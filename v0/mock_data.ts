@@ -1,7 +1,7 @@
 import { Mat } from "../utils/mat";
 
 /**
- * 提供一个符合 y = x + 1 线性关系的 mock 数据集
+ * 提供一个符合 y = 2x + 1 线性关系的 mock 数据集
  * @param size 
  * @returns features（特征）
  * @returns labels（标签）
@@ -12,8 +12,8 @@ export const mockData = (size: number) => {
   const labels: number[] = [];
 
   for (let i = 0; i <= size; i++) {
-    features.push(i);   // 特征: [加数1, 加数2]
-    labels.push(i + 1);    // 标签: 真实和
+    features.push(i);   // 特征
+    labels.push(2 * i + 1);    // 标签
   }
   return { features, labels };
 }

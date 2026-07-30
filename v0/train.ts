@@ -16,7 +16,7 @@ const linear = (x: number, W: number, bias: number) => {
 const train = () => {
   const { features, labels } = mockData(10); // 生成训练数据
 
-  for (let epoch = 0; epoch <= 30; epoch++) {
+  for (let epoch = 0; epoch <= 600; epoch++) {
     const batch = sampleBatch({ features, labels }, 10);
 
     gradW = 0;
@@ -31,6 +31,10 @@ const train = () => {
       gradW += feature * gradLoss;
       gradBias += gradLoss;
     }
+    // 平均梯度
+    gradW /= batch.length;
+    gradBias /= batch.length;
+
     W -= learnRate * gradW;
     bias -= learnRate * gradBias;
   }
