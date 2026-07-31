@@ -4,3 +4,10 @@ node_modules
 .agents
 skills-lock.json
 *.bak
+
+# Next.js
+.next/
+out/
+
+# env
+.env*.local

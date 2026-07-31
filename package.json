@@ -1,0 +1,8 @@
+{
+  "name": "handfirst-llm",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter v0-app dev",
+    "build": "pnpm --filter v0-app build"
+  }
+}
