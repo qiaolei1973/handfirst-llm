@@ -33,7 +33,8 @@
   #mainCanvas { width:100%; height:380px; display:block; }
 
   .bottom-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  @media (max-width:760px) { .bottom-row { grid-template-columns:1fr; } }
+  .bottom-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:14px; }
+  @media (max-width:760px) { .bottom-row, .bottom-row-3 { grid-template-columns:1fr; } }
   .btm-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:14px; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
   .btm-card h3 { font-size:0.8rem; color:#475569; margin-bottom:0; }
   .btm-card .fn { font-family:monospace; font-size:0.72rem; color:#6366f1; margin-bottom:4px; min-height:18px; }
@@ -83,6 +84,21 @@
       <canvas id="lossBCanvas"></canvas>
     </div>
   </div>
+
+  <div class="bottom-row-3">
+    <div class="btm-card">
+      <h3>📉 Loss 曲线</h3>
+      <canvas id="lossHistCanvas"></canvas>
+    </div>
+    <div class="btm-card">
+      <h3>📈 参数收敛</h3>
+      <canvas id="paramHistCanvas"></canvas>
+    </div>
+    <div class="btm-card">
+      <h3>📊 梯度衰减</h3>
+      <canvas id="gradHistCanvas"></canvas>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -105,6 +121,7 @@ let epoch = 0;
 let playing = false, timer = null, speed = 4;
 let trailW = [], trailB = [];
 let gradWLast = 0, gradBLast = 0;
+let lossHistory = [], gradWHist = [], gradBHist = [];
 
 function currentW() { return W_norm / xStd; }
 function currentB() { return bias_norm - W_norm * xMean / xStd; }
@@ -113,6 +130,9 @@ function currentB() { return bias_norm - W_norm * xMean / xStd; }
 const mc = document.getElementById('mainCanvas');
 const lwc = document.getElementById('lossWCanvas');
 const lbc = document.getElementById('lossBCanvas');
+const lhc = document.getElementById('lossHistCanvas');
+const phc = document.getElementById('paramHistCanvas');
+const ghc = document.getElementById('gradHistCanvas');
 
 function resize(cvs) {
   const dpr = window.devicePixelRatio || 1;
@@ -161,6 +181,9 @@ function oneEpoch() {
   gradBLast = gradBRaw(Wraw, Braw);
   trailW.push({x: epoch+1, W: Wraw});
   trailB.push({x: epoch+1, B: Braw});
+  lossHistory.push({epoch: epoch+1, loss: lossVal(Wraw, Braw)});
+  gradWHist.push({epoch: epoch+1, grad: Math.abs(gradWLast)});
+  gradBHist.push({epoch: epoch+1, grad: Math.abs(gradBLast)});
   epoch++;
 }
 
@@ -478,7 +501,298 @@ function drawLossB() {
     `<b>L(bias)</b> = bias² <span style="color:#f59e0b">${fb}</span>bias <span style="color:#f59e0b">${fc}</span> &nbsp;|&nbsp; (W 固定在 ${Wraw.toFixed(2)})`;
 }
 
-function drawAll(){drawMain();drawLossW();drawLossB();}
+// 存储每个 epoch-history canvas 的 draw 参数，供 hover 时像素→epoch 转换
+const _drawMeta = {};
+
+function crosshairOverlay(ctx, datasets, xKey, yKeys, colors, dsLabels, near, toX, toY, pad, pw, ph) {
+  const epoch = near[xKey];
+  const cx = toX(epoch);
+
+  // 竖线
+  ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(100,116,139,0.45)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cx, pad.t); ctx.lineTo(cx, pad.t+ph); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 每条线的数据点 + 小圆
+  const tooltipLines = [`Epoch ${epoch}`];
+  for (let d=0; d<datasets.length; d++) {
+    const pt = near;
+    if (!pt) continue;
+    const val = pt[yKeys[d]];
+    if (val == null) continue;
+    const py = toY(val);
+    ctx.beginPath(); ctx.arc(cx, py, 4, 0, Math.PI*2);
+    ctx.fillStyle = colors[d]; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    tooltipLines.push(`${dsLabels[d]}: ${val.toFixed(4)}`);
+  }
+
+  // tooltip 框
+  const fontSize = pw < 350 ? 9 : 10;
+  ctx.font = `${fontSize}px monospace`;
+  const tw = Math.max(...tooltipLines.map(l => ctx.measureText(l).width)) + 14;
+  const lh = fontSize * 1.45;
+  const th = tooltipLines.length * lh + 12;
+  let tx = cx + 12, ty = pad.t + 6;
+  if (tx + tw > pad.l + pw) tx = cx - tw - 12;
+  if (ty + th > pad.t + ph) ty = pad.t + ph - th;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(tx, ty, tw, th, 6); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = '#1e293b'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  for (let i=0; i<tooltipLines.length; i++) {
+    // 第一条 (epoch) 灰色，其余用对应颜色
+    if (i === 0) ctx.fillStyle = '#64748b';
+    else ctx.fillStyle = colors[i-1];
+    ctx.fillText(tooltipLines[i], tx+7, ty + 8 + i*lh);
+  }
+}
+
+function drawHistLine(cvs, datasets, xKey, yKeys, colors, dsLabels, yLabel) {
+  const {w,h,ctx}=resize(cvs);
+  const pad={t:20,r:20,b:36,l:52};
+  const pw=w-pad.l-pad.r, ph=h-pad.t-pad.b;
+  ctx.clearRect(0,0,w,h);
+
+  // 数据范围
+  let xLo=Infinity,xHi=-Infinity,yLo=Infinity,yHi=-Infinity;
+  for(const ds of datasets) {
+    for(const pt of ds.data) {
+      const xv=pt[xKey];
+      for(const yk of yKeys) {
+        const yv=pt[yk];
+        if(typeof yv==='number'){if(xv<xLo)xLo=xv;if(xv>xHi)xHi=xv;if(yv<yLo)yLo=yv;if(yv>yHi)yHi=yv;}
+      }
+    }
+  }
+  if(!isFinite(xLo)){xLo=0;xHi=600;yLo=0;yHi=10;}
+  if(xHi-xLo<20)xHi=xLo+20;
+  const yPad=(yHi-yLo)*0.15||0.5;
+  yLo-=yPad; yHi+=yPad;
+
+  const toX=v=>pad.l+(v-xLo)/(xHi-xLo)*pw;
+  const toY=v=>pad.t+(yHi-v)/(yHi-yLo)*ph;
+
+  // 存 draw meta 供 hover
+  _drawMeta[cvs.id] = {datasets, xKey, yKeys, colors, dsLabels, toX, toY, pad, pw, ph, xLo, xHi, yLo, yHi};
+
+  // 网格
+  ctx.strokeStyle='#f1f5f9'; ctx.lineWidth=0.5;
+  const xTicks=niceTicks(xLo,xHi,6);
+  const yTicks=niceTicks(yLo,yHi,5);
+  const fontSize=pw<350?8:9;
+  for(const tx of xTicks){const gx=toX(tx);ctx.beginPath();ctx.moveTo(gx,pad.t);ctx.lineTo(gx,pad.t+ph);ctx.stroke();}
+  for(const ty of yTicks){const gy=toY(ty);ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+pw,gy);ctx.stroke();}
+
+  // 数据线
+  for(let d=0;d<datasets.length;d++){
+    const ds=datasets[d], pts=ds.data;
+    if(pts.length<2)continue;
+    ctx.strokeStyle=colors[d]; ctx.lineWidth=2; ctx.setLineDash([]);
+    ctx.beginPath();
+    for(let i=0;i<pts.length;i++){const px=toX(pts[i][xKey]),py=toY(pts[i][yKeys[0]]);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+    ctx.stroke();
+  }
+
+  // hover crosshair（如果有）
+  const hoverEpoch = _hoverEpochs[cvs.id];
+  if (hoverEpoch != null && datasets[0].data.length > 0) {
+    // 找最近的 epoch
+    const pts0 = datasets[0].data;
+    let near = pts0[0], best = Infinity;
+    for (const pt of pts0) {
+      const d = Math.abs(pt[xKey] - hoverEpoch);
+      if (d < best) { best = d; near = pt; }
+    }
+    crosshairOverlay(ctx, datasets, xKey, yKeys, colors, dsLabels, near, toX, toY, pad, pw, ph);
+  }
+
+  // 坐标轴
+  ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,pad.t+ph);
+  ctx.moveTo(pad.l,pad.t+ph); ctx.lineTo(pad.l+pw,pad.t+ph); ctx.stroke();
+
+  // X 刻度
+  ctx.fillStyle=C.gray; ctx.font=`${fontSize}px sans-serif`; ctx.textAlign='center';
+  for(const tx of xTicks)ctx.fillText(Math.round(tx),toX(tx),pad.t+ph+14);
+  ctx.fillText('Epoch',pad.l+pw/2,pad.t+ph+30);
+
+  // Y 刻度
+  ctx.textAlign='right';
+  for(const ty of yTicks)ctx.fillText(Number.isInteger(ty)?ty:ty.toFixed(1),pad.l-6,toY(ty)+4);
+  ctx.save();
+  ctx.translate(pad.l-40,pad.t+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';
+  ctx.fillText(yLabel,0,0);
+  ctx.restore();
+}
+
+function drawLossHist() {
+  drawHistLine(lhc,
+    [{data:lossHistory}],
+    'epoch', ['loss'],
+    [C.red], ['Loss'], 'MSE');
+}
+
+function drawParamHistImpl() {
+  const {w,h,ctx}=resize(phc);
+  const pad={t:20,r:20,b:36,l:52};
+  const pw=w-pad.l-pad.r, ph=h-pad.t-pad.b;
+  ctx.clearRect(0,0,w,h);
+
+  // 合并数据求范围
+  let xLo=Infinity,xHi=-Infinity,yLo=Infinity,yHi=-Infinity;
+  for(const t of trailW){if(t.x<xLo)xLo=t.x;if(t.x>xHi)xHi=t.x;if(t.W<yLo)yLo=t.W;if(t.W>yHi)yHi=t.W;}
+  for(const t of trailB){if(t.x<xLo)xLo=t.x;if(t.x>xHi)xHi=t.x;if(t.B<yLo)yLo=t.B;if(t.B>yHi)yHi=t.B;}
+  if(!isFinite(xLo)){xLo=0;xHi=600;yLo=0;yHi=10;}
+  if(xHi-xLo<20)xHi=xLo+20;
+  const yPad=(yHi-yLo)*0.15||0.5;
+  yLo-=yPad; yHi+=yPad;
+
+  const toX=v=>pad.l+(v-xLo)/(xHi-xLo)*pw;
+  const toY=v=>pad.t+(yHi-v)/(yHi-yLo)*ph;
+
+  // 存 draw meta（trailW/trailB 格式特殊）
+  _drawMeta['paramHistCanvas'] = {toX, toY, pad, pw, ph, xLo, xHi, yLo, yHi, isParam: true};
+
+  // 网格
+  ctx.strokeStyle='#f1f5f9'; ctx.lineWidth=0.5;
+  const xTicks=niceTicks(xLo,xHi,6);
+  const yTicks=niceTicks(yLo,yHi,5);
+  const fontSize=pw<350?8:9;
+  for(const tx of xTicks){const gx=toX(tx);ctx.beginPath();ctx.moveTo(gx,pad.t);ctx.lineTo(gx,pad.t+ph);ctx.stroke();}
+  for(const ty of yTicks){const gy=toY(ty);ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+pw,gy);ctx.stroke();}
+
+  // W 线
+  if(trailW.length>1){
+    ctx.strokeStyle=C.blue; ctx.lineWidth=2; ctx.setLineDash([]);
+    ctx.beginPath();
+    for(let i=0;i<trailW.length;i++){const px=toX(trailW[i].x),py=toY(trailW[i].W);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+    ctx.stroke();
+  }
+  // bias 线
+  if(trailB.length>1){
+    ctx.strokeStyle=C.amber; ctx.lineWidth=2; ctx.setLineDash([]);
+    ctx.beginPath();
+    for(let i=0;i<trailB.length;i++){const px=toX(trailB[i].x),py=toY(trailB[i].B);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+    ctx.stroke();
+  }
+
+  // hover crosshair
+  const hoverEpoch = _hoverEpochs['paramHistCanvas'];
+  if (hoverEpoch != null && trailW.length > 0) {
+    // 找最近的 epoch
+    let nearW = trailW[0], nearB = trailB[0], best = Infinity;
+    for (let i = 0; i < trailW.length; i++) {
+      const d = Math.abs(trailW[i].x - hoverEpoch);
+      if (d < best) { best = d; nearW = trailW[i]; nearB = trailB[i] || nearB; }
+    }
+    const epoch = nearW.x;
+    const cx = toX(epoch);
+
+    // 竖线
+    ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(100,116,139,0.45)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx, pad.t); ctx.lineTo(cx, pad.t+ph); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // W 点
+    const pyW = toY(nearW.W);
+    ctx.beginPath(); ctx.arc(cx, pyW, 4, 0, Math.PI*2);
+    ctx.fillStyle = C.blue; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // bias 点
+    if (nearB) {
+      const pyB = toY(nearB.B);
+      ctx.beginPath(); ctx.arc(cx, pyB, 4, 0, Math.PI*2);
+      ctx.fillStyle = C.amber; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+
+    // tooltip
+    const tl = [`Epoch ${epoch}`, `W: ${nearW.W.toFixed(4)}`, `bias: ${nearB.B.toFixed(4)}`];
+    const tfs = pw < 350 ? 9 : 10;
+    ctx.font = `${tfs}px monospace`;
+    const tw = Math.max(...tl.map(l=>ctx.measureText(l).width)) + 14;
+    const lh = tfs * 1.45, th = tl.length * lh + 12;
+    let tx = cx + 12, ty = pad.t + 6;
+    if (tx + tw > pad.l + pw) tx = cx - tw - 12;
+    if (ty + th > pad.t + ph) ty = pad.t + ph - th;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(tx, ty, tw, th, 6); ctx.fill(); ctx.stroke();
+
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#64748b'; ctx.fillText(tl[0], tx+7, ty+8);
+    ctx.fillStyle = C.blue; ctx.fillText(tl[1], tx+7, ty+8+lh);
+    ctx.fillStyle = C.amber; ctx.fillText(tl[2], tx+7, ty+8+2*lh);
+  }
+
+  // 坐标轴
+  ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,pad.t+ph);
+  ctx.moveTo(pad.l,pad.t+ph); ctx.lineTo(pad.l+pw,pad.t+ph); ctx.stroke();
+
+  // X 刻度
+  ctx.fillStyle=C.gray; ctx.font=`${fontSize}px sans-serif`; ctx.textAlign='center';
+  for(const tx of xTicks)ctx.fillText(Math.round(tx),toX(tx),pad.t+ph+14);
+  ctx.fillText('Epoch',pad.l+pw/2,pad.t+ph+30);
+
+  // Y 刻度
+  ctx.textAlign='right';
+  for(const ty of yTicks)ctx.fillText(Number.isInteger(ty)?ty:ty.toFixed(1),pad.l-6,toY(ty)+4);
+  ctx.save();
+  ctx.translate(pad.l-40,pad.t+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';
+  ctx.fillText('值',0,0);
+  ctx.restore();
+
+  // 图例
+  ctx.font=`${fontSize}px sans-serif`;
+  if(trailW.length>0){ctx.fillStyle=C.blue;ctx.textAlign='left';ctx.fillText('W',pad.l+6,pad.t+12);}
+  if(trailB.length>0){ctx.fillStyle=C.amber;ctx.textAlign='right';ctx.fillText('bias',pad.l+pw-6,pad.t+12);}
+}
+
+function drawGradHist() {
+  drawHistLine(ghc,
+    [{data:gradWHist},{data:gradBHist}],
+    'epoch', ['grad','grad'],
+    [C.blue,C.amber], ['|gradW|','|gradBias|'], '|梯度|');
+}
+
+// ===== hover 状态与事件 =====
+const _hoverEpochs = {};  // canvasId -> epoch number | null
+
+function installHistHover(cvs) {
+  cvs.addEventListener('mousemove', (e) => {
+    const meta = _drawMeta[cvs.id];
+    if (!meta || (meta.isParam ? trailW.length === 0 : meta.datasets[0].data.length === 0)) return;
+    const rect = cvs.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    // 像素 → epoch
+    const epoch = Math.round(meta.xLo + (mx - meta.pad.l) / meta.pw * (meta.xHi - meta.xLo));
+    // clamp
+    const clamped = Math.max(Math.ceil(meta.xLo), Math.min(Math.floor(meta.xHi), epoch));
+    _hoverEpochs[cvs.id] = clamped;
+    // 重绘
+    if (cvs === lhc) drawLossHist();
+    else if (cvs === phc) drawParamHistImpl();
+    else if (cvs === ghc) drawGradHist();
+  });
+  cvs.addEventListener('mouseleave', () => {
+    _hoverEpochs[cvs.id] = null;
+    if (cvs === lhc) drawLossHist();
+    else if (cvs === phc) drawParamHistImpl();
+    else if (cvs === ghc) drawGradHist();
+  });
+}
+
+function drawAll(){drawMain();drawLossW();drawLossB();drawLossHist();drawParamHistImpl();drawGradHist();}
 
 // ===== UI =====
 function updateUI() {
@@ -509,6 +823,7 @@ function stop(){
 function stepOne(){if(playing)stop();if(epoch>=600)return;oneEpoch();updateUI();}
 function resetAll(){
   stop(); W_norm=xStd;bias_norm=xMean;epoch=0;trailW=[];trailB=[];gradWLast=0;gradBLast=0;
+  lossHistory=[];gradWHist=[];gradBHist=[];
   document.getElementById('stEp').textContent='0';document.getElementById('stLoss').textContent='—';
   document.getElementById('stW').textContent='1.00';document.getElementById('stB').textContent='0.00';
   document.getElementById('stGW').textContent='—';document.getElementById('stGB').textContent='—';
@@ -516,8 +831,8 @@ function resetAll(){
 }
 function updateSpeed(){speed=parseInt(document.getElementById('speedSlider').value);document.getElementById('speedLbl').textContent=speed+'x';}
 
-window.addEventListener('load',()=>{resize(mc);resize(lwc);resize(lbc);drawAll();});
-window.addEventListener('resize',()=>{resize(mc);resize(lwc);resize(lbc);drawAll();});
+window.addEventListener('load',()=>{resize(mc);resize(lwc);resize(lbc);resize(lhc);resize(phc);resize(ghc);installHistHover(lhc);installHistHover(phc);installHistHover(ghc);drawAll();});
+window.addEventListener('resize',()=>{resize(mc);resize(lwc);resize(lbc);resize(lhc);resize(phc);resize(ghc);drawAll();});
 </script>
 </body>
 </html>
