@@ -11,9 +11,9 @@ export const mockData = (size: number) => {
   const features: number[] = [];
   const labels: number[] = [];
 
-  for (let i = 0; i <= size; i++) {
-    features.push(i);   // 特征
-    labels.push(2 * i + 1);    // 标签
+  for (let i = 0; i < size; i++) {
+    features.push(i);
+    labels.push(2 * i + 10 + (Math.random() - 0.5) * 2 * 3); // y=2x+10 ± 3 噪声
   }
   return { features, labels };
 }
