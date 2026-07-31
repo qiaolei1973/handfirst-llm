@@ -30,7 +30,8 @@
 
   .main-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:16px 20px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
   .main-card h2 { font-size:0.85rem; color:#475569; margin-bottom:8px; }
-  #mainCanvas { width:100%; height:380px; display:block; }
+  .main-scroll { max-height:500px; overflow-y:auto; }
+  #mainCanvas { width:100%; display:block; }
 
   .bottom-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   @media (max-width:760px) { .bottom-row { grid-template-columns:1fr; } }
@@ -60,15 +61,15 @@
   <div class="status-bar">
     <div class="stat"><div class="lbl">Epoch</div><div class="val ep" id="stEp">0</div></div>
     <div class="stat"><div class="lbl">Loss</div><div class="val loss" id="stLoss">—</div></div>
-    <div class="stat"><div class="lbl">W</div><div class="val w" id="stW">1.00</div></div>
-    <div class="stat"><div class="lbl">Bias</div><div class="val b" id="stB">0.00</div></div>
+    <div class="stat"><div class="lbl">W</div><div class="val w" id="stW">1.000</div></div>
+    <div class="stat"><div class="lbl">Bias</div><div class="val b" id="stB">0.000</div></div>
     <div class="stat"><div class="lbl">gradW</div><div class="val w" id="stGW">—</div></div>
     <div class="stat"><div class="lbl">gradBias</div><div class="val b" id="stGB">—</div></div>
   </div>
 
   <div class="main-card">
-    <h2>📊 数据空间 &nbsp;|&nbsp; 🟢 真实函数 y=2x+10 &nbsp; 🟣 模型 &nbsp; 🔴 误差</h2>
-    <canvas id="mainCanvas"></canvas>
+    <h2>📊 数据空间 &nbsp;|&nbsp; 🟢 真实函数 y=2x+10 &nbsp; 🟣 模型 &nbsp; 🔴 误差 &nbsp;|&nbsp; 1:1 等比例尺，可滚动</h2>
+    <div class="main-scroll"><canvas id="mainCanvas"></canvas></div>
   </div>
 
   <div class="bottom-row">
@@ -183,22 +184,38 @@ function niceTicks(lo, hi, maxN) {
 }
 
 // ===== 绘图 =====
-const C = {blue:'#3b82f6',amber:'#f59e0b',red:'#ef4444',purple:'#6366f1',green:'#22c55e',gray:'#94a3b8'};
+const C = {blue:'#3b82f6',amber:'#f59e0b',red:'#ef4444',purple:'#7c3aed',green:'#22c55e',gray:'#94a3b8'};
 
 function drawMain() {
-  const {w,h,ctx} = resize(mc);
+  const dpr = window.devicePixelRatio || 1;
+  const r = mc.parentElement.getBoundingClientRect();
+  const w = r.width;
+
   const pad={t:30,r:30,b:42,l:58};
-  const pw=w-pad.l-pad.r, ph=h-pad.t-pad.b;
+  const pw=w-pad.l-pad.r;
+  const xSpan = xMax - xMin;
+  const pxPerUnit = pw / xSpan;  // 1:1 ratio — same for x and y
+
+  // 固定 y 范围：覆盖所有可能的数据（模型线从 0 开始，真实线到 ~37）
+  const yMin = -3;
+  const yMax = 40;
+  const ySpan = yMax - yMin;
+  const ph = ySpan * pxPerUnit;  // 等比例尺：1 y-unit = 1 x-unit 在像素上
+  const H = ph + pad.t + pad.b;
+
+  // 动态设 canvas 高度
+  mc.style.height = H + 'px';
+  mc.height = H * dpr;
+  mc.width  = w * dpr;
+  const ctx = mc.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const Wraw=currentW(), Braw=currentB();
-  const yAll = rawX.flatMap((x,i)=>[labels[i], x*Wraw+Braw, TRUE_W*x+TRUE_BIAS]);
-  let yMin=Math.min(...yAll)-2, yMax=Math.max(...yAll)+2;
-  if(yMax-yMin<5){ const mid=(yMax+yMin)/2; yMin=mid-4; yMax=mid+4; }
 
-  const toX=v=>pad.l+(v-xMin)/(xMax-xMin)*pw;
-  const toY=v=>pad.t+(yMax-v)/(yMax-yMin)*ph;
+  const toX=v=>pad.l+(v-xMin)/xSpan*pw;
+  const toY=v=>pad.t+(yMax-v)/ySpan*ph;
 
-  ctx.clearRect(0,0,w,h);
+  ctx.clearRect(0,0,w,H);
 
   // 网格
   ctx.strokeStyle='#f1f5f9'; ctx.lineWidth=0.5;
@@ -266,7 +283,7 @@ function drawMain() {
   ctx.fillStyle='rgba(34,197,95,0.75)'; ctx.font='bold 10px sans-serif'; ctx.textAlign='left';
   ctx.fillText('y=2x+10', toX(7)+4, toY(TRUE_W*7+TRUE_BIAS)-5);
   ctx.fillStyle=C.purple;
-  ctx.fillText(`y=${Wraw.toFixed(2)}x+${Braw.toFixed(2)}`, toX(8)+4, toY(8*Wraw+Braw)+12);
+  ctx.fillText(`y=${Wraw.toFixed(3)}x+${Braw.toFixed(3)}`, toX(9)+4, toY(9*Wraw+Braw)-8);
 }
 
 function drawLossW() {
@@ -368,10 +385,10 @@ function drawLossW() {
   ctx.fillText('Loss', 0, 0);
   ctx.restore();
 
-  // 函数公式文字 — 更新到 HTML 元素
+  // 函数公式文字
   const fa = a.toFixed(2), fb = b >= 0 ? '+' + b.toFixed(2) : b.toFixed(2), fc = c >= 0 ? '+' + c.toFixed(2) : c.toFixed(2);
   document.getElementById('fnW').innerHTML =
-    `<b>L(W)</b> = <span style="color:#3b82f6">${fa}</span>W² <span style="color:#3b82f6">${fb}</span>W <span style="color:#3b82f6">${fc}</span> &nbsp;|&nbsp; (bias 固定在 ${Braw.toFixed(2)})`;
+    `<b>L(W)</b> = <span style="color:#3b82f6">${fa}</span>W² <span style="color:#3b82f6">${fb}</span>W <span style="color:#3b82f6">${fc}</span> &nbsp;|&nbsp; (bias 固定在 ${Braw.toFixed(3)})`;
 }
 
 function drawLossB() {
@@ -475,7 +492,7 @@ function drawLossB() {
   // 函数公式
   const fb = b >= 0 ? '+' + b.toFixed(2) : b.toFixed(2), fc = c >= 0 ? '+' + c.toFixed(2) : c.toFixed(2);
   document.getElementById('fnB').innerHTML =
-    `<b>L(bias)</b> = bias² <span style="color:#f59e0b">${fb}</span>bias <span style="color:#f59e0b">${fc}</span> &nbsp;|&nbsp; (W 固定在 ${Wraw.toFixed(2)})`;
+    `<b>L(bias)</b> = bias² <span style="color:#f59e0b">${fb}</span>bias <span style="color:#f59e0b">${fc}</span> &nbsp;|&nbsp; (W 固定在 ${Wraw.toFixed(3)})`;
 }
 
 function drawAll(){drawMain();drawLossW();drawLossB();}
@@ -510,14 +527,14 @@ function stepOne(){if(playing)stop();if(epoch>=600)return;oneEpoch();updateUI();
 function resetAll(){
   stop(); W_norm=xStd;bias_norm=xMean;epoch=0;trailW=[];trailB=[];gradWLast=0;gradBLast=0;
   document.getElementById('stEp').textContent='0';document.getElementById('stLoss').textContent='—';
-  document.getElementById('stW').textContent='1.00';document.getElementById('stB').textContent='0.00';
+  document.getElementById('stW').textContent='1.000';document.getElementById('stB').textContent='0.000';
   document.getElementById('stGW').textContent='—';document.getElementById('stGB').textContent='—';
   drawAll();
 }
 function updateSpeed(){speed=parseInt(document.getElementById('speedSlider').value);document.getElementById('speedLbl').textContent=speed+'x';}
 
-window.addEventListener('load',()=>{resize(mc);resize(lwc);resize(lbc);drawAll();});
-window.addEventListener('resize',()=>{resize(mc);resize(lwc);resize(lbc);drawAll();});
+window.addEventListener('load',()=>{resize(lwc);resize(lbc);drawAll();});
+window.addEventListener('resize',()=>{resize(lwc);resize(lbc);drawAll();});
 </script>
 </body>
 </html>
