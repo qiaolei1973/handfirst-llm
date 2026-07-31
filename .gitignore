@@ -1,1 +1,6 @@
 node_modules
+.claude
+.agent
+.agents
+skills-lock.json
+*.bak
