@@ -3,8 +3,8 @@ import './docs.css';
 
 export const metadata = {
   title: {
-    template: '%s · 手摸手机器学习',
-    default: '手摸手机器学习',
+    template: '%s · HandFirst ML',
+    default: 'HandFirst ML',
   },
 };
 

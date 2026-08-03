@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '🔬 v1 · 认识梯度下降',
+  title: '🔬 v1：MAE 梯度下降',
   description: '看每一步：数据空间里的直线怎么转，loss 曲面上的点怎么滑向谷底',
 };
 

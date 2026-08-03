@@ -78,8 +78,8 @@ export function getNavigation(): NavItem[] {
 }
 
 const DIR_TITLES: Record<string, string> = {
-  v1: 'v1 · 认识机器学习',
-  v2: 'v2 · MSE + SGD',
+  v1: 'v1：MAE 梯度下降',
+  v2: 'v2：MSE + SGD + 归一化',
 };
 
 function getSubPages(dir: string): NavItem[] | undefined {

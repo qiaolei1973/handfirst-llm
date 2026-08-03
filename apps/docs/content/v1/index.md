@@ -1,4 +1,4 @@
-# v1 · 认识机器学习
+# v1：认识机器学习
 
 ## 什么是机器学习？
 
@@ -15,11 +15,10 @@
 
 这就是机器学习里最**简单**也最**核心**的问题——线性回归。
 
-![数据空间截图](images/data-space.png)
+![数据空间截图](/v1/data-space.png)
 
 > 计算机看到的只有这些点，它要从零学出一条直线。
 
----
 
 ## 怎么学？四个步骤
 
@@ -33,7 +32,6 @@ const linear = (x: number, W: number, bias: number) => x * W + bias;
 
 这就是**模型**。W 和 bias 是参数，等着数据来调教。
 
----
 
 ### 第二步：看这条直线有多差（损失函数）
 
@@ -50,7 +48,9 @@ const diff = yPred - target;
 totalLoss += Math.abs(diff);   // 绝对值误差，高了低了都算"差"
 ```
 
----
+![MAE 损失函数和符号梯度](/v1/mae-gradient.png)
+
+> 左图：MAE 是 V 形，|−5| 和 |5| 的 loss 都是 5——损失只看差多远，不关心方向。右图：梯度始终 ±1，不随差值大小而变。差 0.01 和差 100，推动力都一样。
 
 ### 第三步：算往哪调（梯度）
 
@@ -75,7 +75,6 @@ gradBias /= n;
 
 > 预测大了 → sign = 1 → W 要**减**。预测小了 → sign = -1 → W 要**加**。直觉就是"错了往回拉"。
 
----
 
 ### 第四步：走一小步（参数更新）
 
@@ -88,7 +87,6 @@ bias -= learnRate * gradBias;
 
 `learnRate = 0.1` 意思是只取梯度的 10%。太大震荡，太小爬不动。
 
----
 
 ### 合在一起：训练循环
 
@@ -120,7 +118,6 @@ for (let epoch = 0; epoch < 600; epoch++) {
 
 > 完整可运行文件：`apps/v1/train_simple.ts`。
 
----
 
 ## 浏览器里的可视化
 
@@ -137,7 +134,6 @@ export class Trainer extends BaseTrainer {
 }
 ```
 
----
 
 ## 试试看
 
@@ -161,17 +157,24 @@ pnpm dev:v1
 | 参数收敛 | 底部中——W、bias 一步步趋近真值 |
 | 梯度衰减 | 底部右——梯度一步步减小 |
 
-![训练全景](images/training.png)
+![训练全景](/v1/training.png)
 
 > 注意 L(W) 和 L(bias) 两张图：W 大步跳跃，bias 几乎原地不动。
 
----
 
 ## 不足
 
 回顾训练过程：W 一步冲到真值旁边，但 bias 蜗牛一样慢慢爬。
 
-![L(W) vs L(bias) 对比](images/loss-comparison.png)
+![L(W) vs L(bias) 收敛对比](/v1/loss-comparison.png)
+
+> 同样的 MAE、同样的学习率、同样的步数——W 几步就逼近真值 2，bias 爬了 20 步才走到 10。
+
+为什么？
+
+![W 和 bias 的梯度量级对比](/v1/gradient-asymmetry.png)
+
+> W 的梯度 = sign(diff) × x，被 x（最大 20）放大。bias 的梯度 = sign(diff)，永远是 ±1。一个拿杠杆，一个用手推。
 
 四个明显的问题：
 

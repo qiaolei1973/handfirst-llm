@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '🔬 v2 · MSE + SGD',
+  title: '🔬 v2：MSE + SGD + 归一化',
   description: 'SGD + mini-batch — 数据空间里的直线怎么转，loss 曲面上的点怎么滑向谷底',
 };
 
