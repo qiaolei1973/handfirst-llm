@@ -10,7 +10,7 @@
 
 - **每一步只引入一个新概念。** v1 认识梯度下降，v2 换 MSE + SGD + 归一化，后面是 MLP、反向传播、Transformer……每次只多走一小步。
 - **代码是教学材料，不是生产代码。** `train.ts` 要求一个文件读完，显式循环、不抽象、注释比代码多。
-- **终端可以独立跑，浏览器可以看。** `pnpm exec tsx train.ts` 直接出结果；`pnpm dev:vN` 起 WS + Next.js，同一套算法在浏览器实时可视化。
+- **终端可以独立跑，浏览器可以看，互不依赖。** 基础 run：`pnpm exec tsx train.ts` 打印结果。UI run：`pnpm dev:vN` 起 WS + Next.js dev，浏览器实时可视化。UI run 时不需要先跑终端。
 
 ## 项目结构
 
@@ -52,12 +52,16 @@ apps/vN/
 - **marked + highlight.js**：docs 的 MD 渲染
 - **matplotlib**：概念图生成
 
-## 常用命令
+## 两种运行方式
 
 ```bash
-pnpm dev              # docs 站点 (localhost:3000)
-pnpm dev:v1           # v1 训练可视化 (WS :3002 + Next :3001)
-pnpm dev:v2           # v2 训练可视化 (WS :3004 + Next :3003)
-pnpm build            # 构建全部三个 app
-pnpm exec tsx apps/vN/train.ts   # 终端裸跑训练
+# 基础 run：终端裸跑，打印结果
+pnpm exec tsx apps/vN/train.ts
+
+# UI run：WS 训练服务 + Next.js dev，浏览器实时可视化
+pnpm dev:v1     # v1 → localhost:3001
+pnpm dev:v2     # v2 → localhost:3003
+pnpm dev        # docs → localhost:3000
 ```
+
+两者互不依赖——UI run 自动启动 WS server，不需要先跑终端。
