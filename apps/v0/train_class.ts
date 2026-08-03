@@ -39,6 +39,7 @@ export class Trainer extends BaseTrainer {
 
     for (let i = 0; i < size; i++) {
       const x = this.dataset.features[i];
+      // 目标值
       const target = this.dataset.labels[i];
       // 计算预测值
       const yPred = linear(x, this.params.W, this.params.bias);

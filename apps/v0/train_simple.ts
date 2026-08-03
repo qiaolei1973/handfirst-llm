@@ -27,6 +27,7 @@ const train = () => {
 
     for (let i = 0; i < size; i++) {
       const x = dataset.features[i];
+      // 目标值
       const target = dataset.labels[i];
       // 计算预测值
       const yPred = linear(x, W, bias);
