@@ -48,6 +48,7 @@ export function useLineChart(opts?: LineChartOpts) {
     chartRef.current?.draw();
   }, []);
 
+  // ---- hover（chart 自己管理鼠标事件） ----
   const onHoverX = useCallback((xValue: number | null) => {
     chartRef.current?.onHoverX(xValue);
   }, []);
@@ -56,5 +57,25 @@ export function useLineChart(opts?: LineChartOpts) {
     chartRef.current?.hoverAtPixel(px);
   }, []);
 
-  return { canvasRef, setSeries, append, clear, draw, onHoverX, hoverAtPixel };
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const onMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      chartRef.current?.hoverAtPixel(e.clientX - rect.left);
+    };
+    const onLeave = () => {
+      chartRef.current?.onHoverX(null);
+    };
+
+    canvas.addEventListener('mousemove', onMove);
+    canvas.addEventListener('mouseleave', onLeave);
+    return () => {
+      canvas.removeEventListener('mousemove', onMove);
+      canvas.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
+
+  return { canvasRef, setSeries, append, clear, draw };
 }

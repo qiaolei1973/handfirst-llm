@@ -20,6 +20,7 @@
         "name": "next"
       }
     ],
+    "types": ["node"],
     "allowJs": true,
     "incremental": true,
     "resolveJsonModule": true,

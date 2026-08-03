@@ -1,4 +1,5 @@
 import type { Coord, Padding } from './types';
+import { COLORS } from './colors';
 
 /**
  * Compute nice tick values for a data range.
@@ -56,7 +57,7 @@ export function drawGrid(
   plotW: number,
   plotH: number,
 ): void {
-  ctx.strokeStyle = '#f1f5f9';
+  ctx.strokeStyle = COLORS.grayBg;
   ctx.lineWidth = 0.5;
   for (const tx of xTicks) {
     const gx = coord.toX(tx);
@@ -91,9 +92,9 @@ export function drawAxes(
 ): void {
   const fs = fontSize ?? 9;
   ctx.font = `${fs}px sans-serif`;
-  ctx.fillStyle = '#94a3b8';
+  ctx.fillStyle = COLORS.gray;
   ctx.lineWidth = 1;
-  ctx.strokeStyle = '#cbd5e1';
+  ctx.strokeStyle = COLORS.grayLight;
 
   // L-shaped axis lines
   ctx.beginPath();

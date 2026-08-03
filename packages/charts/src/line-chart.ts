@@ -1,5 +1,6 @@
 import { resizeCanvas, niceTicks, drawGrid, drawAxes } from './primitives';
 import type { Padding, Coord, Point, LineSeries } from './types';
+import { COLORS } from './colors';
 
 export interface LineChartOpts {
   xLabel?: string;
@@ -50,7 +51,7 @@ export function createLineChart(
 
     // vertical dashed line
     ctx.setLineDash([4, 3]);
-    ctx.strokeStyle = 'rgba(100,116,139,0.45)';
+    ctx.strokeStyle = COLORS.crosshair;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(cx, pad.t);
@@ -78,7 +79,7 @@ export function createLineChart(
       ctx.arc(cx, py, 4, 0, Math.PI * 2);
       ctx.fillStyle = s.color;
       ctx.fill();
-      ctx.strokeStyle = '#fff';
+      ctx.strokeStyle = COLORS.white;
       ctx.lineWidth = 1.5;
       ctx.stroke();
       tooltipLines.push(`${s.label}: ${near.y.toFixed(4)}`);
@@ -95,8 +96,8 @@ export function createLineChart(
     if (tx + tw > pad.l + pw) tx = cx - tw - 12;
     if (ty + th > pad.t + ph) ty = pad.t + ph - th;
 
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    ctx.strokeStyle = '#cbd5e1';
+    ctx.fillStyle = COLORS.tooltipBg;
+    ctx.strokeStyle = COLORS.grayLight;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.roundRect(tx, ty, tw, th, 6);
@@ -106,7 +107,7 @@ export function createLineChart(
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     for (let i = 0; i < tooltipLines.length; i++) {
-      ctx.fillStyle = i === 0 ? '#64748b' : series[i - 1].color;
+      ctx.fillStyle = i === 0 ? COLORS.tooltipText : series[i - 1].color;
       ctx.fillText(tooltipLines[i], tx + 7, ty + 8 + i * lh);
     }
   }
@@ -186,7 +187,7 @@ export function createLineChart(
     },
     append(idx: number, pt: Point): void {
       while (series.length <= idx) {
-        series.push({ label: '', color: '#94a3b8', points: [] });
+        series.push({ label: '', color: COLORS.gray, points: [] });
       }
       series[idx].points.push(pt);
     },

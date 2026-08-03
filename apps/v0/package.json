@@ -11,6 +11,8 @@
   "dependencies": {
     "@handfirst/charts": "workspace:*",
     "@handfirst/datasets": "workspace:*",
+    "@handfirst/utils": "workspace:*",
+    "@handfirst/viz": "workspace:*",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

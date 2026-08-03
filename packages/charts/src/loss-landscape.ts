@@ -1,5 +1,6 @@
 import { resizeCanvas, niceTicks, drawGrid, drawAxes } from './primitives';
 import type { Padding, Coord, Point } from './types';
+import { COLORS } from './colors';
 
 export interface LossLandscapeOpts {
   xLabel?: string;
@@ -116,7 +117,7 @@ export function createLossLandscape(
     drawGrid(ctx, { toX, toY }, xTicks, yTicks, pad, plotW, plotH);
 
     // ---- parabola curve ----
-    ctx.strokeStyle = '#cbd5e1';
+    ctx.strokeStyle = COLORS.grayLight;
     ctx.lineWidth = 1.5;
     ctx.setLineDash([]);
     ctx.beginPath();
@@ -129,7 +130,7 @@ export function createLossLandscape(
 
     // ---- trajectory ----
     if (trajectory.length > 1) {
-      ctx.strokeStyle = 'rgba(59,130,246,0.25)';
+      ctx.strokeStyle = COLORS.trajectory;
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 4]);
       ctx.beginPath();
@@ -148,7 +149,7 @@ export function createLossLandscape(
         const py = toY(f(trajectory[i].x));
         ctx.beginPath();
         ctx.arc(px, py, 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(59,130,246,0.35)';
+        ctx.fillStyle = COLORS.trajectoryDot;
         ctx.fill();
       }
     }
@@ -158,9 +159,9 @@ export function createLossLandscape(
     const cy = toY(curY);
     ctx.beginPath();
     ctx.arc(cx, cy, 7, 0, Math.PI * 2);
-    ctx.fillStyle = '#ef4444'; // red
+    ctx.fillStyle = COLORS.red;
     ctx.fill();
-    ctx.strokeStyle = '#fff';
+    ctx.strokeStyle = COLORS.white;
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -169,7 +170,7 @@ export function createLossLandscape(
     const t1 = currentX - tExtent;
     const t2 = currentX + tExtent;
     ctx.setLineDash([4, 3]);
-    ctx.strokeStyle = '#ef4444';
+    ctx.strokeStyle = COLORS.red;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(toX(t1), toY(curY + grad * (t1 - currentX)));
@@ -182,7 +183,7 @@ export function createLossLandscape(
     if (vly) {
       const vx = toX(valley);
       ctx.setLineDash([2, 4]);
-      ctx.strokeStyle = 'rgba(34,197,94,0.45)';
+      ctx.strokeStyle = COLORS.valley;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(vx, toY(config.valleyX ? f(valley) : yLo) + 10);
@@ -190,7 +191,7 @@ export function createLossLandscape(
       ctx.stroke();
       ctx.setLineDash([]);
       // label
-      ctx.fillStyle = 'rgba(34,197,95,0.7)';
+      ctx.fillStyle = COLORS.valleyLabel;
       ctx.font = `${fontSize}px sans-serif`;
       ctx.textAlign = 'center';
       const bottomLabel = (config.valleyX ?? valley).toFixed(2);
@@ -198,7 +199,7 @@ export function createLossLandscape(
     }
 
     // ---- annotation ----
-    ctx.fillStyle = '#ef4444';
+    ctx.fillStyle = COLORS.red;
     ctx.font = 'bold 10px sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(`grad=${grad.toFixed(2)}`, cx + 10, cy - 10);

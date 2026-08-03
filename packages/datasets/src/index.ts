@@ -1,16 +1,16 @@
 /**
- * Generate mock linear regression data: y = 2x + 10 with ±3 uniform noise.
+ * 线性回归 demo 数据：x 步长 1.2，y = 2x + 10 ± 3 均匀噪声。
+ * 返回带有真实函数引用的 dataset。
  */
-export function mockData(size: number): { features: number[]; labels: number[] } {
-  const features: number[] = [];
-  const labels: number[] = [];
-
-  for (let i = 0; i < size; i++) {
-    features.push(i);
-    labels.push(2 * i + 10 + (Math.random() - 0.5) * 2 * 3);
-  }
-
-  return { features, labels };
+export function linearData(size = 12): {
+  features: number[];
+  labels: number[];
+  trueFn: (x: number) => number;
+} {
+  const trueFn = (x: number) => 2 * x + 10;
+  const features = Array.from({ length: size }, (_, i) => i * 1.2);
+  const labels = features.map((x) => trueFn(x) + (Math.random() - 0.5) * 6);
+  return { features, labels, trueFn };
 }
 
 /**

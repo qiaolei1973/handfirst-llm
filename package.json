@@ -3,6 +3,10 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter v0-app dev",
-    "build": "pnpm --filter v0-app build"
+    "build": "pnpm --filter v0-app build",
+    "check": "pnpm exec tsx apps/v0/lib/train.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.1"
   }
 }

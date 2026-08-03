@@ -1,6 +1,9 @@
+export { COLORS } from './colors';
 export { niceTicks, drawGrid, drawAxes, resizeCanvas } from './primitives';
 export { createLineChart } from './line-chart';
 export { createLossLandscape } from './loss-landscape';
+export { createModelFit } from './model-fit';
 export type { Padding, Coord, Point, LineSeries } from './types';
 export type { LineChartOpts, LineChartHandle } from './line-chart';
 export type { LossLandscapeOpts, LossLandscapeConfig, LossLandscapeHandle } from './loss-landscape';
+export type { ModelFitConfig, ModelFitHandle } from './model-fit';
