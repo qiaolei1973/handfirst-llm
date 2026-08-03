@@ -1,26 +1,17 @@
 'use client';
 
-import { useMemo } from 'react';
 import { SurgeryDashboard } from '@handfirst/viz';
-import { linearData } from '@handfirst/datasets';
-import { Trainer } from '@/lib/train';
-import { mse, lossCoeffs } from '@handfirst/utils';
+import { useWsTrainer } from '@handfirst/utils';
 
-const { features, labels, trueFn } = linearData(12);
+const trueFn = (x: number) => 2 * x + 10;
 
 export default function Page() {
-  const trainer = useMemo(
-    () => new Trainer({ features, labels }),
-    [],
-  );
+  const trainer = useWsTrainer('ws://localhost:3002');
 
   return (
     <SurgeryDashboard
       trainer={trainer}
       trueFn={trueFn}
-      dataset={{ features, labels }}
-      mse={mse}
-      lossCoeffs={lossCoeffs}
     />
   );
 }
