@@ -2,7 +2,7 @@
   "name": "handfirst-llm",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter docs dev",
+    "dev": "pnpm --filter _docs dev",
     "dev:v1": "pnpm exec tsx apps/v1/server.ts & pnpm --filter v1-app dev",
     "dev:v2": "pnpm exec tsx apps/v2/server.ts & pnpm --filter v2-app dev"
   },
