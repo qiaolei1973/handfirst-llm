@@ -2,8 +2,9 @@
   "name": "handfirst-llm",
   "private": true,
   "scripts": {
-    "dev": "pnpm exec tsx apps/v0/server.ts & pnpm --filter v0-app dev",
-    "build": "pnpm --filter v0-app build"
+    "dev:v0": "pnpm exec tsx apps/v0/server.ts & pnpm --filter v0-app dev",
+    "dev:v1": "pnpm exec tsx apps/v1/server.ts & pnpm --filter v1-app dev",
+    "build": "pnpm --filter v0-app build && pnpm --filter v1-app build"
   },
   "devDependencies": {
     "tsx": "^4.23.1"

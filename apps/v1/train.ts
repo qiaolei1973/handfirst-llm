@@ -1,11 +1,11 @@
 // ============================================================
-// 线性回归 — 梯度下降训练
+// 线性回归 — SGD 梯度下降训练
 //
 // 你学习时只看这个文件就够了。
 // page.tsx 只是 UI，不包含任何算法。
 //
-// 终端验证: pnpm exec tsx lib/train.ts
-// 浏览器 viz: pnpm dev
+// 终端验证: pnpm exec tsx train.ts
+// 浏览器 viz: pnpm dev:v1
 // ============================================================
 
 import { fileURLToPath } from 'node:url';
@@ -74,7 +74,7 @@ export class Trainer extends BaseTrainer {
 }
 
 // ===== 终端运行 =====
-//   pnpm exec tsx lib/train.ts
+//   pnpm exec tsx train.ts
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const t = new Trainer({
@@ -88,9 +88,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const ep = t.history.length;
     if (ep <= 3 || ep % 200 === 0) {
       console.log(
-        `epoch ${String(ep).padStart(4)}  W=${(last.params as {W:number,bias:number}).W.toFixed(5)}  bias=${(last.params as {W:number,bias:number}).bias.toFixed(5)}  loss=${last.loss.toFixed(4)}`,
+        `epoch ${String(ep).padStart(4)}  W=${(last.params as { W: number; bias: number }).W.toFixed(5)}  bias=${(last.params as { W: number; bias: number }).bias.toFixed(5)}  loss=${last.loss.toFixed(4)}`,
       );
     }
   }
-  console.log(`\n最终  W=${(last!.params as {W:number,bias:number}).W.toFixed(5)} (真值:2)  bias=${(last!.params as {W:number,bias:number}).bias.toFixed(5)} (真值:10)`);
+  console.log(
+    `\n最终  W=${(last!.params as { W: number; bias: number }).W.toFixed(5)} (真值:2)  bias=${(last!.params as { W: number; bias: number }).bias.toFixed(5)} (真值:10)`,
+  );
 }

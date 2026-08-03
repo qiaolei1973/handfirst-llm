@@ -6,13 +6,13 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { COLORS } from '@handfirst/charts';
 import { mse, lossCoeffs } from '@handfirst/utils';
 import type { WsTrainer } from '@handfirst/utils';
+import { useLineChart } from './useLineChart';
+import { useLossLandscape } from './useLossLandscape';
+import { useModelFit } from './useModelFit';
 
 // ---- v0 专用事件形状 ----
 type V0Params = { W: number; bias: number };
 type V0EpochData = { params: V0Params; grads: V0Params; loss: number; epoch: number };
-import { useLineChart } from './useLineChart';
-import { useLossLandscape } from './useLossLandscape';
-import { useModelFit } from './useModelFit';
 
 // ============================================================
 //  Props
@@ -88,23 +88,20 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
     ]);
   }, [trainer, lossHist, paramHist, gradHist]);
 
-  // ---- 更新所有可视化 ----
-  const updateUI = useCallback(() => {
+  // ---- 渲染所有可视化 ----
+  const render = useCallback((W: number, B: number, gradW: number, gradB: number, loss: number | null) => {
     const ds = trainer.dataset;
     if (!ds) return;
     const dataset = { features: ds.features, labels: ds.labels };
-    const ev = trainer.lastEvent as V0EpochData | null;
-    if (!ev) return;
-    const { W, bias: B } = ev.params;
     const h = trainer.history as V0EpochData[];
 
     // 状态栏
     if (stEpRef.current) stEpRef.current.textContent = String(trainer.history.length);
-    if (stLossRef.current) stLossRef.current.textContent = ev.loss.toFixed(4);
+    if (stLossRef.current) stLossRef.current.textContent = loss !== null ? loss.toFixed(4) : '—';
     if (stWRef.current) stWRef.current.textContent = W.toFixed(3);
     if (stBRef.current) stBRef.current.textContent = B.toFixed(3);
-    if (stGWRef.current) stGWRef.current.textContent = ev.grads.W.toFixed(3);
-    if (stGBRef.current) stGBRef.current.textContent = ev.grads.bias.toFixed(3);
+    if (stGWRef.current) stGWRef.current.textContent = loss !== null ? gradW.toFixed(3) : '—';
+    if (stGBRef.current) stGBRef.current.textContent = loss !== null ? gradB.toFixed(3) : '—';
 
     // 主图
     modelFit.update({
@@ -121,7 +118,7 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
     lossW.update({
       a: lwc.a, b: lwc.b, c: lwc.c,
       currentX: W,
-      gradient: ev.grads.W,
+      gradient: gradW,
       trajectory: h.map((e) => ({ x: e.params.W, y: mse(e.params.W, B, dataset) })),
       valleyX: -lwc.b / (2 * lwc.a),
     });
@@ -132,7 +129,7 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
     lossB.update({
       a: lbc.a, b: lbc.b, c: lbc.c,
       currentX: B,
-      gradient: ev.grads.bias,
+      gradient: gradB,
       trajectory: h.map((e) => ({ x: e.params.bias, y: mse(W, e.params.bias, dataset) })),
       valleyX: -lbc.b / (2 * lbc.a),
     });
@@ -157,19 +154,24 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
 
   // ---- WS 事件回调 ----
   useEffect(() => {
-    const u1 = trainer.onInit(() => {
+    const u1 = trainer.onInit((initData) => {
       setReady(true);
       syncHistoryCharts();
-      updateUI();
+      const p = initData.params as V0Params;
+      render(p.W, p.bias, 0, 0, null);
     });
-    const u2 = trainer.onEpoch(() => {
+    const u2 = trainer.onEpoch((ev) => {
+      const e = ev as V0EpochData;
       syncHistoryCharts();
-      updateUI();
+      render(e.params.W, e.params.bias, e.grads.W, e.grads.bias, e.loss);
     });
     const u3 = trainer.onDone(() => {
       setPlaying(false);
     });
     const u4 = trainer.onReset(() => {
+      const ds = trainer.dataset;
+      if (!ds) return;
+      const p = ds.params as V0Params;
       lossW.update({ a: 1, b: 0, c: 0, currentX: 0 });
       lossW.draw();
       lossB.update({ a: 1, b: 0, c: 0, currentX: 0 });
@@ -180,14 +182,8 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
         { label: 'W', color: COLORS.blue, points: [] },
         { label: 'bias', color: COLORS.amber, points: [] },
       ]);
-      if (stEpRef.current) stEpRef.current.textContent = '0';
-      if (stLossRef.current) stLossRef.current.textContent = '—';
-      if (stWRef.current) stWRef.current.textContent = '1.00';
-      if (stBRef.current) stBRef.current.textContent = '0.00';
-      if (stGWRef.current) stGWRef.current.textContent = '—';
-      if (stGBRef.current) stGBRef.current.textContent = '—';
+      render(p.W, p.bias, 0, 0, null);
       setPlaying(false);
-      updateUI();
     });
     return () => { u1(); u2(); u3(); u4(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -215,16 +211,17 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
   }
 
   // ===== JSX =====
-  if (!ready && !trainer.dataset) {
-    return (
-      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>🔌 等待训练服务连接...</span>
-      </div>
-    );
-  }
-
   return (
     <div className="container">
+      {!ready && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 10,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(248,250,252,0.85)',
+        }}>
+          <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>🔌 等待训练服务连接...</span>
+        </div>
+      )}
       <div className="top-bar">
         <span className="title">{title}</span>
         <span className="sub">{subtitle}</span>
@@ -237,8 +234,8 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
         <span className="sep">|</span>
         <span>
           速度:{' '}
-          <input type="range" min="1" max="15" defaultValue={4}
-            onChange={(e) => { setSpeed(Number(e.target.value)); }} />
+          <input type="range" min="1" max="15" value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))} />
         </span>
         <span className="speed-lbl">{speed}x</span>
       </div>
