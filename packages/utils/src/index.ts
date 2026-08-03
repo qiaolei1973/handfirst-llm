@@ -1,3 +1,5 @@
+export { Mat } from './mat';
+export { SGDOptimizer } from './optimizer';
 export { mse, lossCoeffs } from './loss';
 export type { LossFn } from './loss';
 
