@@ -1,13 +1,11 @@
 import { linearData } from '@handfirst/datasets';
-import { Trainer } from './train';
+import { Trainer } from './train_class';
 
-const { features, labels } = linearData(12);
+const { features, labels, trueFn } = linearData(12, 20);
 
 Trainer.server({
-  port: 3004,
-  maxEpochs: 600,
-  features,
-  labels,
-  trueFnLabel: 'y=2x+10',
+  port: 3002, maxEpochs: 600,
+  features, labels,
+  trueFnLabel: `y=2x+10`,
   factory: () => new Trainer({ features, labels }),
 });
