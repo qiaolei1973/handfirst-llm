@@ -36,3 +36,24 @@ export const COLORS = {
   valley:     'rgba(34,197,94,0.45)',
   valleyLabel:'rgba(34,197,95,0.7)',
 } as const;
+
+// ---- style constants (matplotlib-like rcParams) ----
+
+export const STYLE = {
+  font: {
+    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+    tick: 8,
+    axisLabel: 10,
+    annotation: 9,
+  },
+  spine: {
+    lineWidth: 1,
+    topRight: 'rgba(203,213,225,0.45)',
+  },
+  legend: {
+    fontSize: 9,
+    padding: 8,
+    swatchSize: 11,
+    gap: 6,
+  },
+} as const;

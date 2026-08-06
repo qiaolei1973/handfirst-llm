@@ -247,7 +247,7 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
       </div>
 
       <div className="main-card">
-        <h2>📊 数据空间 &nbsp;|&nbsp; 🟢 真实函数 y=2x+10 &nbsp; 🟣 模型 &nbsp; 🔴 误差</h2>
+        <h2>📊 数据空间</h2>
         <canvas ref={modelFit.canvasRef} />
       </div>
 

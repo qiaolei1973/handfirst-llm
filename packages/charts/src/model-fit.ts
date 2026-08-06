@@ -1,6 +1,6 @@
-import { resizeCanvas, niceTicks, drawGrid, drawAxes } from './primitives';
+import { resizeCanvas, niceTicks, drawGrid, drawAxes, drawLegend } from './primitives';
 import type { Coord } from './types';
-import { COLORS } from './colors';
+import { COLORS, STYLE } from './colors';
 
 // ---- 配置 ----
 
@@ -119,18 +119,17 @@ export function createModelFit(
       ctx.fill();
     }
 
-    // 标注
-    const annotX = rawX[Math.floor(N * 0.6)];
-    ctx.fillStyle = COLORS.trueFnLabel;
-    ctx.font = 'bold 10px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(trueLabel, toX(annotX) + 4, toY(trueFn(annotX)) - 5);
-    ctx.fillStyle = COLORS.purple;
-    ctx.fillText(
-      `y=${W.toFixed(2)}x+${bias.toFixed(2)}`,
-      toX(annotX + 1) + 4,
-      toY(W * (annotX + 1) + bias) + 12,
-    );
+    // 图例（右上角）
+    const legendItems = [
+      { color: COLORS.green, label: trueLabel },
+      { color: COLORS.purple, label: `模型  y=${W.toFixed(2)}x+${bias.toFixed(2)}` },
+      { color: COLORS.red, label: '误差' },
+    ];
+    const lg = STYLE.legend;
+    ctx.font = `${lg.fontSize}px ${STYLE.font.family}`;
+    const maxW = Math.max(...legendItems.map((it) => ctx.measureText(it.label).width));
+    const lx = pad.l + pw - lg.padding * 2 - lg.swatchSize - lg.gap - maxW;
+    drawLegend(ctx, legendItems, lx, pad.t + 4);
   }
 
   return {

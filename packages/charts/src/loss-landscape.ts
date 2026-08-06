@@ -1,6 +1,6 @@
 import { resizeCanvas, niceTicks, drawGrid, drawAxes } from './primitives';
 import type { Padding, Coord, Point } from './types';
-import { COLORS } from './colors';
+import { COLORS, STYLE } from './colors';
 
 export interface LossLandscapeOpts {
   xLabel?: string;
@@ -192,7 +192,7 @@ export function createLossLandscape(
       ctx.setLineDash([]);
       // label
       ctx.fillStyle = COLORS.valleyLabel;
-      ctx.font = `${fontSize}px sans-serif`;
+      ctx.font = `${fontSize}px ${STYLE.font.family}`;
       ctx.textAlign = 'center';
       const bottomLabel = (config.valleyX ?? valley).toFixed(2);
       ctx.fillText(`谷底 ${xLabel}=${bottomLabel}`, vx, pad.t + plotH + 14);
@@ -200,7 +200,7 @@ export function createLossLandscape(
 
     // ---- annotation ----
     ctx.fillStyle = COLORS.red;
-    ctx.font = 'bold 10px sans-serif';
+    ctx.font = `600 ${STYLE.font.annotation}px ${STYLE.font.family}`;
     ctx.textAlign = 'left';
     ctx.fillText(`grad=${grad.toFixed(2)}`, cx + 10, cy - 10);
     ctx.fillText(`${xLabel}=${currentX.toFixed(2)}`, cx + 10, cy + 24);

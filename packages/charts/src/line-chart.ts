@@ -1,6 +1,6 @@
-import { resizeCanvas, niceTicks, drawGrid, drawAxes } from './primitives';
+import { resizeCanvas, niceTicks, drawGrid, drawAxes, drawLegend } from './primitives';
 import type { Padding, Coord, Point, LineSeries } from './types';
-import { COLORS } from './colors';
+import { COLORS, STYLE } from './colors';
 
 export interface LineChartOpts {
   xLabel?: string;
@@ -176,7 +176,24 @@ export function createLineChart(
       drawCrosshair(ctx, toX, toY, plotW, plotH);
     }
 
-    drawAxes(ctx, coord, xTicks, yTicks, xLabel, yLabel, pad, plotW, plotH, plotW < 350 ? 8 : 9);
+    drawAxes(ctx, coord, xTicks, yTicks, xLabel, yLabel, pad, plotW, plotH, plotW < 350 ? STYLE.font.tick : STYLE.font.tick + 1);
+
+    // legend — top-right inside plot area
+    const legendItems = series
+      .filter((s) => s.points.length > 0 && s.label)
+      .map((s) => ({ color: s.color, label: s.label }));
+    if (legendItems.length >= 2) {
+      const lx = pad.l + plotW - STYLE.legend.padding;
+      const ly = pad.t + 4;
+      // measure to offset left
+      ctx.font = `${STYLE.legend.fontSize}px ${STYLE.font.family}`;
+      let maxW = 0;
+      for (const it of legendItems) {
+        const w = ctx.measureText(it.label).width;
+        if (w > maxW) maxW = w;
+      }
+      drawLegend(ctx, legendItems, lx - STYLE.legend.padding * 2 - STYLE.legend.swatchSize - STYLE.legend.gap - maxW, ly);
+    }
   }
 
   // ---- public API ----

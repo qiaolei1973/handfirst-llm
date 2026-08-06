@@ -1,5 +1,5 @@
 export { COLORS } from './colors';
-export { niceTicks, drawGrid, drawAxes, resizeCanvas } from './primitives';
+export { niceTicks, drawGrid, drawAxes, drawLegend, resizeCanvas } from './primitives';
 export { createLineChart } from './line-chart';
 export { createLossLandscape } from './loss-landscape';
 export { createModelFit } from './model-fit';
