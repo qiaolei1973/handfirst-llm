@@ -1,4 +1,6 @@
 export { Mat } from './mat';
+export { Layer } from './layer';
+export type { Activation } from './layer';
 export { SGDOptimizer } from './optimizer';
 export { mse, lossCoeffs } from './loss';
 export type { LossFn } from './loss';

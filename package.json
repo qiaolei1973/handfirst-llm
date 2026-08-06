@@ -3,8 +3,9 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter _docs dev",
-    "dev:v1": "pnpm exec tsx apps/v1/server.ts & pnpm --filter v1-app dev",
-    "dev:v2": "pnpm exec tsx apps/v2/server.ts & pnpm --filter v2-app dev"
+    "dev:v1": "pnpm exec tsx apps/v1/dev.ts",
+    "dev:v2": "pnpm exec tsx apps/v2/dev.ts",
+    "dev:v3": "pnpm exec tsx apps/v3/dev.ts"
   },
   "devDependencies": {
     "tsx": "^4.23.1"

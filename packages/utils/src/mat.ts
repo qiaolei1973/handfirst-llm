@@ -130,6 +130,15 @@ export class Mat {
     return this.dotmul(Mat.from([s]));
   }
 
+  /** 逐元素变换，返回新矩阵 */
+  map(fn: (v: number) => number): Mat {
+    const result = new Mat(this.rows, this.cols);
+    for (let i = 0; i < this.data.length; i++) {
+      result.data[i] = fn(this.data[i]);
+    }
+    return result;
+  }
+
   /** 
    * 矩阵乘法：this @ other（形状 m×n 乘 n×p → m×p）
    * 信息融合
@@ -141,7 +150,7 @@ export class Mat {
 
     for (let i = 0; i < rows; i++) {
       const aOffset = i * inner, cOffset = i * cols;
-      for (let k = 0; k < cols; k++) {
+      for (let k = 0; k < inner; k++) {
         const av = a[aOffset + k];
         if (av === 0) continue; // skip zero for efficiency
         const bOffset = k * cols;
