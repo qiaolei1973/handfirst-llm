@@ -2,22 +2,19 @@
 
 import './surgery-dashboard.css';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { COLORS } from '@handfirst/charts';
 import { mse, lossCoeffs } from '@handfirst/utils';
 import type { WsTrainer } from '@handfirst/utils';
-import { useLineChart } from './useLineChart';
-import { useLossLandscape } from './useLossLandscape';
-import { useModelFit } from './useModelFit';
+import { LineChart } from './LineChart';
+import { LossLandscape } from './LossLandscape';
+import { ModelFit } from './ModelFit';
 
-// ---- v0 专用事件形状 ----
+// ---- Data types ----
 type V0Params = { W: number; bias: number };
 type V0EpochData = { params: V0Params; grads: V0Params; loss: number; epoch: number };
 
-// ============================================================
-//  Props
-// ============================================================
-
+// ---- Props ----
 export interface SurgeryDashboardProps {
   trainer: WsTrainer;
   trueFn: (x: number) => number;
@@ -25,7 +22,7 @@ export interface SurgeryDashboardProps {
 }
 
 // ============================================================
-//  组件
+//  Component
 // ============================================================
 
 export function SurgeryDashboard(props: SurgeryDashboardProps) {
@@ -35,160 +32,139 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
     title = '🔬 梯度下降的几何含义',
   } = props;
 
-  // ---- UI 状态 ----
-  const [playing, setPlaying] = useState(false);
+  // ---- State ----
   const [ready, setReady] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(4);
+  const [epoch, setEpoch] = useState(0);
+  const [params, setParams] = useState<V0Params>({ W: 1, bias: 0 });
+  const [grads, setGrads] = useState<V0Params>({ W: 0, bias: 0 });
+  const [loss, setLoss] = useState<number | null>(null);
+  const [history, setHistory] = useState<V0EpochData[]>([]);
+  const [dataset, setDataset] = useState<{
+    features: number[]; labels: number[]; trueFnLabel: string;
+  } | null>(null);
 
-  const stEpRef = useRef<HTMLSpanElement>(null);
-  const stLossRef = useRef<HTMLSpanElement>(null);
-  const stWRef = useRef<HTMLSpanElement>(null);
-  const stBRef = useRef<HTMLSpanElement>(null);
-  const stGWRef = useRef<HTMLSpanElement>(null);
-  const stGBRef = useRef<HTMLSpanElement>(null);
-  const fnWRef = useRef<HTMLDivElement>(null);
-  const fnBRef = useRef<HTMLDivElement>(null);
-
-  // ---- chart hooks ----
-  const lossW = useLossLandscape({ xLabel: 'W', yLabel: 'Loss' });
-  const lossB = useLossLandscape({ xLabel: 'bias', yLabel: 'Loss' });
-  const lossHist = useLineChart({ xLabel: 'Epoch', yLabel: 'MSE' });
-  const paramHist = useLineChart({ xLabel: 'Epoch', yLabel: '值' });
-  const gradHist = useLineChart({ xLabel: 'Epoch', yLabel: '|梯度|' });
-  const modelFit = useModelFit();
-
-  useEffect(() => {
-    paramHist.setSeries([
-      { label: 'W', color: COLORS.blue, points: [] },
-      { label: 'bias', color: COLORS.amber, points: [] },
-    ]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ---- 从 trainer.history 重建 chart 数据 ----
-  const syncHistoryCharts = useCallback(() => {
-    const h = trainer.history as V0EpochData[];
-    lossHist.setSeries([
-      { label: 'Loss', color: COLORS.red,
-        points: h.map((_, i) => ({ x: i + 1, y: h[i].loss })) },
-    ]);
-    paramHist.setSeries([
-      { label: 'W', color: COLORS.blue,
-        points: h.map((_, i) => ({ x: i + 1, y: h[i].params.W })) },
-      { label: 'bias', color: COLORS.amber,
-        points: h.map((_, i) => ({ x: i + 1, y: h[i].params.bias })) },
-    ]);
-    gradHist.setSeries([
-      { label: '|gradW|', color: COLORS.blue,
-        points: h.map((_, i) => ({ x: i + 1, y: Math.abs(h[i].grads.W) })) },
-      { label: '|gradBias|', color: COLORS.amber,
-        points: h.map((_, i) => ({ x: i + 1, y: Math.abs(h[i].grads.bias) })) },
-    ]);
-  }, [trainer, lossHist, paramHist, gradHist]);
-
-  // ---- 渲染所有可视化 ----
-  const render = useCallback((W: number, B: number, gradW: number, gradB: number, loss: number | null) => {
-    const ds = trainer.dataset;
-    if (!ds) return;
-    const dataset = { features: ds.features, labels: ds.labels };
-    const h = trainer.history as V0EpochData[];
-
-    // 状态栏
-    if (stEpRef.current) stEpRef.current.textContent = String(trainer.history.length);
-    if (stLossRef.current) stLossRef.current.textContent = loss !== null ? loss.toFixed(4) : '—';
-    if (stWRef.current) stWRef.current.textContent = W.toFixed(3);
-    if (stBRef.current) stBRef.current.textContent = B.toFixed(3);
-    if (stGWRef.current) stGWRef.current.textContent = loss !== null ? gradW.toFixed(3) : '—';
-    if (stGBRef.current) stGBRef.current.textContent = loss !== null ? gradB.toFixed(3) : '—';
-
-    // 主图
-    modelFit.update({
+  // ---- Derived chart data ----
+  const modelFitData = useMemo(() => {
+    if (!dataset) return null;
+    return {
       points: dataset.features.map((x, i) => ({ x, y: dataset.labels[i] })),
       trueFn,
-      trueLabel: ds.trueFnLabel,
-      W,
-      bias: B,
-    });
-    modelFit.draw();
+      trueLabel: dataset.trueFnLabel,
+      W: params.W,
+      bias: params.bias,
+    };
+  }, [dataset, trueFn, params]);
 
-    // L(W) 抛物线
-    const lwc = lossCoeffs('MSE', 'W', B, dataset);
-    lossW.update({
+  const lossWData = useMemo(() => {
+    if (!dataset) return null;
+    const lwc = lossCoeffs('MSE', 'W', params.bias, { features: dataset.features, labels: dataset.labels });
+    return {
+      xLabel: 'W',
+      yLabel: 'Loss',
       a: lwc.a, b: lwc.b, c: lwc.c,
-      currentX: W,
-      gradient: gradW,
-      trajectory: h.map((e) => ({ x: e.params.W, y: mse(e.params.W, B, dataset) })),
+      currentX: params.W,
+      gradient: grads.W,
+      trajectory: history.map((e) => ({ x: e.params.W, y: mse(e.params.W, params.bias, { features: dataset.features, labels: dataset.labels }) })),
       valleyX: -lwc.b / (2 * lwc.a),
-    });
-    lossW.draw();
+    };
+  }, [dataset, params.W, params.bias, grads.W, history]);
 
-    // L(bias) 抛物线
-    const lbc = lossCoeffs('MSE', 'bias', W, dataset);
-    lossB.update({
+  const lossBData = useMemo(() => {
+    if (!dataset) return null;
+    const lbc = lossCoeffs('MSE', 'bias', params.W, { features: dataset.features, labels: dataset.labels });
+    return {
+      xLabel: 'bias',
+      yLabel: 'Loss',
       a: lbc.a, b: lbc.b, c: lbc.c,
-      currentX: B,
-      gradient: gradB,
-      trajectory: h.map((e) => ({ x: e.params.bias, y: mse(W, e.params.bias, dataset) })),
+      currentX: params.bias,
+      gradient: grads.bias,
+      trajectory: history.map((e) => ({ x: e.params.bias, y: mse(params.W, e.params.bias, { features: dataset.features, labels: dataset.labels }) })),
       valleyX: -lbc.b / (2 * lbc.a),
-    });
-    lossB.draw();
+    };
+  }, [dataset, params.W, params.bias, grads.bias, history]);
 
-    // 公式
-    if (fnWRef.current) {
-      const fb = lwc.b >= 0 ? '+' + lwc.b.toFixed(2) : lwc.b.toFixed(2);
-      const fc = lwc.c >= 0 ? '+' + lwc.c.toFixed(2) : lwc.c.toFixed(2);
-      fnWRef.current.innerHTML = `<b>L(W)</b> = <span style="color:${COLORS.blue}">${lwc.a.toFixed(2)}</span>W² <span style="color:${COLORS.blue}">${fb}</span>W <span style="color:${COLORS.blue}">${fc}</span> &nbsp;|&nbsp; (bias 固定在 ${B.toFixed(2)})`;
-    }
-    if (fnBRef.current) {
-      const fb = lbc.b >= 0 ? '+' + lbc.b.toFixed(2) : lbc.b.toFixed(2);
-      const fc = lbc.c >= 0 ? '+' + lbc.c.toFixed(2) : lbc.c.toFixed(2);
-      fnBRef.current.innerHTML = `<b>L(bias)</b> = bias² <span style="color:${COLORS.amber}">${fb}</span>bias <span style="color:${COLORS.amber}">${fc}</span> &nbsp;|&nbsp; (W 固定在 ${W.toFixed(2)})`;
-    }
+  const lossHistSeries = useMemo(() => [{
+    label: 'Loss',
+    color: COLORS.red,
+    points: history.map((_, i) => ({ x: i + 1, y: history[i].loss })),
+  }], [history]);
 
-    lossHist.draw();
-    paramHist.draw();
-    gradHist.draw();
-  }, [trainer, trueFn, lossW, lossB, lossHist, paramHist, gradHist, modelFit]);
+  const paramHistSeries = useMemo(() => [
+    { label: 'W', color: COLORS.blue, points: history.map((_, i) => ({ x: i + 1, y: history[i].params.W })) },
+    { label: 'bias', color: COLORS.amber, points: history.map((_, i) => ({ x: i + 1, y: history[i].params.bias })) },
+  ], [history]);
 
-  // ---- WS 事件回调 ----
+  const gradHistSeries = useMemo(() => [
+    { label: '|gradW|', color: COLORS.blue, points: history.map((_, i) => ({ x: i + 1, y: Math.abs(history[i].grads.W) })) },
+    { label: '|gradBias|', color: COLORS.amber, points: history.map((_, i) => ({ x: i + 1, y: Math.abs(history[i].grads.bias) })) },
+  ], [history]);
+
+  const lwFormula = useMemo(() => {
+    if (!dataset) return '';
+    const lwc = lossCoeffs('MSE', 'W', params.bias, { features: dataset.features, labels: dataset.labels });
+    const fb = lwc.b >= 0 ? '+' + lwc.b.toFixed(2) : lwc.b.toFixed(2);
+    const fc = lwc.c >= 0 ? '+' + lwc.c.toFixed(2) : lwc.c.toFixed(2);
+    return `L(W) = ${lwc.a.toFixed(2)}W² ${fb}W ${fc}  |  (bias 固定在 ${params.bias.toFixed(2)})`;
+  }, [dataset, params.bias]);
+
+  const lbFormula = useMemo(() => {
+    if (!dataset) return '';
+    const lbc = lossCoeffs('MSE', 'bias', params.W, { features: dataset.features, labels: dataset.labels });
+    const fb = lbc.b >= 0 ? '+' + lbc.b.toFixed(2) : lbc.b.toFixed(2);
+    const fc = lbc.c >= 0 ? '+' + lbc.c.toFixed(2) : lbc.c.toFixed(2);
+    return `L(bias) = bias² ${fb}bias ${fc}  |  (W 固定在 ${params.W.toFixed(2)})`;
+  }, [dataset, params.W]);
+
+  // ---- WS event subscriptions ----
   useEffect(() => {
     const u1 = trainer.onInit((initData) => {
       setReady(true);
-      syncHistoryCharts();
+      setDataset({
+        features: initData.features as number[],
+        labels: initData.labels as number[],
+        trueFnLabel: initData.trueFnLabel as string,
+      });
       const p = initData.params as V0Params;
-      render(p.W, p.bias, 0, 0, null);
+      setParams(p);
+      setGrads({ W: 0, bias: 0 });
+      setLoss(null);
+      setHistory([]);
+      setEpoch(0);
     });
+
     const u2 = trainer.onEpoch((ev) => {
       const e = ev as V0EpochData;
-      syncHistoryCharts();
-      render(e.params.W, e.params.bias, e.grads.W, e.grads.bias, e.loss);
+      setEpoch(e.epoch);
+      setParams(e.params);
+      setGrads(e.grads);
+      setLoss(e.loss);
+      setHistory((prev) => [...prev, e]);
     });
+
     const u3 = trainer.onDone(() => {
       setPlaying(false);
     });
+
     const u4 = trainer.onReset(() => {
-      const ds = trainer.dataset;
-      if (!ds) return;
-      const p = ds.params as V0Params;
-      lossW.update({ a: 1, b: 0, c: 0, currentX: 0 });
-      lossW.draw();
-      lossB.update({ a: 1, b: 0, c: 0, currentX: 0 });
-      lossB.draw();
-      lossHist.clear(); lossHist.draw();
-      gradHist.clear(); gradHist.draw();
-      paramHist.setSeries([
-        { label: 'W', color: COLORS.blue, points: [] },
-        { label: 'bias', color: COLORS.amber, points: [] },
-      ]);
-      render(p.W, p.bias, 0, 0, null);
+      setHistory([]);
+      setEpoch(0);
+      setLoss(null);
+      setGrads({ W: 0, bias: 0 });
+      if (trainer.dataset) {
+        const p = trainer.dataset.params as V0Params;
+        setParams(p);
+      }
       setPlaying(false);
     });
+
     return () => { u1(); u2(); u3(); u4(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trainer]);
 
-  // ---- 控制 ----
-  function togglePlay() {
+  // ---- Controls ----
+  const togglePlay = useCallback(() => {
     if (playing) {
       trainer.pause();
       setPlaying(false);
@@ -196,17 +172,17 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
       trainer.play(speed);
       setPlaying(true);
     }
-  }
+  }, [playing, speed, trainer]);
 
-  function stepOne() {
+  const stepOne = useCallback(() => {
     if (playing) { trainer.pause(); setPlaying(false); }
     trainer.step();
-  }
+  }, [playing, trainer]);
 
-  function resetAll() {
+  const resetAll = useCallback(() => {
     if (playing) setPlaying(false);
     trainer.reset();
-  }
+  }, [playing, trainer]);
 
   // ===== JSX =====
   return (
@@ -238,36 +214,45 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
       </div>
 
       <div className="status-bar">
-        <div className="stat"><div className="lbl">Epoch</div><div className="val ep"><span ref={stEpRef}>0</span></div></div>
-        <div className="stat"><div className="lbl">Loss</div><div className="val loss"><span ref={stLossRef}>—</span></div></div>
-        <div className="stat"><div className="lbl">W</div><div className="val w"><span ref={stWRef}>1.00</span></div></div>
-        <div className="stat"><div className="lbl">Bias</div><div className="val b"><span ref={stBRef}>0.00</span></div></div>
-        <div className="stat"><div className="lbl">gradW</div><div className="val w"><span ref={stGWRef}>—</span></div></div>
-        <div className="stat"><div className="lbl">gradBias</div><div className="val b"><span ref={stGBRef}>—</span></div></div>
+        <div className="stat"><div className="lbl">Epoch</div><div className="val ep">{epoch}</div></div>
+        <div className="stat"><div className="lbl">Loss</div><div className="val loss">{loss !== null ? loss.toFixed(4) : '—'}</div></div>
+        <div className="stat"><div className="lbl">W</div><div className="val w">{params.W.toFixed(3)}</div></div>
+        <div className="stat"><div className="lbl">Bias</div><div className="val b">{params.bias.toFixed(3)}</div></div>
+        <div className="stat"><div className="lbl">gradW</div><div className="val w">{loss !== null ? grads.W.toFixed(3) : '—'}</div></div>
+        <div className="stat"><div className="lbl">gradBias</div><div className="val b">{loss !== null ? grads.bias.toFixed(3) : '—'}</div></div>
       </div>
 
       <div className="main-card">
         <h2>📊 数据空间</h2>
-        <canvas ref={modelFit.canvasRef} />
+        {modelFitData && <ModelFit {...modelFitData} />}
+        {!modelFitData && <canvas />}
       </div>
 
       <div className="bottom-row">
         <div className="btm-card">
           <h3>🎢 L(W) — 固定 bias，只看 W 变化时的 loss</h3>
-          <div className="fn" ref={fnWRef} />
-          <canvas ref={lossW.canvasRef} />
+          {lwFormula && <div className="fn" dangerouslySetInnerHTML={{ __html: `<b>${lwFormula}</b>` }} />}
+          {lossWData && <LossLandscape {...lossWData} />}
+          {!lossWData && <canvas />}
         </div>
         <div className="btm-card">
           <h3>🎢 L(bias) — 固定 W，只看 bias 变化时的 loss</h3>
-          <div className="fn" ref={fnBRef} />
-          <canvas ref={lossB.canvasRef} />
+          {lbFormula && <div className="fn" dangerouslySetInnerHTML={{ __html: `<b>${lbFormula}</b>` }} />}
+          {lossBData && <LossLandscape {...lossBData} />}
+          {!lossBData && <canvas />}
         </div>
       </div>
 
       <div className="bottom-row-3">
-        <div className="btm-card"><h3>📉 Loss 曲线</h3><canvas ref={lossHist.canvasRef} /></div>
-        <div className="btm-card"><h3>📈 参数收敛</h3><canvas ref={paramHist.canvasRef} /></div>
-        <div className="btm-card"><h3>📊 梯度衰减</h3><canvas ref={gradHist.canvasRef} /></div>
+        <div className="btm-card"><h3>📉 Loss 曲线</h3>
+          <LineChart series={lossHistSeries} xLabel="Epoch" yLabel="MSE" />
+        </div>
+        <div className="btm-card"><h3>📈 参数收敛</h3>
+          <LineChart series={paramHistSeries} xLabel="Epoch" yLabel="值" />
+        </div>
+        <div className="btm-card"><h3>📊 梯度衰减</h3>
+          <LineChart series={gradHistSeries} xLabel="Epoch" yLabel="|梯度|" />
+        </div>
       </div>
     </div>
   );

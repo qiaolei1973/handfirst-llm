@@ -160,7 +160,8 @@ export function drawLegend(
     if (w > maxW) maxW = w;
   }
   const lineH = fontSize * 1.5;
-  const boxW = padding * 2 + swatchSize + gap + maxW;
+  const lineLen = swatchSize * 2;
+  const boxW = padding * 2 + lineLen + gap + maxW;
   const boxH = padding * 2 + items.length * lineH;
 
   // Background
@@ -178,16 +179,19 @@ export function drawLegend(
   for (let i = 0; i < items.length; i++) {
     const iy = y + padding + lineH * i + lineH / 2;
     const sx = x + padding;
-    const sy = iy - swatchSize / 2;
+    const midY = iy;
 
-    // Swatch
-    ctx.fillStyle = items[i].color;
+    // Line swatch (matplotlib style)
+    ctx.strokeStyle = items[i].color;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
     ctx.beginPath();
-    ctx.roundRect(sx, sy, swatchSize, swatchSize, 3);
-    ctx.fill();
+    ctx.moveTo(sx, midY);
+    ctx.lineTo(sx + lineLen, midY);
+    ctx.stroke();
 
     // Label
     ctx.fillStyle = COLORS.tooltipText;
-    ctx.fillText(items[i].label, sx + swatchSize + gap, iy);
+    ctx.fillText(items[i].label, sx + lineLen + gap, iy);
   }
 }
