@@ -15,14 +15,14 @@ export abstract class Trainer<P = unknown, E extends object = object> {
    * 每个客户端连接时调用 factory 创建新的 Trainer 实例。
    */
   static server(opts: {
-    port: number;
+    port?: number;
     maxEpochs: number;
     features: number[];
     labels: number[];
     trueFnLabel: string;
     factory: () => Trainer;
   }): void {
-    new WSServer(opts.port, opts.maxEpochs, opts.factory, {
+    new WSServer(opts.port ?? 3101, opts.maxEpochs, opts.factory, {
       features: opts.features,
       labels: opts.labels,
       trueFnLabel: opts.trueFnLabel,

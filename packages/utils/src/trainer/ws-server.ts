@@ -1,8 +1,24 @@
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { ITrainer, InitData, ClientMsg, ServerMsg } from './types';
 
+/** 尝试在指定端口创建 WSS，成功返回实例，EADDRINUSE 返回 null */
+function tryPort(port: number): Promise<WebSocketServer | null> {
+  return new Promise((resolve, reject) => {
+    const wss = new WebSocketServer({ port });
+    wss.on('listening', () => resolve(wss));
+    wss.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        wss.close();
+        resolve(null);
+      } else {
+        reject(err);
+      }
+    });
+  });
+}
+
 export class WSServer {
-  private _wss: WebSocketServer;
+  private _wss!: WebSocketServer;
 
   constructor(
     port: number,
@@ -10,7 +26,26 @@ export class WSServer {
     factory: () => ITrainer,
     initData: Omit<InitData, 'params'>,
   ) {
-    this._wss = new WebSocketServer({ port });
+    void this._bind(port, maxEpochs, factory, initData);
+  }
+
+  private async _bind(
+    port: number,
+    maxEpochs: number,
+    factory: () => ITrainer,
+    initData: Omit<InitData, 'params'>,
+  ) {
+    // 尝试绑定端口，被占用则顺延（最多试 10 次）
+    let actualPort = port;
+    for (let i = 0; i < 10; i++) {
+      const wss = await tryPort(actualPort);
+      if (wss) { this._wss = wss; break; }
+      actualPort++;
+    }
+
+    if (actualPort !== port) {
+      console.log(`  ⚠️  端口 ${port} 已被占用，改用: ${actualPort}`);
+    }
 
     this._wss.on('connection', (ws: WebSocket) => {
       const trainer = factory();
@@ -62,7 +97,7 @@ export class WSServer {
       ws.on('close', stop);
     });
 
-    console.log(`  🔌 训练 WS 服务启动: ws://localhost:${port}`);
+    console.log(`  🔌 训练 WS 服务启动: ws://localhost:${actualPort}`);
   }
 
   close(): void {

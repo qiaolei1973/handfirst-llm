@@ -22,7 +22,6 @@ export interface SurgeryDashboardProps {
   trainer: WsTrainer;
   trueFn: (x: number) => number;
   title?: string;
-  subtitle?: string;
 }
 
 // ============================================================
@@ -34,7 +33,6 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
     trainer,
     trueFn,
     title = '🔬 梯度下降的几何含义',
-    subtitle = '数据空间的直线 + loss 曲面的梯度滑行',
   } = props;
 
   // ---- UI 状态 ----
@@ -224,7 +222,6 @@ export function SurgeryDashboard(props: SurgeryDashboardProps) {
       )}
       <div className="top-bar">
         <span className="title">{title}</span>
-        <span className="sub">{subtitle}</span>
         <span className="sep">|</span>
         <button className={`primary${playing ? ' running' : ''}`} onClick={togglePlay}>
           {playing ? '⏸ 暂停' : '▶ 开始训练'}

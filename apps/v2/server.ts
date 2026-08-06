@@ -4,7 +4,6 @@ import { Trainer, normalize } from './train';
 const ds = normalize(linearData(12, 20));
 
 Trainer.server({
-  port: 3004,
   maxEpochs: 600,
   features: ds.features,
   labels: ds.labels,

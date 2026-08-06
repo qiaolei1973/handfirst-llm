@@ -62,7 +62,7 @@ body {
 }
 
 .docs-content h1 { font-size: 2rem; margin-bottom: 0.5em; font-weight: 700; }
-.docs-content h2 { font-size: 1.4rem; margin: 2em 0 0.5em; font-weight: 600; border-top: 1px solid #e2e8f0; padding-top: 1em; }
+.docs-content h2 { font-size: 1.4rem; margin: 2em 0 0.5em; font-weight: 600; }
 .docs-content h3 { font-size: 1.1rem; margin: 1.5em 0 0.3em; font-weight: 600; }
 .docs-content p { margin: 0.8em 0; }
 .docs-content ul, .docs-content ol { margin: 0.5em 0; padding-left: 1.5em; }
