@@ -74,13 +74,13 @@ for pt in points:
     # Point marker
     ax.scatter([W], [L], c=pt["color"], s=60, zorder=10, edgecolors="white", linewidth=1)
 
-    # Gradient arrow (derivative direction, scaled)
-    arrow_len = abs(grad) * 1.8 + 0.3
-    # Arrow goes DOWNHILL: if grad>0, go left (W decreasing); if grad<0, go right
-    dx = -np.sign(grad) * arrow_len
-    dy = -abs(grad) * arrow_len * 0.15  # slight downward slope for visual
-    ax.arrow(W, L, dx, dy, head_width=0.3, head_length=0.18,
-             fc=pt["color"], ec=pt["color"], alpha=0.85, lw=1.5, zorder=5)
+    # Tangent arrow: points downhill along the actual tangent line
+    # For L=(W-1)²: grad = 2(W-1). dy/dx = grad.
+    if abs(grad) > 0.01:  # skip valley (grad=0, no slope)
+        arrow_dx = -np.sign(grad) * 0.5
+        arrow_dy = grad * arrow_dx
+        ax.arrow(W, L, arrow_dx, arrow_dy, head_width=0.25, head_length=0.15,
+                 fc=pt["color"], ec=pt["color"], alpha=0.85, lw=1.5, zorder=5)
 
     # Label
     ax.annotate(pt["label"], (W, L), textcoords="offset points",
