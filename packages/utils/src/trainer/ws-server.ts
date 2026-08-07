@@ -59,7 +59,8 @@ export class WSServer {
         if (timer) { clearInterval(timer); timer = null; }
       };
 
-      const done = () => trainer.history.length >= maxEpochs;
+      const done = () =>
+	        (trainer.isDone?.() ?? false) || trainer.history.length >= maxEpochs;
 
       send({ type: 'init', data: { ...initData, params: trainer.params } });
 

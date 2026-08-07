@@ -59,7 +59,14 @@ export function getNavigation(): NavItem[] {
       .filter((d) => {
         try { return statSync(join(CONTENT_DIR, d)).isDirectory(); } catch { return false; }
       })
-      .sort();
+      .sort((a, b) => {
+        const ai = DIR_ORDER.indexOf(a);
+        const bi = DIR_ORDER.indexOf(b);
+        if (ai === -1 && bi === -1) return a.localeCompare(b);
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
 
     for (const dir of dirs) {
       try {
@@ -77,9 +84,14 @@ export function getNavigation(): NavItem[] {
   return items;
 }
 
+const DIR_ORDER = ['v1', 'v2', 'v3', 'v4', 'recap'];
+
 const DIR_TITLES: Record<string, string> = {
   v1: 'v1：猜一条直线',
   v2: 'v2：进入机器学习的世界',
+  v3: 'v3：画曲线',
+  v4: 'v4：优化曲线',
+  recap: '复习：机器学习是什么',
 };
 
 function getSubPages(dir: string): NavItem[] | undefined {

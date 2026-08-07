@@ -1,0 +1,13 @@
+import { sinData } from '@handfirst/datasets';
+import { Trainer } from './train';
+
+const { features, labels, trueFn } = sinData(60);
+
+Trainer.server({
+  port: 3104,
+  maxEpochs: 3000,
+  features,
+  labels,
+  trueFnLabel: 'y = sin(x)',
+  factory: () => new Trainer({ features, labels }, 16),
+});
