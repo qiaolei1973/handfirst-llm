@@ -213,62 +213,66 @@ fig.tight_layout(rect=[0, 0, 1, 0.90])
 fig.savefig(OUT / "one-step.png", dpi=144)
 plt.close(fig)
 
-# ===== 8. mae-gradient.png =====
-# Show: for the same "diff", loss sees distance but gradient only sees direction.
+# ===== 8. mae-loss.png — MAE 损失函数 L = |diff|（V 形） =====
 diff_range = np.linspace(-10, 10, 500)
 mae_loss = np.abs(diff_range)
+
+fig, ax = plt.subplots(figsize=(6, 4.3))
+
+ax.plot(diff_range, mae_loss, "#ef4444", lw=2.5, label="MAE: L = |diff|")
+ax.axvline(x=-5, color="#94a3b8", ls="--", lw=1, alpha=0.6)
+ax.axvline(x=5, color="#94a3b8", ls="--", lw=1, alpha=0.6)
+ax.axhline(y=5, color="#94a3b8", ls="--", lw=1, alpha=0.6)
+ax.annotate("差 -5 → L=5", (-5, 0), textcoords="offset points", xytext=(0, -20),
+            fontsize=8, color="#64748b", ha="center", fontproperties=fp_sm,
+            arrowprops=dict(arrowstyle="->", color="#94a3b8", lw=0.8))
+ax.annotate("差 +5 → L=5", (5, 0), textcoords="offset points", xytext=(0, -20),
+            fontsize=8, color="#64748b", ha="center", fontproperties=fp_sm,
+            arrowprops=dict(arrowstyle="->", color="#94a3b8", lw=0.8))
+ax.set_xlabel("diff = yPred − 真实值", fontproperties=fp_md)
+ax.set_ylabel("L（损失）", fontproperties=fp_md)
+ax.set_title("损失函数 MAE：L = |diff|——差 5 就是 5，差多少就是多少",
+            fontproperties=fp_lg)
+ax.legend(prop=fp_sm, loc="upper right")
+ax.grid(True, alpha=0.2)
+ax.tick_params(labelsize=9)
+ax.set_xlim(-10, 10); ax.set_ylim(-1, 11)
+
+fig.tight_layout()
+fig.savefig(OUT / "mae-loss.png", dpi=144)
+plt.close(fig)
+
+# ===== 9. mae-gradient.png — MAE 梯度 grad = sign(diff)（只看方向） =====
 mae_grad = np.sign(diff_range)
 mae_grad[diff_range == 0] = 0
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.3))
+fig, ax = plt.subplots(figsize=(6, 4.3))
 
-# ---- Left: Loss L = |diff| ----
-ax1.plot(diff_range, mae_loss, "#ef4444", lw=2.5, label="L = |diff|")
-# auxiliary vertical lines at diff=-5 and diff=5
-ax1.axvline(x=-5, color="#94a3b8", ls="--", lw=1, alpha=0.6)
-ax1.axvline(x=5, color="#94a3b8", ls="--", lw=1, alpha=0.6)
-ax1.axhline(y=5, color="#94a3b8", ls="--", lw=1, alpha=0.6)
-# annotation
-ax1.annotate("差 -5 → L=5", (-5, 0), textcoords="offset points", xytext=(0, -20),
-             fontsize=8, color="#64748b", ha="center", fontproperties=fp_sm,
-             arrowprops=dict(arrowstyle="->", color="#94a3b8", lw=0.8))
-ax1.annotate("差 +5 → L=5", (5, 0), textcoords="offset points", xytext=(0, -20),
-             fontsize=8, color="#64748b", ha="center", fontproperties=fp_sm,
-             arrowprops=dict(arrowstyle="->", color="#94a3b8", lw=0.8))
-ax1.set_xlabel("diff = yPred − 真实值", fontproperties=fp_md)
-ax1.set_ylabel("L（总差距评分）", fontproperties=fp_md)
-ax1.set_title("怎么看「猜得多差」：绝对值", fontproperties=fp_lg)
-ax1.legend(prop=fp_sm, loc="upper right")
-ax1.grid(True, alpha=0.2)
-ax1.tick_params(labelsize=9)
-ax1.set_xlim(-10, 10); ax1.set_ylim(-1, 11)
-
-# ---- Right: grad = sign(diff) ----
 colors_grad = ["#3b82f6" if d < 0 else "#ef4444" if d > 0 else "#94a3b8"
                for d in diff_range]
 for i in range(len(diff_range)-1):
-    ax2.plot(diff_range[i:i+2], mae_grad[i:i+2], color=colors_grad[i], lw=2.5)
-ax2.plot([], [], "#ef4444", lw=2.5, label="diff>0 → grad=+1")
-ax2.plot([], [], "#3b82f6", lw=2.5, label="diff<0 → grad=-1")
-# auxiliary contrast annotations
-ax2.annotate("差 100\n推力也是 1", (8, 1), textcoords="offset points",
-             xytext=(30, 15), fontsize=8, color="#64748b", ha="center",
-             fontproperties=fp_sm,
-             arrowprops=dict(arrowstyle="->", color="#94a3b8", lw=0.8))
-ax2.annotate("差 0.01\n推力也是 1", (1, 1), textcoords="offset points",
-             xytext=(30, -15), fontsize=8, color="#64748b", ha="center",
-             fontproperties=fp_sm,
-             arrowprops=dict(arrowstyle="->", color="#94a3b8", lw=0.8))
-ax2.set_xlabel("diff = yPred − 真实值", fontproperties=fp_md)
-ax2.set_ylabel("grad（调整方向）", fontproperties=fp_md)
-ax2.set_title("怎么决定「往哪改」：只看正负号", fontproperties=fp_lg)
-ax2.legend(prop=fp_sm, loc="upper left", ncol=1)
-ax2.grid(True, alpha=0.2)
-ax2.tick_params(labelsize=9)
-ax2.set_xlim(-10, 10); ax2.set_ylim(-1.5, 1.5)
+    ax.plot(diff_range[i:i+2], mae_grad[i:i+2], color=colors_grad[i], lw=2.5)
+ax.plot([], [], "#ef4444", lw=2.5, label="diff>0 → grad=+1")
+ax.plot([], [], "#3b82f6", lw=2.5, label="diff<0 → grad=−1")
 
-fig.suptitle("同一个 diff，损失有大有小，梯度全是 ±1", fontproperties=fp_xl)
-fig.tight_layout(rect=[0, 0, 1, 0.90])
+ax.annotate("差 100\n推力也是 1", (8, 1), textcoords="offset points",
+            xytext=(30, 15), fontsize=8, color="#64748b", ha="center",
+            fontproperties=fp_sm,
+            arrowprops=dict(arrowstyle="->", color="#94a3b8", lw=0.8))
+ax.annotate("差 0.01\n推力也是 1", (1, 1), textcoords="offset points",
+            xytext=(30, -15), fontsize=8, color="#64748b", ha="center",
+            fontproperties=fp_sm,
+            arrowprops=dict(arrowstyle="->", color="#94a3b8", lw=0.8))
+ax.set_xlabel("diff = yPred − 真实值", fontproperties=fp_md)
+ax.set_ylabel("grad（梯度）", fontproperties=fp_md)
+ax.set_title("MAE 的梯度：grad = sign(diff)——只看方向，不看距离",
+            fontproperties=fp_lg)
+ax.legend(prop=fp_sm, loc="upper left")
+ax.grid(True, alpha=0.2)
+ax.tick_params(labelsize=9)
+ax.set_xlim(-10, 10); ax.set_ylim(-1.5, 1.5)
+
+fig.tight_layout()
 fig.savefig(OUT / "mae-gradient.png", dpi=144)
 plt.close(fig)
 

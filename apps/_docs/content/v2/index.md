@@ -29,6 +29,9 @@ v1 用的是绝对值取平均，官方名字叫 **MAE**（Mean Absolute Error�
 MAE:    L     = (1/n) · Σ |diff|
 ```
 
+![MAE 损失：L = |diff|——差多少就是多少，差得越大损失越大](/v1/mae-loss.png)
+<!-- gen_v1_images.py: #8 mae-loss — 红色 V 形曲线，辅助线显示 diff=±5→L=5 -->
+
 ### 梯度（Gradient）
 
 计算机不是靠试错来猜方向的。它用微积分算：把损失函数对参数求导，就知道"参数变大一丢丢，损失是变大还是变小"。这个导数叫**梯度**。
@@ -42,8 +45,8 @@ v1 对 MAE 求导：
 
 求导后绝对值被消掉了，只剩下正负号。所以 MAE 的梯度**只看方向，不看距离**——差 100 和差 0.01，推得一样狠。
 
-![MAE 的梯度：sign(diff)——只看方向不看距离](/v1/mae-gradient.png)
-<!-- gen_v1_images.py: #8 mae-gradient — 右半边 grad=sign(diff)，红 diff>0→+1，蓝 diff<0→−1，标注差100/差0.01推力都是±1 -->
+![MAE 的梯度：grad=sign(diff)——只看方向，不看距离](/v1/mae-gradient.png)
+<!-- gen_v1_images.py: #9 mae-gradient — grad=sign(diff)，红 diff>0→+1，蓝 diff<0→−1，标注差100/差0.01推力都是±1 -->
 
 ### 参数更新 & 学习率（Learning Rate）
 
@@ -83,8 +86,8 @@ bias -= 0.1 * gradBias;
 
 在 v1 中，梯度永远在 ±1 之间跳动——差 100 和差 0.01，对参数的推动力完全一样。回头看上一节的梯度图：
 
-![MAE 损失函数和符号梯度](/v1/mae-gradient.png)
-<!-- gen_v1_images.py: #8 mae-gradient — 复用 v1 的图说明问题 -->
+![MAE 梯度：差100和差0.01推力都是±1](/v1/mae-gradient.png)
+<!-- gen_v1_images.py: #9 mae-gradient — 复用 v1 的图，唤起"梯度只看方向"的记忆 -->
 
 原因出在 MAE 本身：`L = (1/n) · Σ |diff|`，求导之后绝对值被消掉，只剩 `sign(diff)`。**MAE 的梯度和距离脱钩了。**
 
