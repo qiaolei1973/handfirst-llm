@@ -29,9 +29,6 @@ v1 用的是绝对值取平均，官方名字叫 **MAE**（Mean Absolute Error�
 MAE:    L     = (1/n) · Σ |diff|
 ```
 
-![MAE 损失函数和符号梯度](/v1/mae-gradient.png)
-<!-- gen_v1_images.py: #8 mae-gradient — 左=红色 V 形 L=|diff|，辅助线差±5→L=5；右=红蓝分段 grad=sign(diff)，标注差100/差0.01推力都是±1 -->
-
 ### 梯度（Gradient）
 
 计算机不是靠试错来猜方向的。它用微积分算：把损失函数对参数求导，就知道"参数变大一丢丢，损失是变大还是变小"。这个导数叫**梯度**。
@@ -44,6 +41,9 @@ v1 对 MAE 求导：
 ```
 
 求导后绝对值被消掉了，只剩下正负号。所以 MAE 的梯度**只看方向，不看距离**——差 100 和差 0.01，推得一样狠。
+
+![MAE 的梯度：sign(diff)——只看方向不看距离](/v1/mae-gradient.png)
+<!-- gen_v1_images.py: #8 mae-gradient — 右半边 grad=sign(diff)，红 diff>0→+1，蓝 diff<0→−1，标注差100/差0.01推力都是±1 -->
 
 ### 参数更新 & 学习率（Learning Rate）
 
