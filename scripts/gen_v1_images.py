@@ -217,7 +217,7 @@ plt.close(fig)
 diff_range = np.linspace(-10, 10, 500)
 mae_loss = np.abs(diff_range)
 
-fig, ax = plt.subplots(figsize=(6, 4.3))
+fig, ax = plt.subplots(figsize=(4.2, 3))
 
 ax.plot(diff_range, mae_loss, "#ef4444", lw=2.5, label="MAE: L = |diff|")
 ax.axvline(x=-5, color="#94a3b8", ls="--", lw=1, alpha=0.6)
@@ -246,7 +246,7 @@ plt.close(fig)
 mae_grad = np.sign(diff_range)
 mae_grad[diff_range == 0] = 0
 
-fig, ax = plt.subplots(figsize=(6, 4.3))
+fig, ax = plt.subplots(figsize=(4.2, 3))
 
 colors_grad = ["#3b82f6" if d < 0 else "#ef4444" if d > 0 else "#94a3b8"
                for d in diff_range]

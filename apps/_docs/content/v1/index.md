@@ -145,8 +145,10 @@ bias -= 0.1 * gradBias;
 
 ### 问题二：步子大小不会自己调整
 
-![MAE 只看方向的梯度特性](/v1/mae-gradient.png)
-<!-- gen_v1_images.py: #8 mae-gradient — 左=红色 V 形 L=|diff|，辅助线标出差±5对应L=5；右=红蓝分段 grad=sign(diff)，标注差100/差0.01推力都是±1。x轴均标注"diff=yPred-真实值" -->
+![MAE 的损失：L = |diff|，V 形](/v1/mae-loss.png)
+<!-- gen_v1_images.py: #8 mae-loss — 红色 V 形 L=|diff|，辅助线标出差±5→L=5 -->
+![MAE 的梯度：grad = sign(diff)，只看方向](/v1/mae-gradient.png)
+<!-- gen_v1_images.py: #9 mae-gradient — 红蓝分段 grad=sign(diff)，标注差100/差0.01推力都是±1 -->
 
 每个点只看方向（`sign`），不看差多远。这就好比开车——不管离目的地 1 公里还是 100 公里，油门都踩同样的深度。快到目的地了也不会减速。
 
