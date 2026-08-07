@@ -211,10 +211,9 @@ plt.close(fig)
 print("  ✓ v2/sgd-fluctuation.png")
 
 # ================================================================
-#  3. v2/centering.png — Feature distribution before/after centering
+#  3. v2/centering.png — Before/after distribution + training effect
 # ================================================================
 np.random.seed(42)
-# Reproduce v1 data exactly
 N, MAX_X = 12, 20
 features = np.linspace(0, MAX_X, N)
 noise = (np.random.rand(N) - 0.5) * 6
@@ -223,71 +222,115 @@ labels = 2 * features + 10 + noise
 mean_x = np.mean(features)
 features_centered = features - mean_x
 
-fig = plt.figure(figsize=(10, 5.5))
+fig = plt.figure(figsize=(11, 5.8))
 
-# ---- Top: Before centering ----
-ax1 = fig.add_subplot(2, 1, 1)
-# Strip plot + histogram
+# ---- Top-left: Before centering (data distribution) ----
+ax1 = fig.add_subplot(2, 2, 1)
 ax1.scatter(features, np.ones_like(features) * 0.5,
-            c=COLORS["red"], s=80, zorder=5, edgecolors="white", linewidth=0.5)
-# vertical mean line
-ax1.axvline(x=mean_x, color="#64748b", ls="--", lw=1.5, alpha=0.7,
+            c=COLORS["red"], s=60, zorder=5, edgecolors="white", linewidth=0.5)
+ax1.axvline(x=mean_x, color="#64748b", ls="--", lw=1.2, alpha=0.7,
             label=f"均值 = {mean_x:.1f}")
-# Annotate key insight
-for x_val, label in [(0, "x 全是正数"), (MAX_X, "范围 [0, 20]")]:
-    ax1.annotate(label, (x_val, 0.5), textcoords="offset points",
-                xytext=(0, -25 if x_val == MAX_X else -25),
-                fontsize=9, color="#64748b", ha="center",
-                fontproperties=fp_sm)
 
-# Gradient direction annotation
-ax1.annotate("W 的梯度 ∝ x\n所有 x>0 → 推力永远同号 → 刹不住车",
-             xy=(mean_x, 0.5), textcoords="offset points",
-             xytext=(0, 30), fontsize=9, color="#dc2626",
-             ha="center", fontproperties=fp_sm,
-             bbox=dict(boxstyle="round,pad=0.3", facecolor="#fef2f2",
-                       edgecolor="#ef4444", alpha=0.9))
+# Show gradient push direction for each point (all right)
+for xp in features:
+    ax1.arrow(xp, 0.5, 2.5, 0, head_width=0.06, head_length=0.6,
+              fc=COLORS["red"], ec=COLORS["red"], alpha=0.35, lw=0.8)
 
-ax1.set_ylim(0, 1.2)
-ax1.set_xlim(-3, 23)
+ax1.set_ylim(0, 1.2); ax1.set_xlim(-3, 23)
 ax1.set_yticks([])
-ax1.set_title("原始数据：x 全部在 0 右侧，梯度推力永远同号", fontproperties=fp_lg)
-ax1.set_xlabel("x", fontproperties=fp_md)
-ax1.legend(prop=fp_legend, loc="upper right")
+ax1.set_title("中心化前：所有推力朝同一个方向", fontproperties=fp_lg)
+ax1.set_xlabel("x（全正）", fontproperties=fp_md)
+ax1.legend(prop=fp_legend, loc="upper right", fontsize=8)
 ax1.grid(True, alpha=0.15, axis="x")
 ax1.tick_params(labelsize=9)
 
-# ---- Bottom: After centering ----
-ax2 = fig.add_subplot(2, 1, 2)
+# ---- Top-right: After centering (data distribution) ----
+ax2 = fig.add_subplot(2, 2, 2)
+scatter_colors = [COLORS["blue"] if xc < 0 else COLORS["red"] for xc in features_centered]
 ax2.scatter(features_centered, np.ones_like(features_centered) * 0.5,
-            c=COLORS["blue"], s=80, zorder=5, edgecolors="white", linewidth=0.5)
-ax2.axvline(x=0, color="#64748b", ls="--", lw=1.5, alpha=0.7,
+            c=scatter_colors, s=60, zorder=5, edgecolors="white", linewidth=0.5)
+ax2.axvline(x=0, color="#64748b", ls="--", lw=1.2, alpha=0.7,
             label="新均值 = 0")
 
-# Color-code positive and negative x
-ax2.axvspan(-0.5, 0, alpha=0.05, color="#3b82f6", label="负 x：反向推 W")
-ax2.axvspan(0, 0.5, alpha=0.05, color="#ef4444", label="正 x：正向推 W")
+# Show gradient push directions (left for positive x, right for negative x)
+for xp, xc in zip(features, features_centered):
+    direction = 2.5 if xc > 0 else -2.5
+    color = COLORS["red"] if xc > 0 else COLORS["blue"]
+    ax2.arrow(xc, 0.5, direction, 0, head_width=0.06, head_length=0.6,
+              fc=color, ec=color, alpha=0.35, lw=0.8)
 
-ax2.annotate("梯度天然平衡：\n一半正推力，一半负推力",
-             xy=(0, 0.5), textcoords="offset points",
-             xytext=(0, 30), fontsize=9, color="#2563eb",
-             ha="center", fontproperties=fp_sm,
-             bbox=dict(boxstyle="round,pad=0.3", facecolor="#eff6ff",
-                       edgecolor="#3b82f6", alpha=0.9))
-
-ax2.set_ylim(0, 1.2)
-ax2.set_xlim(-13, 13)
+ax2.set_ylim(0, 1.2); ax2.set_xlim(-13, 13)
 ax2.set_yticks([])
 x_ticks = [-10, -5, 0, 5, 10]
 ax2.set_xticks(x_ticks)
 ax2.set_xticklabels([f"{v:.0f}" for v in x_ticks])
-ax2.set_title("中心化后：以 0 对称分布，梯度推力自然平衡", fontproperties=fp_lg)
+ax2.set_title("中心化后：正/负推力各一半，自然平衡", fontproperties=fp_lg)
 ax2.set_xlabel("x_centered = x − mean(x)", fontproperties=fp_md)
-ax2.legend(prop=fp_legend, loc="upper right")
+ax2.legend(prop=fp_legend, loc="upper right", fontsize=8)
 ax2.grid(True, alpha=0.15, axis="x")
 ax2.tick_params(labelsize=9)
 
-fig.suptitle("均值中心化：把数据摆对称，让梯度自己平衡",
+# ---- Bottom: Training effect — W trajectory with vs without centering ----
+# Simulate W convergence with same data, same lr, same MSE, but with/without centering
+np.random.seed(42)
+TRUE_W, TRUE_BIAS = 2.0, 10.0
+INIT_W, INIT_BIAS = 1.0, 0.0
+LR = 0.01
+EPOCHS = 100
+
+# Without centering: raw features
+W_raw, bias_raw = INIT_W, INIT_BIAS
+traj_raw_w = [W_raw]
+for _ in range(EPOCHS):
+    for xp, yp in zip(features, labels):
+        pred = W_raw * xp + bias_raw
+        diff = pred - yp
+        W_raw -= LR * 2 * diff * xp / N
+        bias_raw -= LR * 2 * diff / N
+    traj_raw_w.append(W_raw)
+
+# With centering
+W_cen, bias_cen = INIT_W, INIT_BIAS
+traj_cen_w = [W_cen]
+for _ in range(EPOCHS):
+    for xp, yp in zip(features_centered, labels):
+        pred = W_cen * xp + bias_cen
+        diff = pred - yp
+        W_cen -= LR * 2 * diff * xp / N
+        bias_cen -= LR * 2 * diff / N
+    traj_cen_w.append(W_cen)
+
+ax3 = fig.add_subplot(2, 1, 2)
+epochs_arr = np.arange(EPOCHS + 1)
+ax3.plot(epochs_arr, traj_raw_w, COLORS["red"], lw=2,
+         label="W（无中心化）— 锯齿震荡")
+ax3.plot(epochs_arr, traj_cen_w, COLORS["blue"], lw=2,
+         label="W（中心化）— 平滑收敛")
+ax3.axhline(y=TRUE_W, color="#22c55e", ls="--", lw=1.2, alpha=0.6,
+            label=f"目标 W = {TRUE_W}")
+
+# Annotate zigzag vs smooth
+ax3.annotate("左右来回甩\n过冲了没人拉",
+             (35, traj_raw_w[35]), textcoords="offset points",
+             xytext=(30, 25), fontsize=8, color=COLORS["red"],
+             fontproperties=fp_sm,
+             arrowprops=dict(arrowstyle="->", color=COLORS["red"], lw=1))
+ax3.annotate("正负推力平衡\n每一步都干净",
+             (60, traj_cen_w[60]), textcoords="offset points",
+             xytext=(30, -25), fontsize=8, color=COLORS["blue"],
+             fontproperties=fp_sm,
+             arrowprops=dict(arrowstyle="->", color=COLORS["blue"], lw=1))
+
+ax3.set_xlim(0, EPOCHS); ax3.set_ylim(0.8, 2.8)
+ax3.grid(True, alpha=0.2)
+ax3.legend(prop=fp_legend, loc="center right", fontsize=8)
+ax3.set_title("训练效果对比：W 参数收敛轨迹（相同学习率、相同 MSE）",
+            fontproperties=fp_lg)
+ax3.set_xlabel("Epoch", fontproperties=fp_md)
+ax3.set_ylabel("W", fontproperties=fp_md)
+ax3.tick_params(labelsize=9)
+
+fig.suptitle("中心化：把数据摆对称，让梯度自己平衡",
             fontproperties=fp_xl)
 fig.tight_layout(rect=[0, 0, 1, 0.94])
 fig.savefig(OUT_V2 / "centering.png", dpi=144)
