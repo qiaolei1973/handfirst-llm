@@ -32,6 +32,10 @@ interface V3EpochData {
   epoch: number;
 }
 
+// 归一化因子：模型在 x̂ ∈ [0,1] 上训练，图表还原到原始 x ∈ [0,2π]。
+// 这只是为了让 x 轴刻度可读的演示转换，实际训练中不需要。
+const X_SCALE = 2 * Math.PI;
+
 // Neuron color palette
 const NEURON_COLORS = [
   '#3b82f6', // blue
@@ -158,23 +162,31 @@ export function Dashboard({
 
   const modelCurveData = useMemo(() => {
     if (!dataset || !params) return null;
-    const predict = makePredict(params);
+    // 模型在归一化 x̂ ∈ [0,1] 上训练，图表显示原始 x ∈ [0,2π]。
+    // 这只是视觉效果——把 x 轴放大 2π 倍、预测函数做反向缩放。
+    const predictNorm = makePredict(params);
+    const displayPredict = (xOrig: number) => predictNorm(xOrig / X_SCALE);
+    const displayTrueFn = (xOrig: number) => trueFn(xOrig);
     return {
-      points: dataset.features.map((x, i) => ({ x, y: dataset.labels[i] })),
-      trueFn,
-      trueLabel: dataset.trueFnLabel,
-      predict,
+      points: dataset.features.map((xNorm, i) => ({
+        x: xNorm * X_SCALE,
+        y: dataset.labels[i],
+      })),
+      trueFn: displayTrueFn,
+      trueLabel: 'y = sin(x)',
+      predict: displayPredict,
       modelLabel: `模型  (${params.numNeurons} 个 ReLU 神经元)`,
     };
   }, [dataset, params, trueFn]);
 
   const reluData = useMemo(() => {
     if (!dataset || !params) return null;
-    const rawX = dataset.features;
+    // ReLU 图表也显示原始 x ∈ [0,2π]：将 w 除以 2π，
+    // 使 ReLU(w_disp * x_orig + b) = ReLU(w * x̂ + b)
     return {
-      xRange: { min: Math.min(...rawX), max: Math.max(...rawX) },
+      xRange: { min: 0, max: X_SCALE },
       neurons: params.hiddenW.map((w, i) => ({
-        w,
+        w: w / X_SCALE,
         b: params.hiddenB[i],
         label: `Neuron ${i + 1}`,
         color: NEURON_COLORS[i % NEURON_COLORS.length],
@@ -355,13 +367,13 @@ export function Dashboard({
       {params && (
         <div className="formula-bar">
           <code>{formatFormula(params)}</code>
-          <span className="note">（x̂ 为归一化输入，x̂ = x / 2π）</span>
+          <span className="note">（x̂ = x/2π，图表轴已还原为原始 x）</span>
         </div>
       )}
 
       {/* ---- Row 1: Model Curve ---- */}
       <div className="main-card">
-        <h2>📊 数据空间 — 折线逼近 sin(2πx̂)</h2>
+        <h2>📊 数据空间 — 折线逼近 sin(x)</h2>
         <canvas ref={mcCanvasRef} />
       </div>
 
