@@ -4,10 +4,11 @@ Output: apps/_docs/public/v2/ + apps/_docs/public/v1/loss-comparison.png
 Run: python3 scripts/gen_v2_images.py
 
 Images generated:
-  1. v2/loss-comparison.png  — MAE vs MSE: loss curves + gradients side-by-side
-  2. v2/sgd-fluctuation.png  — BGD (smooth) vs SGD (jittery) loss over epochs
-  3. v2/centering.png        — feature distribution before/after mean-centering
-  4. v1/loss-comparison.png  — L(bias) landscape: MAE vs MSE trajectory to valley
+  1. v2/gradient-intuition.png — 下山比喻：抛物线上不同位置的坡度箭头
+  2. v2/loss-comparison.png    — MAE vs MSE: loss curves + gradients side-by-side
+  3. v2/sgd-fluctuation.png    — BGD (smooth) vs SGD (jittery) loss over epochs
+  4. v2/centering.png          — feature distribution before/after mean-centering
+  5. v1/loss-comparison.png    — L(bias) landscape: MAE vs MSE trajectory to valley
 """
 import matplotlib
 matplotlib.use("Agg")
@@ -44,7 +45,79 @@ COLORS = {
 }
 
 # ================================================================
-#  1. v2/loss-comparison.png — MAE vs MSE: loss curves + gradients
+#  1. v2/gradient-intuition.png — 下坡比喻：梯度就是脚下的坡度
+# ================================================================
+w_range = np.linspace(-1.5, 3.5, 500)
+# Parabola: L(W) = (W-1)^2 + 0.3  (valley at W=1)
+L_vals = (w_range - 1)**2 + 0.3
+
+fig, ax = plt.subplots(figsize=(5.5, 3.8))
+
+# Plot the loss landscape
+ax.plot(w_range, L_vals, "#64748b", lw=2, label="Loss L(W)")
+ax.set_xlim(-1.5, 3.5); ax.set_ylim(-0.5, 7.5)
+
+# Pick 5 points along the curve to show gradient arrows
+points = [
+    {"W": -0.5, "label": "坡度陡\n→ 大步", "color": "#ef4444", "xytext": (-10, -30)},
+    {"W": 0.3,  "label": "坡度缓\n→ 小步", "color": "#f59e0b", "xytext": (-10, -30)},
+    {"W": 1.0,  "label": "谷底\n梯度=0",  "color": "#22c55e", "xytext": (10, -30)},
+    {"W": 1.8,  "label": "坡度缓\n→ 小步", "color": "#f59e0b", "xytext": (20, -30)},
+    {"W": 2.5,  "label": "坡度陡\n→ 大步", "color": "#ef4444", "xytext": (20, -30)},
+]
+
+for pt in points:
+    W = pt["W"]
+    L = (W - 1)**2 + 0.3
+    grad = 2 * (W - 1)  # derivative of (W-1)²+0.3
+
+    # Point marker
+    ax.scatter([W], [L], c=pt["color"], s=60, zorder=10, edgecolors="white", linewidth=1)
+
+    # Gradient arrow (derivative direction, scaled)
+    arrow_len = abs(grad) * 1.8 + 0.3
+    # Arrow goes DOWNHILL: if grad>0, go left (W decreasing); if grad<0, go right
+    dx = -np.sign(grad) * arrow_len
+    dy = -abs(grad) * arrow_len * 0.15  # slight downward slope for visual
+    ax.arrow(W, L, dx, dy, head_width=0.3, head_length=0.18,
+             fc=pt["color"], ec=pt["color"], alpha=0.85, lw=1.5, zorder=5)
+
+    # Label
+    ax.annotate(pt["label"], (W, L), textcoords="offset points",
+                xytext=pt["xytext"], fontsize=8, color=pt["color"],
+                ha="center", fontproperties=fp_sm,
+                arrowprops=dict(arrowstyle="->", color=pt["color"], lw=0.8),
+                bbox=dict(boxstyle="round,pad=0.2", facecolor="white",
+                          edgecolor=pt["color"], alpha=0.8))
+
+# Trajectory dots (simulated gradient descent steps)
+w_cur = 2.8
+traj_w = [w_cur]
+lr = 0.15
+for _ in range(12):
+    grad = 2 * (w_cur - 1)
+    w_cur -= lr * grad
+    traj_w.append(w_cur)
+traj_w = np.array(traj_w)
+ax.scatter(traj_w, (traj_w - 1)**2 + 0.3, c="#6366f1", s=25, zorder=8)
+ax.plot(traj_w, (traj_w - 1)**2 + 0.3, "#6366f1", lw=1.2, alpha=0.6,
+        label="梯度下降路径")
+
+ax.legend(prop=fp_legend, loc="upper left", fontsize=8)
+ax.set_xlabel("参数 W", fontproperties=fp_md)
+ax.set_ylabel("Loss L(W)", fontproperties=fp_md)
+ax.set_title("蒙眼下山：梯度 = 脚下的坡度，告诉你往哪走、走多远",
+            fontproperties=fp_lg)
+ax.grid(True, alpha=0.15)
+ax.tick_params(labelsize=9)
+
+fig.tight_layout()
+fig.savefig(OUT_V2 / "gradient-intuition.png", dpi=144)
+plt.close(fig)
+print("  ✓ v2/gradient-intuition.png")
+
+# ================================================================
+#  2. v2/loss-comparison.png — MAE vs MSE: loss curves + gradients
 # ================================================================
 diff_range = np.linspace(-8, 8, 600)
 
