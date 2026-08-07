@@ -8,7 +8,39 @@
 
 ## 核心理念
 
-- **每一步只引入一个新概念。**
+### HandFirst：编码优先
+
+不是先讲理论再写代码，而是**从代码中学习**。每个版本从一个具体问题出发——"这条直线怎么画？""这组数据怎么拟合？"——用最自然的直觉写代码解决问题，然后观察效果，问"能不能更好？"。
+
+答案永远不是"因为书上这么说"，而是"因为你刚看到的效果告诉你了"。v1 的 MAE 变成 v2 的 MSE，不是因为 MSE 高级，而是因为读者亲眼看见 MAE 的梯度在接近最优时不减速。
+
+### Demo → 概念 → 算法 → 数学
+
+每个版本按这个顺序层层递进：
+
+```
+1. Demo      你看到什么现象？（怎么画出来的？为什么画不好？）
+   ↓
+2. 概念      这个现象在 ML 里叫什么名字？这个"名字"解决的是什么问题？
+   ↓
+3. 算法      这个概念对应什么具体实现？代码写给你看
+   ↓
+4. 数学      背后的数学推导是什么？为什么这个公式能 work？
+```
+
+概念必须在 demo 里**先出现**，然后才被命名。"先引出概念，概念的解释，然后再讲具体实现"——这个顺序保证了读者每学一个新概念，都有上下文可以依附。
+
+SGD、Adam、backprop 这些概念，应该是"你刚才遇到的问题 → 你需要一个什么东西来解 → 这个东西的名字叫 X → X 本质上是在做什么"的节奏，而不是词典条目。
+
+### 概念和实现严格对齐
+
+不要空讲概念。**每个概念在对应版本的 `train.ts` 里一定有对应的代码片段**。读者读文档看到概念时，同时看到代码长什么样。反过来，train.ts 里每段核心逻辑，文档里都有对应的概念解释。
+
+### 数学解释要扎实
+
+"这个概念为什么有效？"不是一句话带过。数学推导要完整——从损失函数求导到梯度公式，每一步都写出来。同时佐以"深入浅出"的例子：对 MAE 求导后导数是 ±1，这件事用"差 100 推力是 1，差 0.01 推力也是 1"这句直觉就能记住。
+
+- **每一步只引入一个新概念。** 每个版本只有两个文件读者需要看：一个 `train.ts`（算法全部在这里），一个浏览器 dashboard 看可视化结果。理论在 `_docs/` 里配合代码讲，不是反过来。
 - **代码是教学材料，不是生产代码。** `train.ts` 要求一个文件读完，显式循环、不抽象、注释比代码多。
 - **终端可以独立跑，浏览器可以看，互不依赖。** 基础 run：`pnpm exec tsx train.ts` 打印结果。UI run：`pnpm dev:vN` 起 WS + Next.js dev，浏览器实时可视化。UI run 时不需要先跑终端。
 
@@ -18,12 +50,13 @@
 apps/
   v1/              猜一条直线——从直觉出发（入门）
   v2/              进入机器学习的世界——术语命名 + MSE/SGD/中心化
+  v3/              画曲线——单隐藏层 ReLU 神经网络
   _docs/           教程站点（默认 pnpm dev）
 packages/
-  utils/           Trainer 基类、WS server、useWsTrainer hook、Mat、Optimizer
-  datasets/        linearData()、sampleBatch()
-  charts/          Canvas2D 图表
-  viz/             React 手术台 dashboard
+  utils/           Trainer 基类、WS server、useWsTrainer hook、Layer、Mat
+  datasets/        linearData()、sinData()、sampleBatch()
+  charts/          Canvas2D 图表（Axes + CanvasManager + biz charts）
+  viz/             React 手术台 dashboard（v1/v2 共享）
 ```
 
 ### 每个 version 的文件约定
@@ -70,11 +103,12 @@ apps/vN/
 - 用 `np.random.seed()` 固定随机种子，确保数据可复现
 - 每个 `fig.savefig()` 前写清楚这是文档中的哪张图
 5. **学习率、batch size 等超参数是有教学意图的。** 改动它们之前，想想这会让读者学到什么。
+6. **教学顺序 = Demo → 概念 → 算法 → 数学。** 每个概念先从可视化或现象中引出，再给名字，再给代码实现，最后给数学推导。不先抛理论再找例子——反方向。
 
 ## 技术栈
 
 - **pnpm** monorepo，`pnpm-workspace.yaml` 包含 `packages/*` 和 `apps/*`
-- **Next.js 15** App Router（v1 :3001, v2 :3002, _docs :3000）
+- **Next.js 15** App Router（v1 :3001, v2 :3002, v3 :3003, _docs :3000）
 - **WebSocket**（ws）：训练跑在 Node 端，浏览器只做 viz
 - **Canvas2D**（`@handfirst/charts`）：所有图表
 - **marked + highlight.js**：_docs 的 MD 渲染
@@ -89,6 +123,7 @@ pnpm exec tsx apps/vN/train.ts
 # UI run：WS 训练服务 + Next.js dev，浏览器实时可视化
 pnpm dev:v1     # v1 → localhost:3001
 pnpm dev:v2     # v2 → localhost:3002
+pnpm dev:v3     # v3 → localhost:3003
 pnpm dev        # _docs → localhost:3000
 ```
 
