@@ -2,15 +2,11 @@
  * excalirender — 将 .excalidraw 文件导出为 SVG。
  *
  * @example
- *   // 链式 API
  *   import excalirender from "excalirender";
- *   await excalirender("scene.excalidraw").output();
- *   await excalirender("scene.excalidraw").config({ noSketch: true }).output("out.svg");
  *
- * @example
- *   // 底层 API
- *   import { excalidrawToSvg } from "excalirender";
- *   const svg = excalidrawToSvg({ elements: [...], appState: {...} });
+ *   await excalirender("scene.excalidraw");
+ *   await excalirender("scene.excalidraw", { output: "out.svg" });
+ *   await excalirender("scene.excalidraw", { noSketch: true });
  */
 
 import { createRequire } from "module";
@@ -45,82 +41,53 @@ export interface ExcalidrawScene {
   files?: Record<string, unknown>;
 }
 
-export interface ExportOptions {
-  background?: boolean;   // default: true
-  sketch?: boolean;       // default: true (roughjs hand-drawn style)
-}
-
-export interface RenderConfig {
-  /** Disable hand-drawn sketch style. Default: false (sketch is on). */
+export interface RenderOptions {
+  /** Output path. Default: ./<basename>.svg */
+  output?: string;
+  /** Disable hand-drawn sketch style. Default: false. */
   noSketch?: boolean;
-  /** Disable white background. Default: false (background is on). */
+  /** Disable white background. Default: false. */
   noBackground?: boolean;
 }
 
-// ── 构建器（链式 API） ──
-
-class RenderBuilder {
-  private inputPath: string;
-  private _noSketch = false;
-  private _noBackground = false;
-
-  constructor(input: string) {
-    this.inputPath = resolve(input);
-  }
-
-  config(cfg: RenderConfig): this {
-    if (cfg.noSketch !== undefined) this._noSketch = cfg.noSketch;
-    if (cfg.noBackground !== undefined) this._noBackground = cfg.noBackground;
-    return this;
-  }
-
-  async output(): Promise<string>;
-  async output(out: string): Promise<string>;
-  async output(out?: string): Promise<string> {
-    // Determine output path
-    let outputPath: string;
-    if (out) {
-      outputPath = resolve(out);
-    } else {
-      const base = basename(this.inputPath, extname(this.inputPath));
-      outputPath = resolve(process.cwd(), `${base}.svg`);
-    }
-
-    // Determine format from extension
-    const ext = extname(outputPath).toLowerCase();
-    if (ext !== ".svg") {
-      throw new Error(`Unsupported output format: ${ext}. Only .svg is supported.`);
-    }
-
-    // Read scene
-    const scene: ExcalidrawScene = JSON.parse(readFileSync(this.inputPath, "utf-8"));
-
-    // Render
-    const svg = excalidrawToSvg(scene, {
-      sketch: !this._noSketch,
-      background: !this._noBackground,
-    });
-
-    writeFileSync(outputPath, svg, "utf-8");
-    return outputPath;
-  }
-}
+// ── 主入口 ──
 
 /**
- * 链式 API 入口。
- *
- * @example
- *   await excalirender("scene.excalidraw").output();                     // → ./scene.svg
- *   await excalirender("scene.excalidraw").output("out.svg");            // → ./out.svg
- *   await excalirender("scene.excalidraw").config({ noSketch: true }).output("clean.svg");
+ * 渲染 .excalidraw 为 SVG 并写盘。
+ * 返回生成的输出路径。
  */
-export default function excalirender(input: string): RenderBuilder {
-  return new RenderBuilder(input);
+export default async function excalirender(input: string, opts: RenderOptions = {}): Promise<string> {
+  const inputPath = resolve(input);
+  const ext = extname(inputPath).toLowerCase();
+  if (ext !== ".excalidraw") {
+    throw new Error(`Unsupported input format: ${ext}. Expected .excalidraw`);
+  }
+
+  const base = basename(inputPath, ext);
+  const outputPath = resolve(opts.output || `${base}.svg`);
+
+  if (extname(outputPath).toLowerCase() !== ".svg") {
+    throw new Error(`Unsupported output format. Only .svg is supported.`);
+  }
+
+  const scene: ExcalidrawScene = JSON.parse(readFileSync(inputPath, "utf-8"));
+  const svg = excalidrawToSvg(scene, {
+    sketch: !opts.noSketch,
+    background: !opts.noBackground,
+  });
+
+  writeFileSync(outputPath, svg, "utf-8");
+  return outputPath;
 }
 
-// ── 底层渲染 ──
+// ── 底层渲染（命名导出） ──
 
-export function excalidrawToSvg(scene: ExcalidrawScene, opts: ExportOptions = {}): string {
+export interface SvgOptions {
+  sketch?: boolean;     // default: true
+  background?: boolean; // default: true
+}
+
+export function excalidrawToSvg(scene: ExcalidrawScene, opts: SvgOptions = {}): string {
   const elements = scene.elements || [];
   if (elements.length === 0) throw new Error("No elements found in scene");
 
@@ -144,7 +111,7 @@ export function excalidrawToSvg(scene: ExcalidrawScene, opts: ExportOptions = {}
   const vbW = maxX - minX + pad * 2;
   const vbH = maxY - minY + pad * 2;
 
-  // Build defs
+  // Build defs (fonts + arrowheads)
   let defs = `<style>\n`
     + `@font-face { font-family: "Virgil"; src: url(data:font/woff2;base64,${VIRGIL_FONT}) format("woff2"); `
     + `unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2039-203A; }\n`
@@ -349,10 +316,7 @@ function innerText(el: ExcalidrawElement): string {
 
 function hash32(s: string): number {
   let h = 0x6d2b79f5;
-  for (let i = 0; i < s.length; i++) {
-    h = Math.imul(h ^ s.charCodeAt(i), 0x5bd1e995);
-    h = Math.imul(h ^ (h >>> 13), 0x5bd1e995);
-  }
+  for (let i = 0; i < s.length; i++) { h = Math.imul(h ^ s.charCodeAt(i), 0x5bd1e995); h = Math.imul(h ^ (h >>> 13), 0x5bd1e995); }
   return h ^ (h >>> 15);
 }
 
