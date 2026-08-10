@@ -16,9 +16,12 @@ import { join, dirname } from "node:path";
 
 const { generator: newGenerator } = createRequire(import.meta.url)("roughjs");
 
-// Embedded Virgil hand-drawn font (same font Excalidraw uses)
+// Embedded hand-drawn fonts:
+//   Virgil — Latin (same font Excalidraw uses)
+//   ZCOOL KuaiLe — CJK (站酷快乐体, SIL OFL, Google Fonts)
 const __dirname = dirname(import.meta.url.replace("file://", ""));
 const VIRGIL_FONT = readFileSync(join(__dirname, "..", "Virgil-Regular.woff2")).toString("base64");
+const ZCOOL_FONT = readFileSync(join(__dirname, "..", "ZCOOLKuaiLe-Regular.woff2")).toString("base64");
 
 // ── 类型 ──
 
@@ -74,10 +77,12 @@ export function excalidrawToSvg(scene: ExcalidrawScene, opts: ExportOptions = {}
 
   // Arrowhead markers + Virgil font
   let defs = "";
-  defs += `<style>\n@font-face {`
-       + ` font-family: "Virgil";`
-       + ` src: url(data:font/woff2;base64,${VIRGIL_FONT}) format("woff2");`
-       + ` }\n</style>\n`;
+  defs += `<style>\n`
+       // Virgil = Latin hand-drawn. With unicode-range, browser falls through to ZCOOL for CJK.
+       + `@font-face { font-family: "Virgil"; src: url(data:font/woff2;base64,${VIRGIL_FONT}) format("woff2"); `
+       + `unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2039-203A; }\n`
+       + `@font-face { font-family: "ZCOOL KuaiLe"; src: url(data:font/woff2;base64,${ZCOOL_FONT}) format("woff2"); }\n`
+       + `</style>\n`;
   for (const el of elements) {
     if (el.type !== "arrow") continue;
     const pts = el.points || [];
@@ -132,9 +137,7 @@ function render(el: ExcalidrawElement, sketch: boolean): string {
 
 function renderText(el: ExcalidrawElement): string {
   const fs = el.fontSize || 16;
-  const ff = el.fontFamily === 2 ? "Helvetica, Arial, sans-serif"
-           : el.fontFamily === 1 ? "Virgil, Segoe UI Emoji"
-           : "Virgil, Segoe UI Emoji";
+  const ff = "\"Virgil\", \"ZCOOL KuaiLe\", \"Segoe UI Emoji\"";
   const lines = (el.text || "").split("\n");
   const lineH = fs * 1.3;
   const totalH = lines.length * lineH;
