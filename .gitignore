@@ -11,3 +11,11 @@ out/
 
 # env
 .env*.local
+# Generated images (see scripts/generate-all-images.sh)
+apps/_docs/public/v1/*.png
+apps/_docs/public/v2/*.png
+apps/_docs/public/v3/*.png
+apps/_docs/public/v4/*.png
+apps/_docs/public/recap/*.png
+apps/_docs/public/recap/*.svg
+diagrams/out/
