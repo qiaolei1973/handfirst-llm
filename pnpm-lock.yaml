@@ -22,7 +22,7 @@ importers:
         version: 15.0.12
       next:
         specifier: ^15.1.0
-        version: 15.5.22(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 15.5.22(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.51.0)
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -56,7 +56,7 @@ importers:
         version: link:../../packages/viz
       next:
         specifier: ^15.1.0
-        version: 15.5.22(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 15.5.22(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.51.0)
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -90,7 +90,7 @@ importers:
         version: link:../../packages/viz
       next:
         specifier: ^15.1.0
-        version: 15.5.22(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 15.5.22(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.51.0)
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -121,7 +121,7 @@ importers:
         version: link:../../packages/utils
       next:
         specifier: ^15.1.0
-        version: 15.5.22(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 15.5.22(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.51.0)
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -152,7 +152,7 @@ importers:
         version: link:../../packages/utils
       next:
         specifier: ^15.1.0
-        version: 15.5.22(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 15.5.22(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.51.0)
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -576,6 +576,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@playwright/test@1.62.1':
+    resolution: {integrity: sha512-DTcUc8qii+cpHvtOwggMtBRMjKZHXYWdw8syRYu2vtzuq4Wxphqq4NfCs5Zt44L6mA8rfDfj+PHnxFc/FeK6mQ==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
 
@@ -588,8 +593,24 @@ packages:
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
+  anymatch@3.1.3:
+    resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
+    engines: {node: '>= 8'}
+
+  binary-extensions@2.3.0:
+    resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
+    engines: {node: '>=8'}
+
+  braces@3.0.3:
+    resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
+    engines: {node: '>=8'}
+
   caniuse-lite@1.0.30001806:
     resolution: {integrity: sha512-72Cuvd95zbSYPKq6Fhg8eDJRlzgWDf7/mtoZv6Qe/DYNCEBdNxoA3+rZAU2ZhGCpZlns3EssFavaZomckT5Uuw==}
+
+  chokidar@3.6.0:
+    resolution: {integrity: sha512-7VT13fmjotKpGipCW9JEQAusEPE+Ei8nl6/g4FBAmIm0GOOLMua9NDDo/DWp0ZAxCr3cPq5ZpBqmPAQgDda2Pw==}
+    engines: {node: '>= 8.10.0'}
 
   client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
@@ -606,14 +627,46 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  fill-range@7.1.1:
+    resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
+    engines: {node: '>=8'}
+
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
+  glob-parent@5.1.2:
+    resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
+    engines: {node: '>= 6'}
+
   highlight.js@11.11.1:
     resolution: {integrity: sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==}
     engines: {node: '>=12.0.0'}
+
+  immutable@4.3.9:
+    resolution: {integrity: sha512-ObHy4YN7ycwZOUCLI1/6svfyAFu7vL8RhAvVu/bh/RZW9EPlOyDaQ9jDQWCtdqzaXUjgXZCW1migtHE7YI7UGQ==}
+
+  is-binary-path@2.1.0:
+    resolution: {integrity: sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw==}
+    engines: {node: '>=8'}
+
+  is-extglob@2.1.1:
+    resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
+    engines: {node: '>=0.10.0'}
+
+  is-glob@4.0.3:
+    resolution: {integrity: sha512-xelSayHH36ZgE7ZWhli7pW34hNbNl8Ojv5KVmkJD4hBdD3th8Tfk9vYasLM+mXWOZhFkgZfxhLSnrwRr4elSSg==}
+    engines: {node: '>=0.10.0'}
+
+  is-number@7.0.0:
+    resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
+    engines: {node: '>=0.12.0'}
 
   marked@15.0.12:
     resolution: {integrity: sha512-8dD6FusOQSrpv9Z1rdNMdlSgQOIP880DHqnohobOmYLElGEqAL/JvxvuxZO16r4HtjTlfPRDC1hbvxC9dPN2nA==}
@@ -646,8 +699,26 @@ packages:
       sass:
         optional: true
 
+  normalize-path@3.0.0:
+    resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
+    engines: {node: '>=0.10.0'}
+
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
+
+  picomatch@2.3.2:
+    resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
+    engines: {node: '>=8.6'}
+
+  playwright-core@1.62.1:
+    resolution: {integrity: sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  playwright@1.62.1:
+    resolution: {integrity: sha512-0M+L3LAD8/nm554LOla9Ayx0j0tmFZ0FBcoQ7F1VuVHpM/XpiC8RcDzBQB8W5+hA8L22THxELzeF+2WcUzvcLg==}
+    engines: {node: '>=20'}
+    hasBin: true
 
   postcss@8.4.31:
     resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
@@ -661,6 +732,15 @@ packages:
   react@19.2.8:
     resolution: {integrity: sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==}
     engines: {node: '>=0.10.0'}
+
+  readdirp@3.6.0:
+    resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
+    engines: {node: '>=8.10.0'}
+
+  sass@1.51.0:
+    resolution: {integrity: sha512-haGdpTgywJTvHC2b91GSq+clTKGbtkkZmVAb82jZQN/wTy6qs8DdFm2lhEQbEwrY0QDRgSQ3xDurqM977C3noA==}
+    engines: {node: '>=12.0.0'}
+    hasBin: true
 
   scheduler@0.27.0:
     resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
@@ -690,6 +770,10 @@ packages:
         optional: true
       babel-plugin-macros:
         optional: true
+
+  to-regex-range@5.0.1:
+    resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
+    engines: {node: '>=8.0'}
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
@@ -927,6 +1011,11 @@ snapshots:
   '@next/swc-win32-x64-msvc@15.5.22':
     optional: true
 
+  '@playwright/test@1.62.1':
+    dependencies:
+      playwright: 1.62.1
+    optional: true
+
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
@@ -943,7 +1032,34 @@ snapshots:
     dependencies:
       '@types/node': 22.20.1
 
+  anymatch@3.1.3:
+    dependencies:
+      normalize-path: 3.0.0
+      picomatch: 2.3.2
+    optional: true
+
+  binary-extensions@2.3.0:
+    optional: true
+
+  braces@3.0.3:
+    dependencies:
+      fill-range: 7.1.1
+    optional: true
+
   caniuse-lite@1.0.30001806: {}
+
+  chokidar@3.6.0:
+    dependencies:
+      anymatch: 3.1.3
+      braces: 3.0.3
+      glob-parent: 5.1.2
+      is-binary-path: 2.1.0
+      is-glob: 4.0.3
+      normalize-path: 3.0.0
+      readdirp: 3.6.0
+    optionalDependencies:
+      fsevents: 2.3.3
+    optional: true
 
   client-only@0.0.1: {}
 
@@ -981,16 +1097,48 @@ snapshots:
       '@esbuild/win32-ia32': 0.28.1
       '@esbuild/win32-x64': 0.28.1
 
+  fill-range@7.1.1:
+    dependencies:
+      to-regex-range: 5.0.1
+    optional: true
+
+  fsevents@2.3.2:
+    optional: true
+
   fsevents@2.3.3:
     optional: true
 
+  glob-parent@5.1.2:
+    dependencies:
+      is-glob: 4.0.3
+    optional: true
+
   highlight.js@11.11.1: {}
+
+  immutable@4.3.9:
+    optional: true
+
+  is-binary-path@2.1.0:
+    dependencies:
+      binary-extensions: 2.3.0
+    optional: true
+
+  is-extglob@2.1.1:
+    optional: true
+
+  is-glob@4.0.3:
+    dependencies:
+      is-extglob: 2.1.1
+    optional: true
+
+  is-number@7.0.0:
+    optional: true
 
   marked@15.0.12: {}
 
   nanoid@3.3.16: {}
 
-  next@15.5.22(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  next@15.5.22(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.51.0):
     dependencies:
       '@next/env': 15.5.22
       '@swc/helpers': 0.5.15
@@ -1008,12 +1156,30 @@ snapshots:
       '@next/swc-linux-x64-musl': 15.5.22
       '@next/swc-win32-arm64-msvc': 15.5.22
       '@next/swc-win32-x64-msvc': 15.5.22
+      '@playwright/test': 1.62.1
+      sass: 1.51.0
       sharp: 0.34.5
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
 
+  normalize-path@3.0.0:
+    optional: true
+
   picocolors@1.1.1: {}
+
+  picomatch@2.3.2:
+    optional: true
+
+  playwright-core@1.62.1:
+    optional: true
+
+  playwright@1.62.1:
+    dependencies:
+      playwright-core: 1.62.1
+    optionalDependencies:
+      fsevents: 2.3.2
+    optional: true
 
   postcss@8.4.31:
     dependencies:
@@ -1027,6 +1193,18 @@ snapshots:
       scheduler: 0.27.0
 
   react@19.2.8: {}
+
+  readdirp@3.6.0:
+    dependencies:
+      picomatch: 2.3.2
+    optional: true
+
+  sass@1.51.0:
+    dependencies:
+      chokidar: 3.6.0
+      immutable: 4.3.9
+      source-map-js: 1.2.1
+    optional: true
 
   scheduler@0.27.0: {}
 
@@ -1071,6 +1249,11 @@ snapshots:
     dependencies:
       client-only: 0.0.1
       react: 19.2.8
+
+  to-regex-range@5.0.1:
+    dependencies:
+      is-number: 7.0.0
+    optional: true
 
   tslib@2.8.1: {}
 

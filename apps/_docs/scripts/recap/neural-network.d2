@@ -1,193 +1,196 @@
-title: "神经网络：1 → N → 1" {
-  style.font-size: 20
-  style.font-color: "#0f172a"
+# ── 神经网络：1 → N → 1 架构 ──
+#   由 generate-all.sh 自动构建，输出到 public/recap/neural-network.svg
+
+vars: {
+  d2-config: {
+    layout-engine: dagre
+  }
 }
 
 direction: right
 
-styles: {
-  style.font-size: 12
-  style.font-color: "#334155"
-}
-
-# ============================================================
+# ================================================================
 # Input
-# ============================================================
-
-input: "输入 x" {
+# ================================================================
+input: "x\n(输入)" {
   shape: circle
+  width: 64
+  height: 64
   style.fill: "#e2e8f0"
   style.stroke: "#64748b"
   style.stroke-width: 2
-  style.font-size: 15
+  style.font-size: 14
   style.font-color: "#334155"
 }
 
-# ============================================================
+# ================================================================
 # Hidden Layer
-# ============================================================
-
-hidden-layer: "隐藏层\n(N 个神经元)" {
+# ================================================================
+hidden: "隐藏层 (N 个 ReLU 神经元)" {
   style.fill: "#fffdf5"
   style.stroke: "#f59e0b"
   style.stroke-width: 2
-  style.stroke-dash: 6
-  style.border-radius: 12
+  style.stroke-dash: 8
+  style.border-radius: 14
   style.font-size: 14
   style.font-color: "#92400e"
+
+  h1: "h₁" {
+    shape: circle
+    width: 48
+    height: 48
+    style.fill: "#fef9c3"
+    style.stroke: "#eab308"
+    style.stroke-width: 2
+    style.font-size: 13
+    style.font-color: "#854d0e"
+  }
+
+  h2: "h₂" {
+    shape: circle
+    width: 48
+    height: 48
+    style.fill: "#fef9c3"
+    style.stroke: "#eab308"
+    style.stroke-width: 2
+    style.font-size: 13
+    style.font-color: "#854d0e"
+  }
+
+  hdots: "⋮" {
+    shape: text
+    style.font-size: 22
+    style.font-color: "#94a3b8"
+    style.bold: true
+  }
+
+  hN: "hₙ" {
+    shape: circle
+    width: 48
+    height: 48
+    style.fill: "#fef9c3"
+    style.stroke: "#eab308"
+    style.stroke-width: 2
+    style.font-size: 13
+    style.font-color: "#854d0e"
+  }
 }
 
-h1: "h1" {
-  shape: circle
-  style.fill: "#fef3c7"
-  style.stroke: "#f59e0b"
-  style.stroke-width: 2
-  style.font-size: 13
-  style.font-color: "#92400e"
-}
-
-h1-label: "ReLU(W1·x + b1)" {
-  style.fill: transparent
-  style.stroke: transparent
-  style.font-size: 10
-  style.font-color: "#94a3b8"
-  style.italic: true
-}
-
-h2: "h2" {
-  shape: circle
-  style.fill: "#fef3c7"
-  style.stroke: "#f59e0b"
-  style.stroke-width: 2
-  style.font-size: 13
-  style.font-color: "#92400e"
-}
-
-h2-label: "ReLU(W2·x + b2)" {
-  style.fill: transparent
-  style.stroke: transparent
-  style.font-size: 10
-  style.font-color: "#94a3b8"
-  style.italic: true
-}
-
-hdots: "..." {
-  style.fill: transparent
-  style.stroke: transparent
-  style.font-size: 20
-  style.font-color: "#94a3b8"
-}
-
-hN: "hN" {
-  shape: circle
-  style.fill: "#fef3c7"
-  style.stroke: "#f59e0b"
-  style.stroke-width: 2
-  style.font-size: 13
-  style.font-color: "#92400e"
-}
-
-hN-label: "ReLU(WN·x + bN)" {
-  style.fill: transparent
-  style.stroke: transparent
-  style.font-size: 10
-  style.font-color: "#94a3b8"
-  style.italic: true
-}
-
-# ============================================================
+# ================================================================
 # Output Layer
-# ============================================================
-
-output-layer: "输出层" {
+# ================================================================
+output-layer: "输出层 (Linear 不加激活)" {
   style.fill: "#ecfdf5"
   style.stroke: "#10b981"
   style.stroke-width: 2
-  style.stroke-dash: 6
+  style.stroke-dash: 8
+  style.border-radius: 14
+  style.font-size: 14
+  style.font-color: "#065f46"
+
+  ypred: "ŷ" {
+    shape: circle
+    width: 64
+    height: 64
+    style.fill: "#d1fae5"
+    style.stroke: "#10b981"
+    style.stroke-width: 3
+    style.font-size: 16
+    style.font-color: "#065f46"
+  }
+}
+
+# ================================================================
+# Loss
+# ================================================================
+loss: "MSE Loss\nL = (ŷ − y)²" {
+  shape: rectangle
+  style.fill: "#fef2f2"
+  style.stroke: "#ef4444"
+  style.stroke-width: 2
   style.border-radius: 10
   style.font-size: 13
-  style.font-color: "#065f46"
+  style.font-color: "#991b1b"
 }
 
-output: "yPred" {
-  shape: circle
-  style.fill: "#d1fae5"
-  style.stroke: "#10b981"
-  style.stroke-width: 3
-  style.font-size: 15
-  style.font-color: "#065f46"
-}
-
-output-label: "sum w_out_i·h_i + b_out" {
-  style.fill: transparent
-  style.stroke: transparent
-  style.font-size: 10
-  style.font-color: "#94a3b8"
-  style.italic: true
-}
-
-# ============================================================
-# Loss
-# ============================================================
-
-loss: "Loss\nMSE = (yPred-y)^2" {
-  shape: rectangle
-  style.fill: "#ede9fe"
-  style.stroke: "#8b5cf6"
+# ================================================================
+# Forward connections
+# ================================================================
+input -> hidden.h1: {
+  style.stroke: "#3b82f6"
   style.stroke-width: 2
-  style.border-radius: 6
-  style.font-size: 11
-  style.font-color: "#5b21b6"
+}
+input -> hidden.h2: {
+  style.stroke: "#3b82f6"
+  style.stroke-width: 2
+  style.opacity: 0.6
+}
+input -> hidden.hN: {
+  style.stroke: "#3b82f6"
+  style.stroke-width: 2
+  style.opacity: 0.6
 }
 
-# ============================================================
-# Connections
-# ============================================================
+hidden.h1 -> output-layer.ypred: {
+  style.stroke: "#3b82f6"
+  style.stroke-width: 1
+  style.opacity: 0.5
+}
+hidden.h2 -> output-layer.ypred: {
+  style.stroke: "#3b82f6"
+  style.stroke-width: 1
+  style.opacity: 0.5
+}
+hidden.hN -> output-layer.ypred: {
+  style.stroke: "#3b82f6"
+  style.stroke-width: 1
+  style.opacity: 0.5
+}
 
-input -> h1: "W1,b1"
-input -> h2: "W2,b2"
-input -> hN: "WN,bN"
+output-layer.ypred -> loss: {
+  style.stroke: "#ef4444"
+  style.stroke-width: 2
+}
 
-h1 -> output: "w_out1"
-h2 -> output: "w_out2"
-hN -> output: "w_outN"
-
-output -> loss
-
-# ============================================================
+# ================================================================
 # Annotations
-# ============================================================
-
-neuron-note: "每个神经元\n= Linear + ReLU\n= 一段折线" {
+# ================================================================
+neuron-note: "每个神经元 = Linear + ReLU\nhᵢ = ReLU(Wᵢx + bᵢ)\n= 一段折线  " {
+  shape: rectangle
   style.fill: "#fff7ed"
   style.stroke: "#f59e0b"
   style.stroke-width: 1
-  style.border-radius: 6
-  style.font-size: 10
+  style.border-radius: 8
+  style.font-size: 12
   style.font-color: "#92400e"
 }
 
-output-note: "Linear 不加激活\nW·h + b" {
+output-note: "输出层 = 加权求和\nΣ w_outᵢ · hᵢ + b_out\n不加激活函数  " {
+  shape: rectangle
   style.fill: "#ecfdf5"
   style.stroke: "#10b981"
   style.stroke-width: 1
-  style.border-radius: 6
-  style.font-size: 10
+  style.border-radius: 8
+  style.font-size: 12
   style.font-color: "#065f46"
 }
 
-forward-arrow: "→ 前向传播" {
-  style.fill: transparent
-  style.stroke: transparent
-  style.font-size: 13
+forward-flow: "→ 前向传播 (Forward)" {
+  shape: text
+  style.font-size: 12
   style.font-color: "#3b82f6"
   style.bold: true
 }
 
-backward-arrow: "← 反向传播 (链式法则)" {
-  style.fill: transparent
-  style.stroke: transparent
-  style.font-size: 13
+backward-flow: "← 反向传播 (Backward)" {
+  shape: text
+  style.font-size: 12
   style.font-color: "#ef4444"
   style.bold: true
 }
+
+# Dotted edges for positioning
+neuron-note -- hidden
+output-note -- output-layer
+forward-flow -- hidden
+backward-flow -- output-layer

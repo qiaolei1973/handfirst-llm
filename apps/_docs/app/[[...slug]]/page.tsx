@@ -1,6 +1,7 @@
 import { getNavigation, readContentFile, renderMarkdown } from '@/lib/markdown';
 import { notFound } from 'next/navigation';
 import { NavSidebar } from './NavSidebar';
+import { ImageViewer } from './ImageViewer';
 
 interface PageParams {
   slug?: string[];
@@ -19,7 +20,7 @@ export default async function Page({ params }: { params: Promise<PageParams> }) 
     <div className="docs-layout">
       <NavSidebar items={nav} currentPath={'/' + slug.join('/')} />
       <main className="docs-content">
-        <article dangerouslySetInnerHTML={{ __html: html }} />
+        <ImageViewer html={html} />
       </main>
     </div>
   );

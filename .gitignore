@@ -11,10 +11,14 @@ out/
 
 # env
 .env*.local
-# Generated images (see scripts/images/generate-all.sh)
+# Generated images (see scripts/generate-all.sh)
 apps/_docs/public/v1/*.png
 apps/_docs/public/v2/*.png
 apps/_docs/public/v3/*.png
+apps/_docs/public/v3/*.svg
 apps/_docs/public/v4/*.png
 apps/_docs/public/recap/*.png
 apps/_docs/public/recap/*.svg
+
+# Build cache (content hashes for generate-all.sh)
+apps/_docs/public/.cache/

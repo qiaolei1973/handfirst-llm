@@ -16,8 +16,8 @@
 
 所有概念——不管听起来多复杂——都是这四步里某一步的细节。
 
-![训练循环全景：预测→损失→梯度→更新，四步循环，以及标准化、SGD、Early Stopping 等配套概念](/recap/training-loop.png)
-<!-- gen_recap_images.py: #1 training-loop — 四象限循环图：模型预测/算损失/算梯度/更新参数，每个象限展开子概念，中心"训练循环 epoch=一圈" -->
+![训练循环全景：预测→损失→梯度→更新，四步循环，以及标准化、SGD、Early Stopping 等配套概念](/recap/training-loop.svg)
+<!-- gen: d2 recap/training-loop.d2 → recap/training-loop.svg -->
 
 下面我们把这个循环拆开，看看每一步里装着什么。
 
@@ -164,7 +164,7 @@ backward(上游梯度):
 
 "收 → 算 → 传"，每一层都做这三件事。
 
-![前向传播与反向传播：数据从 x 流到 Loss，梯度从 Loss 流回 x](/v3/backprop.png)
+![前向传播与反向传播：数据从 x 流到 Loss，梯度从 Loss 流回 x](/v3/backprop.svg)
 
 ### ReLU 的导数与死神经元
 
@@ -319,8 +319,8 @@ Adam 是业界默认首选——拿来就用，几乎不用调。
 
 ## 概念地图
 
-![概念地图：机器学习所有核心概念的层级关系——从5大主干（模型、损失、梯度、优化器、防线）向下展开](/recap/concept-map.png)
-<!-- gen_recap_images.py: #2 concept-map — 树状层级图：根=机器学习，5大主干 + 20+ 叶子节点，从 Linear/ReLU/神经元到 Adam/Early Stopping -->
+![概念地图：机器学习所有核心概念的层级关系——从5大主干（模型、损失、梯度、优化器、防线）向下展开](/recap/concept-map.svg)
+<!-- gen: d2 recap/concept-map.d2 → recap/concept-map.svg -->
 
 ---
 

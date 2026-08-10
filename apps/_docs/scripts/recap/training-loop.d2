@@ -1,0 +1,163 @@
+# ── 训练循环：预测 → 损失 → 梯度 → 更新 ──
+#   由 generate-all.sh 自动构建，输出到 public/recap/training-loop.svg
+
+vars: {
+  d2-config: {
+    layout-engine: dagre
+  }
+}
+
+direction: right
+
+# ================================================================
+# Four nodes of the training loop
+# ================================================================
+model: {
+  label: "① 模型预测\nForward"
+  style.fill: "#eff6ff"
+  style.stroke: "#3b82f6"
+  style.stroke-width: 2
+  style.border-radius: 12
+  style.font-size: 14
+  style.font-color: "#1d4ed8"
+
+  m1: "Linear (Wx+b)" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  m2: "激活函数 (ReLU)" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  m3: "神经元 = Linear+ReLU" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  m4: "隐藏层 = N个神经元" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  m5: "Layer.forward()" { shape: text; style.font-size: 12; style.font-color: "#1d4ed8"; style.bold: true }
+}
+
+loss: {
+  label: "② 算损失\nLoss"
+  style.fill: "#fef2f2"
+  style.stroke: "#ef4444"
+  style.stroke-width: 2
+  style.border-radius: 12
+  style.font-size: 14
+  style.font-color: "#991b1b"
+
+  l1: "MSE = (ŷ − y)²" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  l2: "训练损失 → 看拟合" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  l3: "验证损失 → 看泛化" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+}
+
+gradient: {
+  label: "③ 算梯度\nGradient"
+  style.fill: "#fffdf5"
+  style.stroke: "#f59e0b"
+  style.stroke-width: 2
+  style.border-radius: 12
+  style.font-size: 14
+  style.font-color: "#92400e"
+
+  g1: "梯度 = dL/d参数" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  g2: "链式法则" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  g3: "反向传播 = 链式法则组织" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  g4: "收 → 算 → 传" { shape: text; style.font-size: 12; style.font-color: "#92400e"; style.bold: true }
+  g5: "Layer.backward()" { shape: text; style.font-size: 12; style.font-color: "#92400e"; style.bold: true }
+}
+
+optimizer: {
+  label: "④ 更新参数\nOptimize"
+  style.fill: "#ecfdf5"
+  style.stroke: "#10b981"
+  style.stroke-width: 2
+  style.border-radius: 12
+  style.font-size: 14
+  style.font-color: "#065f46"
+
+  o1: "梯度下降: W-=lr*grad" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  o2: "Momentum (惯性)" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  o3: "RMSProp (自适应lr)" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+  o4: "Adam (Momentum+RMSProp)" { shape: text; style.font-size: 12; style.font-color: "#065f46"; style.bold: true }
+  o5: "Mini-batch SGD" { shape: text; style.font-size: 12; style.font-color: "#334155" }
+}
+
+# ================================================================
+# Cycle connections
+# ================================================================
+model -> loss: {
+  style.stroke: "#3b82f6"
+  style.stroke-width: 2
+}
+loss -> gradient: {
+  style.stroke: "#ef4444"
+  style.stroke-width: 2
+}
+gradient -> optimizer: {
+  style.stroke: "#f59e0b"
+  style.stroke-width: 2
+}
+optimizer -> model: {
+  style.stroke: "#10b981"
+  style.stroke-width: 2
+}
+
+# ================================================================
+# Center annotation
+# ================================================================
+train-cycle: "训练\n循环\n\nepoch = 一圈" {
+  shape: circle
+  style.fill: "#f8fafc"
+  style.stroke: "#64748b"
+  style.stroke-width: 1
+  style.stroke-dash: 4
+  style.font-size: 15
+  style.font-color: "#475569"
+  style.bold: true
+}
+
+# Connect center to all four nodes for positioning
+train-cycle -- model
+train-cycle -- loss
+train-cycle -- gradient
+train-cycle -- optimizer
+
+# ================================================================
+# Surrounding annotations
+# ================================================================
+side-standardization: "标准化\n(z-score)" {
+  shape: rectangle
+  style.fill: "#f5f0ff"
+  style.stroke: "#8b5cf6"
+  style.stroke-width: 1
+  style.border-radius: 6
+  style.font-size: 11
+  style.font-color: "#6d28d9"
+}
+
+side-centering: "中心化" {
+  shape: rectangle
+  style.fill: "#eff6ff"
+  style.stroke: "#3b82f6"
+  style.stroke-width: 1
+  style.border-radius: 6
+  style.font-size: 11
+  style.font-color: "#1d4ed8"
+}
+
+side-earlystop: "Early\nStopping" {
+  shape: rectangle
+  style.fill: "#ecfdf5"
+  style.stroke: "#10b981"
+  style.stroke-width: 1
+  style.border-radius: 6
+  style.font-size: 11
+  style.font-color: "#065f46"
+}
+
+side-sgd: "Mini-batch\nSGD" {
+  shape: rectangle
+  style.fill: "#fffdf5"
+  style.stroke: "#f59e0b"
+  style.stroke-width: 1
+  style.border-radius: 6
+  style.font-size: 11
+  style.font-color: "#92400e"
+}
+
+side-standardization -- model
+side-centering -- model
+side-earlystop -- optimizer
+side-sgd -- optimizer
