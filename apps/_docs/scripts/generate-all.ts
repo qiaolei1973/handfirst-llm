@@ -13,7 +13,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { homedir } from "node:os";
-import { excalidrawToSvg } from "../../../packages/excalidraw-export/src/index.ts";
+import { excalidrawToSvg } from "./export-excalidraw.ts";
 
 // ── configuration ──
 
