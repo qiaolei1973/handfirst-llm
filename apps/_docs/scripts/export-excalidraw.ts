@@ -171,9 +171,12 @@ function collectArrowDefs() {
     if (points.length < 2) continue;
     const col = color(el.strokeColor, "#64748b");
     const markerId = `mk-${el.id}`;
-    defs += `<marker id="${markerId}" markerWidth="12" markerHeight="12" refX="10" refY="6"`
+    // Excalidraw-style open V arrowhead (not filled triangle)
+    defs += `<marker id="${markerId}" markerWidth="10" markerHeight="10" refX="8" refY="5"`
          + ` orient="auto" markerUnits="strokeWidth">`
-         + `<path d="M 0,2 L 10,6 L 0,10 Z" fill="${col}" opacity="${opacity(el.opacity)}"/>`
+         + `<path d="M 1,2 L 8,5 L 1,8" fill="none" stroke="${col}"`
+         + ` stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"`
+         + ` opacity="${opacity(el.opacity)}"/>`
          + `</marker>\n`;
   }
 }
