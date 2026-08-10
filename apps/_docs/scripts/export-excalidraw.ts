@@ -1,24 +1,25 @@
 /**
  * excalirender — 将 .excalidraw 文件导出为 SVG。
  *
- * 依赖 roughjs（Generator API，不需要浏览器 DOM）。
+ * @example
+ *   // 链式 API
+ *   import excalirender from "excalirender";
+ *   await excalirender("scene.excalidraw").output();
+ *   await excalirender("scene.excalidraw").config({ noSketch: true }).output("out.svg");
  *
- * ```ts
- * import { excalidrawToSvg } from "excalirender";
- * const svg = excalidrawToSvg({ elements: [...], appState: {...} });
- * writeFileSync("output.svg", svg);
- * ```
+ * @example
+ *   // 底层 API
+ *   import { excalidrawToSvg } from "excalirender";
+ *   const svg = excalidrawToSvg({ elements: [...], appState: {...} });
  */
 
 import { createRequire } from "module";
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { readFileSync, writeFileSync } from "node:fs";
+import { basename, dirname, extname, join, resolve } from "node:path";
 
 const { generator: newGenerator } = createRequire(import.meta.url)("roughjs");
 
-// Embedded hand-drawn fonts:
-//   Virgil — Latin (same font Excalidraw uses)
-//   ZCOOL KuaiLe — CJK (站酷快乐体, SIL OFL, Google Fonts)
+// Embedded hand-drawn fonts
 const __dirname = dirname(import.meta.url.replace("file://", ""));
 const VIRGIL_FONT = readFileSync(join(__dirname, "Virgil-Regular.woff2")).toString("base64");
 const ZCOOL_FONT = readFileSync(join(__dirname, "ZCOOLKuaiLe-Regular.woff2")).toString("base64");
@@ -49,7 +50,75 @@ export interface ExportOptions {
   sketch?: boolean;       // default: true (roughjs hand-drawn style)
 }
 
-// ── 核心导出 ──
+export interface RenderConfig {
+  /** Disable hand-drawn sketch style. Default: false (sketch is on). */
+  noSketch?: boolean;
+  /** Disable white background. Default: false (background is on). */
+  noBackground?: boolean;
+}
+
+// ── 构建器（链式 API） ──
+
+class RenderBuilder {
+  private inputPath: string;
+  private _noSketch = false;
+  private _noBackground = false;
+
+  constructor(input: string) {
+    this.inputPath = resolve(input);
+  }
+
+  config(cfg: RenderConfig): this {
+    if (cfg.noSketch !== undefined) this._noSketch = cfg.noSketch;
+    if (cfg.noBackground !== undefined) this._noBackground = cfg.noBackground;
+    return this;
+  }
+
+  async output(): Promise<string>;
+  async output(out: string): Promise<string>;
+  async output(out?: string): Promise<string> {
+    // Determine output path
+    let outputPath: string;
+    if (out) {
+      outputPath = resolve(out);
+    } else {
+      const base = basename(this.inputPath, extname(this.inputPath));
+      outputPath = resolve(process.cwd(), `${base}.svg`);
+    }
+
+    // Determine format from extension
+    const ext = extname(outputPath).toLowerCase();
+    if (ext !== ".svg") {
+      throw new Error(`Unsupported output format: ${ext}. Only .svg is supported.`);
+    }
+
+    // Read scene
+    const scene: ExcalidrawScene = JSON.parse(readFileSync(this.inputPath, "utf-8"));
+
+    // Render
+    const svg = excalidrawToSvg(scene, {
+      sketch: !this._noSketch,
+      background: !this._noBackground,
+    });
+
+    writeFileSync(outputPath, svg, "utf-8");
+    return outputPath;
+  }
+}
+
+/**
+ * 链式 API 入口。
+ *
+ * @example
+ *   await excalirender("scene.excalidraw").output();                     // → ./scene.svg
+ *   await excalirender("scene.excalidraw").output("out.svg");            // → ./out.svg
+ *   await excalirender("scene.excalidraw").config({ noSketch: true }).output("clean.svg");
+ */
+export default function excalirender(input: string): RenderBuilder {
+  return new RenderBuilder(input);
+}
+
+// ── 底层渲染 ──
 
 export function excalidrawToSvg(scene: ExcalidrawScene, opts: ExportOptions = {}): string {
   const elements = scene.elements || [];
@@ -75,37 +144,30 @@ export function excalidrawToSvg(scene: ExcalidrawScene, opts: ExportOptions = {}
   const vbW = maxX - minX + pad * 2;
   const vbH = maxY - minY + pad * 2;
 
-  // Arrowhead markers + Virgil font
-  let defs = "";
-  defs += `<style>\n`
-       // Virgil = Latin hand-drawn. With unicode-range, browser falls through to ZCOOL for CJK.
-       + `@font-face { font-family: "Virgil"; src: url(data:font/woff2;base64,${VIRGIL_FONT}) format("woff2"); `
-       + `unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2039-203A; }\n`
-       + `@font-face { font-family: "ZCOOL KuaiLe"; src: url(data:font/woff2;base64,${ZCOOL_FONT}) format("woff2"); }\n`
-       + `</style>\n`;
+  // Build defs
+  let defs = `<style>\n`
+    + `@font-face { font-family: "Virgil"; src: url(data:font/woff2;base64,${VIRGIL_FONT}) format("woff2"); `
+    + `unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+2039-203A; }\n`
+    + `@font-face { font-family: "ZCOOL KuaiLe"; src: url(data:font/woff2;base64,${ZCOOL_FONT}) format("woff2"); }\n`
+    + `</style>\n`;
+
   for (const el of elements) {
     if (el.type !== "arrow") continue;
     const pts = el.points || [];
     if (pts.length < 2) continue;
     const col = svgColor(el.strokeColor, "#64748b");
     defs += `<marker id="mk-${el.id}" markerWidth="18" markerHeight="14" refX="14" refY="7"`
-         + ` orient="auto" markerUnits="userSpaceOnUse">`
-         + `<path d="M 1,2 L 14,7 L 1,12" fill="none" stroke="${col}"`
-         + ` stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`
-         + `</marker>\n`;
+      + ` orient="auto" markerUnits="userSpaceOnUse">`
+      + `<path d="M 1,2 L 14,7 L 1,12" fill="none" stroke="${col}"`
+      + ` stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `</marker>\n`;
   }
 
   // Build SVG
   let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
   svg += `<svg xmlns="http://www.w3.org/2000/svg"`
-       + ` viewBox="${minX - pad} ${minY - pad} ${vbW} ${vbH}"`
-       + ` width="${vbW}" height="${vbH}">\n`;
-  // Very subtle text sketch filter — just enough to break mechanical perfection
-  defs += `<filter id="text-sketch">`
-       + `<feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="7" result="noise"/>`
-       + `<feDisplacementMap in="SourceGraphic" in2="noise" scale="0.8" xChannelSelector="R" yChannelSelector="G"/>`
-       + `</filter>\n`;
-
+    + ` viewBox="${minX - pad} ${minY - pad} ${vbW} ${vbH}"`
+    + ` width="${vbW}" height="${vbH}">\n`;
   if (defs) svg += `<defs>\n${defs}</defs>\n`;
   if (bg) {
     svg += `<rect x="${minX - pad}" y="${minY - pad}" width="${vbW}" height="${vbH}" fill="white"/>\n`;
@@ -119,7 +181,7 @@ export function excalidrawToSvg(scene: ExcalidrawScene, opts: ExportOptions = {}
   return svg;
 }
 
-// ── 每个元素渲染 ──
+// ── 元素渲染 ──
 
 const NOS = "none";
 const gen = newGenerator();
@@ -145,18 +207,17 @@ function renderText(el: ExcalidrawElement): string {
   let s = "";
   for (let i = 0; i < lines.length; i++) {
     const ax = el.textAlign === "center" ? el.x + el.width / 2
-             : el.textAlign === "right" ? el.x + el.width : el.x;
+      : el.textAlign === "right" ? el.x + el.width : el.x;
     s += `<text x="${ax.toFixed(1)}" y="${(sy + i * lineH).toFixed(1)}"`
-       + ` font-family="${ff}" font-size="${fs}"`
-       + ` fill="${svgColor(el.strokeColor, "#1e293b")}"`
-       + ` text-anchor="${svgTA(el.textAlign)}" opacity="${svgOp(el.opacity)}">${esc(lines[i])}</text>\n`;
+      + ` font-family="${ff}" font-size="${fs}"`
+      + ` fill="${svgColor(el.strokeColor, "#1e293b")}"`
+      + ` text-anchor="${svgTA(el.textAlign)}" opacity="${svgOp(el.opacity)}">${esc(lines[i])}</text>\n`;
   }
   return s;
 }
 
 function renderRect(el: ExcalidrawElement, sketch: boolean): string {
   if (el.text && !el.backgroundColor) return renderText(el);
-
   const fill = svgBg(el.backgroundColor);
   const stroke = svgColor(el.strokeColor, "#1e293b");
   const sw = el.strokeWidth || 1;
@@ -164,12 +225,11 @@ function renderRect(el: ExcalidrawElement, sketch: boolean): string {
   const rx = el.roundness?.type === 3 ? 8 : el.roundness?.type === 2 ? 6 : el.roundness?.type === 1 ? 4 : 0;
 
   if (!sketch) {
-    return `<rect x="${el.x}" y="${el.y}" width="${el.width}" height="${el.height}" rx="${rx}"`
-         + ` fill="${fill}" stroke="${stroke}" stroke-width="${sw}" opacity="${op}"/>\n`
-         + (el.text ? innerText(el) : "");
+    return `<rect x="${el.x}" y="${el.y}" width="${el.width}" height="${el.height}" rx="${rx}" fill="${fill}"`
+      + ` stroke="${stroke}" stroke-width="${sw}" opacity="${op}"/>\n`
+      + (el.text ? innerText(el) : "");
   }
 
-  // roughjs: generate hachure + multi-pass stroke paths
   const seed = hash32(el.id);
   const drawable = gen.rectangle(el.x, el.y, el.width, el.height, {
     seed, roughness: 1.2, bowing: 0.8,
@@ -180,7 +240,6 @@ function renderRect(el: ExcalidrawElement, sketch: boolean): string {
     hachureAngle: 60,
     hachureGap: sw * 3,
   });
-
   return drawableToSvg(drawable, op) + (el.text ? innerText(el) : "");
 }
 
@@ -193,9 +252,9 @@ function renderEllipse(el: ExcalidrawElement, sketch: boolean): string {
   const op = svgOp(el.opacity);
 
   if (!sketch) {
-    return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}"`
-         + ` stroke-width="${sw}" opacity="${op}"/>\n`
-         + (el.text ? innerText(el) : "");
+    return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}"`
+      + ` stroke="${stroke}" stroke-width="${sw}" opacity="${op}"/>\n`
+      + (el.text ? innerText(el) : "");
   }
 
   const seed = hash32(el.id);
@@ -208,7 +267,6 @@ function renderEllipse(el: ExcalidrawElement, sketch: boolean): string {
     hachureAngle: 60,
     hachureGap: sw * 3,
   });
-
   return drawableToSvg(drawable, op) + (el.text ? innerText(el) : "");
 }
 
@@ -224,15 +282,13 @@ function renderArrow(el: ExcalidrawElement, sketch: boolean): string {
   if (sketch) {
     const seed = hash32(el.id);
     const drawable = gen.linearPath(absPts, { seed, roughness: 1.2, bowing: 0.5, stroke: col, strokeWidth: sw });
-    // Only the 'path' sets (not fill)
     d = drawable.sets.filter(s => s.type === "path").map(s => gen.opsToPath(s, 1)).join(" ");
   } else {
     d = absPts.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ");
   }
 
   return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${sw}"`
-       + ` stroke-linecap="round" opacity="${op}"`
-       + ` marker-end="url(#mk-${el.id})"/>\n`;
+    + ` stroke-linecap="round" opacity="${op}" marker-end="url(#mk-${el.id})"/>\n`;
 }
 
 function renderLine(el: ExcalidrawElement, sketch: boolean): string {
@@ -253,11 +309,10 @@ function renderLine(el: ExcalidrawElement, sketch: boolean): string {
   }
 
   return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${sw}"`
-       + ` stroke-linecap="round" opacity="${op}"`
-       + ` stroke-dasharray="${svgDash(el.strokeStyle)}"/>\n`;
+    + ` stroke-linecap="round" opacity="${op}" stroke-dasharray="${svgDash(el.strokeStyle)}"/>\n`;
 }
 
-// ── roughjs Drawable → SVG strings ──
+// ── roughjs → SVG ──
 
 function drawableToSvg(d: any, opacity: number): string {
   let s = "";
@@ -267,23 +322,23 @@ function drawableToSvg(d: any, opacity: number): string {
     switch (set.type) {
       case "path":
         s += `<path d="${pathData}" fill="none" stroke="${options.stroke}"`
-           + ` stroke-width="${options.strokeWidth}" stroke-linecap="round" stroke-linejoin="round"`
-           + ` opacity="${opacity}"/>\n`;
+          + ` stroke-width="${options.strokeWidth}" stroke-linecap="round" stroke-linejoin="round"`
+          + ` opacity="${opacity}"/>\n`;
         break;
       case "fillPath":
         s += `<path d="${pathData}" fill="${options.fill || NOS}" stroke="none" opacity="${opacity}"/>\n`;
         break;
       case "fillSketch":
         s += `<path d="${pathData}" fill="none" stroke="${options.fill || NOS}"`
-           + ` stroke-width="${options.fillWeight || 1}" stroke-linecap="round"`
-           + ` opacity="${opacity}"/>\n`;
+          + ` stroke-width="${options.fillWeight || 1}" stroke-linecap="round"`
+          + ` opacity="${opacity}"/>\n`;
         break;
     }
   }
   return s;
 }
 
-// ── 辅助 ──
+// ── helpers ──
 
 function innerText(el: ExcalidrawElement): string {
   return renderText({ ...el, type: "text", x: el.x + 6, y: el.y,
