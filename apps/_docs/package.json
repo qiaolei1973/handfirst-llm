@@ -7,8 +7,8 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "predev": "bash ../../scripts/generate-all-images.sh",
-    "prebuild": "bash ../../scripts/generate-all-images.sh"
+    "predev": "bash ../../scripts/images/generate-all.sh",
+    "prebuild": "bash ../../scripts/images/generate-all.sh"
   },
   "dependencies": {
     "next": "^15.1.0",

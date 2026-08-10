@@ -13,7 +13,7 @@ import matplotlib.font_manager as fm
 import numpy as np
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent.parent / "apps/_docs/public/v1"
+OUT = Path(__file__).resolve().parent.parent.parent / "apps/_docs/public/v1"
 OUT.mkdir(parents=True, exist_ok=True)
 
 FONT_PATH = "/home/qingquan/.fonts/NotoSansSC-Regular.ttf"
