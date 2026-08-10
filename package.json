@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter _docs dev",
+    "dev:force": "pnpm --filter _docs dev:force",
     "dev:v1": "pnpm exec tsx apps/v1/dev.ts",
     "dev:v2": "pnpm exec tsx apps/v2/dev.ts",
     "dev:v3": "pnpm exec tsx apps/v3/dev.ts",
