@@ -177,74 +177,20 @@ print("  ✓ v3/relu-shapes.png")
 # ================================================================
 #  3. neurons-approximate.png — 训练 2/4/8/16 个神经元逼近 sin
 # ================================================================
-def train_nn(x, y, n_neurons, epochs=4000, lr=0.02, batch_size=40, seed=42):
-    """Train a single-hidden-layer ReLU network (pure numpy, scalar-style).
-    Returns: (hidden_w, hidden_b, output_w, output_b, final_loss)"""
-    rng = np.random.RandomState(seed)
-    n = len(x)
-
-    # Init weights (matching Layer constructor)
-    hidden_w = rng.rand(n_neurons) * 1.2 - 0.6
-    hidden_b = np.array([-hidden_w[j] * rng.rand() for j in range(n_neurons)])
-    output_w = rng.rand(n_neurons) * 1.2 - 0.6
-    output_b = 0.0
-
-    indices = np.arange(n)
-
-    for epoch in range(epochs):
-        rng.shuffle(indices)
-        batch_idx = indices[:batch_size]
-        xb, yb = x[batch_idx], y[batch_idx]
-
-        # ---- Forward ----
-        # hidden: [batch, neurons]
-        z = np.outer(xb, hidden_w) + hidden_b  # pre-activation
-        h = np.maximum(0, z)                     # ReLU
-        y_pred = h @ output_w + output_b
-
-        diff = y_pred - yb
-        loss = np.mean(diff ** 2)
-
-        # ---- Backward (MSE) ----
-        grad_out = (2 * diff) / batch_size  # [batch]
-
-        grad_output_w = h.T @ grad_out       # [neurons]
-        grad_output_b = np.sum(grad_out)
-
-        grad_h = np.outer(grad_out, output_w)        # [batch, neurons]
-        grad_preact = grad_h * (z > 0)                # ReLU derivative
-
-        grad_hidden_w = xb @ grad_preact              # [neurons]
-        grad_hidden_b = np.sum(grad_preact, axis=0)   # [neurons]
-
-        # ---- Update ----
-        output_w -= lr * grad_output_w
-        output_b -= lr * grad_output_b
-        hidden_w -= lr * grad_hidden_w
-        hidden_b -= lr * grad_hidden_b
-
-    # Final loss on all data
-    z = np.outer(x, hidden_w) + hidden_b
-    h = np.maximum(0, z)
-    y_pred = h @ output_w + output_b
-    final_loss = np.mean((y_pred - y) ** 2)
-
-    return hidden_w, hidden_b, output_w, output_b, final_loss
-
+# Load precomputed training results
+DATA = np.load(Path(__file__).resolve().parent / "precompute.npz", allow_pickle=True)
 
 def predict_nn(x, hidden_w, hidden_b, output_w, output_b):
     h = np.maximum(0, np.outer(x, hidden_w) + hidden_b)
     return h @ output_w + output_b
 
-
 neuron_counts = [2, 4, 8, 16]
 all_results = []
 
 for n_neurons in neuron_counts:
-    hw, hb, ow, ob, loss = train_nn(x_norm, labels, n_neurons,
-                                     epochs=4000, lr=0.02, seed=42)
+    d = dict(DATA[f"n{n_neurons}"].item())
+    hw = d["hw"]; hb = d["hb"]; ow = d["ow"]; ob = d["ob"]; loss = d["loss"]
     all_results.append((hw, hb, ow, ob, loss))
-    print(f"  trained {n_neurons}-neuron network: loss={loss:.6f}")
 
 # ---- Plot: 2×2 grid ----
 fig, axes = plt.subplots(2, 2, figsize=(11, 8))
