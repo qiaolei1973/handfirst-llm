@@ -3,7 +3,7 @@
  * generate-all.ts — 生成所有图片（数据图用 matplotlib，架构图用 D2）
  *
  * 缓存：对每个源文件存 sha256，hash 不变 → 跳过
- * 强制重生成: GENERATE_ALL_FORCE=1 tsx generate-all.ts
+ * 强制重生成: tsx generate-all.ts --force  或  GENERATE_ALL_FORCE=1 tsx generate-all.ts
  *
  * 调用方：_docs/package.json 的 predev / prebuild hooks
  */
@@ -20,7 +20,7 @@ const PUBLIC = resolve(import.meta.dirname!, "..", "public");
 const SCRIPTS = import.meta.dirname!;
 const D2 = join(homedir(), ".local", "bin", "d2");
 const CACHE = join(PUBLIC, ".cache");
-const FORCE = process.env["GENERATE_ALL_FORCE"] === "1";
+const FORCE = process.env["GENERATE_ALL_FORCE"] === "1" || process.argv.includes("--force");
 
 // ── helpers ──
 
