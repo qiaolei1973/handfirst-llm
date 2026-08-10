@@ -172,9 +172,9 @@ function collectArrowDefs() {
     const col = color(el.strokeColor, "#64748b");
     const markerId = `mk-${el.id}`;
     // Excalidraw-style open V arrowhead (not filled triangle)
-    defs += `<marker id="${markerId}" markerWidth="10" markerHeight="10" refX="8" refY="5"`
+    defs += `<marker id="${markerId}" markerWidth="18" markerHeight="14" refX="14" refY="7"`
          + ` orient="auto" markerUnits="userSpaceOnUse">`
-         + `<path d="M 1,2 L 8,5 L 1,8" fill="none" stroke="${col}"`
+         + `<path d="M 1,2 L 14,7 L 1,12" fill="none" stroke="${col}"`
          + ` stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"`
          + ` opacity="${opacity(el.opacity)}"/>`
          + `</marker>\n`;
