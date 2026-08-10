@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.7.1" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1177 1972"><svg class="d2-1347742173 d2-svg" width="1177" height="1972" viewBox="-101 -101 1177 1972"><rect x="-101.000000" y="-101.000000" width="1177.000000" height="1972.000000" rx="0.000000" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-1347742173 .text-bold {
+	font-family: "Noto Sans SC Thin";
+}
+
+.d2-1347742173 .text-italic {
+	font-family: "Noto Sans SC Thin";
+}
+]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-1347742173 .fill-N1{fill:#0A0F25;}
+		.d2-1347742173 .fill-N2{fill:#676C7E;}
+		.d2-1347742173 .fill-N3{fill:#9499AB;}
+		.d2-1347742173 .fill-N4{fill:#CFD2DD;}
+		.d2-1347742173 .fill-N5{fill:#DEE1EB;}
+		.d2-1347742173 .fill-N6{fill:#EEF1F8;}
+		.d2-1347742173 .fill-N7{fill:#FFFFFF;}
+		.d2-1347742173 .fill-B1{fill:#0D32B2;}
+		.d2-1347742173 .fill-B2{fill:#0D32B2;}
+		.d2-1347742173 .fill-B3{fill:#E3E9FD;}
+		.d2-1347742173 .fill-B4{fill:#E3E9FD;}
+		.d2-1347742173 .fill-B5{fill:#EDF0FD;}
+		.d2-1347742173 .fill-B6{fill:#F7F8FE;}
+		.d2-1347742173 .fill-AA2{fill:#4A6FF3;}
+		.d2-1347742173 .fill-AA4{fill:#EDF0FD;}
+		.d2-1347742173 .fill-AA5{fill:#F7F8FE;}
+		.d2-1347742173 .fill-AB4{fill:#EDF0FD;}
+		.d2-1347742173 .fill-AB5{fill:#F7F8FE;}
+		.d2-1347742173 .stroke-N1{stroke:#0A0F25;}
+		.d2-1347742173 .stroke-N2{stroke:#676C7E;}
+		.d2-1347742173 .stroke-N3{stroke:#9499AB;}
+		.d2-1347742173 .stroke-N4{stroke:#CFD2DD;}
+		.d2-1347742173 .stroke-N5{stroke:#DEE1EB;}
+		.d2-1347742173 .stroke-N6{stroke:#EEF1F8;}
+		.d2-1347742173 .stroke-N7{stroke:#FFFFFF;}
+		.d2-1347742173 .stroke-B1{stroke:#0D32B2;}
+		.d2-1347742173 .stroke-B2{stroke:#0D32B2;}
+		.d2-1347742173 .stroke-B3{stroke:#E3E9FD;}
+		.d2-1347742173 .stroke-B4{stroke:#E3E9FD;}
+		.d2-1347742173 .stroke-B5{stroke:#EDF0FD;}
+		.d2-1347742173 .stroke-B6{stroke:#F7F8FE;}
+		.d2-1347742173 .stroke-AA2{stroke:#4A6FF3;}
+		.d2-1347742173 .stroke-AA4{stroke:#EDF0FD;}
+		.d2-1347742173 .stroke-AA5{stroke:#F7F8FE;}
+		.d2-1347742173 .stroke-AB4{stroke:#EDF0FD;}
+		.d2-1347742173 .stroke-AB5{stroke:#F7F8FE;}
+		.d2-1347742173 .background-color-N1{background-color:#0A0F25;}
+		.d2-1347742173 .background-color-N2{background-color:#676C7E;}
+		.d2-1347742173 .background-color-N3{background-color:#9499AB;}
+		.d2-1347742173 .background-color-N4{background-color:#CFD2DD;}
+		.d2-1347742173 .background-color-N5{background-color:#DEE1EB;}
+		.d2-1347742173 .background-color-N6{background-color:#EEF1F8;}
+		.d2-1347742173 .background-color-N7{background-color:#FFFFFF;}
+		.d2-1347742173 .background-color-B1{background-color:#0D32B2;}
+		.d2-1347742173 .background-color-B2{background-color:#0D32B2;}
+		.d2-1347742173 .background-color-B3{background-color:#E3E9FD;}
+		.d2-1347742173 .background-color-B4{background-color:#E3E9FD;}
+		.d2-1347742173 .background-color-B5{background-color:#EDF0FD;}
+		.d2-1347742173 .background-color-B6{background-color:#F7F8FE;}
+		.d2-1347742173 .background-color-AA2{background-color:#4A6FF3;}
+		.d2-1347742173 .background-color-AA4{background-color:#EDF0FD;}
+		.d2-1347742173 .background-color-AA5{background-color:#F7F8FE;}
+		.d2-1347742173 .background-color-AB4{background-color:#EDF0FD;}
+		.d2-1347742173 .background-color-AB5{background-color:#F7F8FE;}
+		.d2-1347742173 .color-N1{color:#0A0F25;}
+		.d2-1347742173 .color-N2{color:#676C7E;}
+		.d2-1347742173 .color-N3{color:#9499AB;}
+		.d2-1347742173 .color-N4{color:#CFD2DD;}
+		.d2-1347742173 .color-N5{color:#DEE1EB;}
+		.d2-1347742173 .color-N6{color:#EEF1F8;}
+		.d2-1347742173 .color-N7{color:#FFFFFF;}
+		.d2-1347742173 .color-B1{color:#0D32B2;}
+		.d2-1347742173 .color-B2{color:#0D32B2;}
+		.d2-1347742173 .color-B3{color:#E3E9FD;}
+		.d2-1347742173 .color-B4{color:#E3E9FD;}
+		.d2-1347742173 .color-B5{color:#EDF0FD;}
+		.d2-1347742173 .color-B6{color:#F7F8FE;}
+		.d2-1347742173 .color-AA2{color:#4A6FF3;}
+		.d2-1347742173 .color-AA4{color:#EDF0FD;}
+		.d2-1347742173 .color-AA5{color:#F7F8FE;}
+		.d2-1347742173 .color-AB4{color:#EDF0FD;}
+		.d2-1347742173 .color-AB5{color:#F7F8FE;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.sketch-overlay-B1{fill:url(#streaks-darker-d2-1347742173);mix-blend-mode:lighten}.sketch-overlay-B2{fill:url(#streaks-darker-d2-1347742173);mix-blend-mode:lighten}.sketch-overlay-B3{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.sketch-overlay-B4{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.sketch-overlay-B5{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.sketch-overlay-B6{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.sketch-overlay-AA2{fill:url(#streaks-dark-d2-1347742173);mix-blend-mode:overlay}.sketch-overlay-AA4{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.sketch-overlay-AA5{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.sketch-overlay-AB4{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.sketch-overlay-AB5{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.sketch-overlay-N1{fill:url(#streaks-darker-d2-1347742173);mix-blend-mode:lighten}.sketch-overlay-N2{fill:url(#streaks-dark-d2-1347742173);mix-blend-mode:overlay}.sketch-overlay-N3{fill:url(#streaks-normal-d2-1347742173);mix-blend-mode:color-burn}.sketch-overlay-N4{fill:url(#streaks-normal-d2-1347742173);mix-blend-mode:color-burn}.sketch-overlay-N5{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.sketch-overlay-N6{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.sketch-overlay-N7{fill:url(#streaks-bright-d2-1347742173);mix-blend-mode:darken}.light-code{display: block}.dark-code{display: none}]]></style><g class="dGl0bGU="><g class="shape" ><rect x="0.000000" y="0.000000" width="267.000000" height="74.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="133.500000" y="42.500000" fill="#0f172a" class="text-bold" style="text-anchor:middle;font-size:20px">神经网络：1 → N → 1</text></g><g class="c3R5bGVz"><g class="shape" ><rect x="95.000000" y="134.000000" width="78.000000" height="63.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="134.000000" y="168.500000" fill="#334155" class="text-bold" style="text-anchor:middle;font-size:12px">styles</text></g><g class="aW5wdXQ="><g class="shape" ><ellipse rx="58.500000" ry="58.500000" cx="133.500000" cy="315.500000" stroke="#64748b" fill="#e2e8f0" class="shape" style="stroke-width:2;" /></g><text x="133.500000" y="319.500000" fill="#334155" class="text-bold" style="text-anchor:middle;font-size:15px">输入 x</text></g><g class="aGlkZGVuLWxheWVy"><g class="shape" ><rect x="65.000000" y="434.000000" width="138.000000" height="80.000000" rx="12.000000" stroke="#f59e0b" fill="#fffdf5" style="stroke-width:2;stroke-dasharray:12.000000,11.838767;" /></g><text x="134.000000" y="470.500000" fill="#92400e" class="text-bold" style="text-anchor:middle;font-size:14px"><tspan x="134.000000" dy="0.000000">隐藏层</tspan><tspan x="134.000000" dy="17.500000">(N 个神经元)</tspan></text></g><g class="aDE="><g class="shape" ><ellipse rx="37.000000" ry="37.000000" cx="448.000000" cy="182.000000" stroke="#f59e0b" fill="#fef3c7" class="shape" style="stroke-width:2;" /></g><text x="448.000000" y="185.500000" fill="#92400e" class="text-bold" style="text-anchor:middle;font-size:13px">h1</text></g><g class="aDEtbGFiZWw="><g class="shape" ><rect x="71.000000" y="574.000000" width="126.000000" height="60.000000" stroke="transparent" fill="transparent" style="stroke-width:2;" /></g><text x="134.000000" y="606.500000" fill="#94a3b8" class="text-bold" style="text-anchor:middle;font-size:10px">ReLU(W1·x + b1)</text></g><g class="aDI="><g class="shape" ><ellipse rx="37.000000" ry="37.000000" cx="448.000000" cy="316.000000" stroke="#f59e0b" fill="#fef3c7" class="shape" style="stroke-width:2;" /></g><text x="448.000000" y="319.500000" fill="#92400e" class="text-bold" style="text-anchor:middle;font-size:13px">h2</text></g><g class="aDItbGFiZWw="><g class="shape" ><rect x="71.000000" y="694.000000" width="126.000000" height="60.000000" stroke="transparent" fill="transparent" style="stroke-width:2;" /></g><text x="134.000000" y="726.500000" fill="#94a3b8" class="text-bold" style="text-anchor:middle;font-size:10px">ReLU(W2·x + b2)</text></g><g class="aGRvdHM="><g class="shape" ><rect x="103.000000" y="814.000000" width="61.000000" height="74.000000" stroke="transparent" fill="transparent" style="stroke-width:2;" /></g><text x="133.500000" y="856.500000" fill="#94a3b8" class="text-bold" style="text-anchor:middle;font-size:20px">...</text></g><g class="aE4="><g class="shape" ><ellipse rx="37.000000" ry="37.000000" cx="448.000000" cy="450.000000" stroke="#f59e0b" fill="#fef3c7" class="shape" style="stroke-width:2;" /></g><text x="448.000000" y="453.500000" fill="#92400e" class="text-bold" style="text-anchor:middle;font-size:13px">hN</text></g><g class="aE4tbGFiZWw="><g class="shape" ><rect x="69.000000" y="948.000000" width="130.000000" height="60.000000" stroke="transparent" fill="transparent" style="stroke-width:2;" /></g><text x="134.000000" y="980.500000" fill="#94a3b8" class="text-bold" style="text-anchor:middle;font-size:10px">ReLU(WN·x + bN)</text></g><g class="b3V0cHV0LWxheWVy"><g class="shape" ><rect x="87.000000" y="1068.000000" width="93.000000" height="64.000000" rx="10.000000" stroke="#10b981" fill="#ecfdf5" style="stroke-width:2;stroke-dasharray:12.000000,11.838767;" /></g><text x="133.500000" y="1103.500000" fill="#065f46" class="text-bold" style="text-anchor:middle;font-size:13px">输出层</text></g><g class="b3V0cHV0"><g class="shape" ><ellipse rx="52.000000" ry="52.000000" cx="687.000000" cy="316.000000" stroke="#10b981" fill="#d1fae5" class="shape" style="stroke-width:3;" /></g><text x="687.000000" y="320.000000" fill="#065f46" class="text-bold" style="text-anchor:middle;font-size:15px">yPred</text></g><g class="b3V0cHV0LWxhYmVs"><g class="shape" ><rect x="50.000000" y="1192.000000" width="168.000000" height="60.000000" stroke="transparent" fill="transparent" style="stroke-width:2;" /></g><text x="134.000000" y="1224.500000" fill="#94a3b8" class="text-bold" style="text-anchor:middle;font-size:10px">sum w_out_i·h_i + b_out</text></g><g class="bG9zcw=="><g class="shape" ><rect x="839.000000" y="280.000000" width="136.000000" height="72.000000" rx="6.000000" stroke="#8b5cf6" fill="#ede9fe" style="stroke-width:2;" /></g><text x="907.000000" y="313.500000" fill="#5b21b6" class="text-bold" style="text-anchor:middle;font-size:11px"><tspan x="907.000000" dy="0.000000">Loss</tspan><tspan x="907.000000" dy="13.500000">MSE = (yPred-y)^2</tspan></text></g><g class="bmV1cm9uLW5vdGU="><g class="shape" ><rect x="75.000000" y="1312.000000" width="117.000000" height="80.000000" rx="6.000000" stroke="#f59e0b" fill="#fff7ed" style="stroke-width:1;" /></g><text x="133.500000" y="1344.500000" fill="#92400e" class="text-bold" style="text-anchor:middle;font-size:10px"><tspan x="133.500000" dy="0.000000">每个神经元</tspan><tspan x="133.500000" dy="11.666667">= Linear + ReLU</tspan><tspan x="133.500000" dy="11.666667">= 一段折线</tspan></text></g><g class="b3V0cHV0LW5vdGU="><g class="shape" ><rect x="70.000000" y="1452.000000" width="127.000000" height="70.000000" rx="6.000000" stroke="#10b981" fill="#ecfdf5" style="stroke-width:1;" /></g><text x="133.500000" y="1484.500000" fill="#065f46" class="text-bold" style="text-anchor:middle;font-size:10px"><tspan x="133.500000" dy="0.000000">Linear 不加激活</tspan><tspan x="133.500000" dy="12.500000">W·h + b</tspan></text></g><g class="Zm9yd2FyZC1hcnJvdw=="><g class="shape" ><rect x="71.000000" y="1582.000000" width="126.000000" height="64.000000" stroke="transparent" fill="transparent" style="stroke-width:2;" /></g><text x="134.000000" y="1617.500000" fill="#3b82f6" class="text-bold" style="text-anchor:middle;font-size:13px">→ 前向传播</text></g><g class="YmFja3dhcmQtYXJyb3c="><g class="shape" ><rect x="32.000000" y="1706.000000" width="204.000000" height="64.000000" stroke="transparent" fill="transparent" style="stroke-width:2;" /></g><text x="134.000000" y="1741.500000" fill="#ef4444" class="text-bold" style="text-anchor:middle;font-size:13px">← 反向传播 (链式法则)</text></g><g class="KGlucHV0IC0mZ3Q7IGgxKVswXQ=="><marker id="mk-d2-1347742173-3488378134" markerWidth="10.000000" markerHeight="12.000000" refX="7.000000" refY="6.000000" viewBox="0.000000 0.000000 10.000000 12.000000" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0.000000,0.000000 10.000000,6.000000 0.000000,12.000000" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 184.671481 282.901751 C 307.799988 202.000000 353.399994 181.600006 407.000096 181.972223" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1347742173-3488378134)" mask="url(#d2-1347742173)" /><text x="290.500000" y="219.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">W1,b1</text></g><g class="KGlucHV0IC0mZ3Q7IGgyKVswXQ=="><path d="M 193.999988 315.993197 C 309.600006 315.600006 353.399994 315.600006 407.000096 315.972223" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1347742173-3488378134)" mask="url(#d2-1347742173)" /><text x="302.000000" y="321.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">W2,b2</text></g><g class="KGlucHV0IC0mZ3Q7IGhOKVswXQ=="><path d="M 184.671481 348.098249 C 307.799988 429.000000 353.399994 449.600006 407.000096 449.972223" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1347742173-3488378134)" mask="url(#d2-1347742173)" /><text x="290.000000" y="423.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">WN,bN</text></g><g class="KGgxIC0mZ3Q7IG91dHB1dClbMF0="><path d="M 486.999956 181.986667 C 545.000000 181.600006 578.200012 200.800003 647.912686 274.726089" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1347742173-3488378134)" mask="url(#d2-1347742173)" /><text x="580.500000" y="209.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">w_out1</text></g><g class="KGgyIC0mZ3Q7IG91dHB1dClbMF0="><path d="M 486.999956 315.986667 C 545.000000 315.600006 575.000000 315.600006 630.500100 315.970001" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1347742173-3488378134)" mask="url(#d2-1347742173)" /><text x="560.000000" y="321.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">w_out2</text></g><g class="KGhOIC0mZ3Q7IG91dHB1dClbMF0="><path d="M 486.999956 449.986667 C 545.000000 449.600006 578.200012 430.200012 647.912686 356.273911" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1347742173-3488378134)" mask="url(#d2-1347742173)" /><text x="581.000000" y="433.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">w_outN</text></g><g class="KG91dHB1dCAtJmd0OyBsb3NzKVswXQ=="><path d="M 741.499875 315.975002 C 779.000000 315.600006 799.000000 315.500000 835.000000 315.500000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1347742173-3488378134)" mask="url(#d2-1347742173)" /></g><mask id="d2-1347742173" maskUnits="userSpaceOnUse" x="-101" y="-101" width="1177" height="1972">
+<rect x="-101" y="-101" width="1177" height="1972" fill="white"></rect>
+<rect x="269.000000" y="203.000000" width="43" height="21" fill="black"></rect>
+<rect x="280.000000" y="305.000000" width="44" height="21" fill="black"></rect>
+<rect x="266.000000" y="407.000000" width="48" height="21" fill="black"></rect>
+<rect x="555.000000" y="193.000000" width="51" height="21" fill="black"></rect>
+<rect x="534.000000" y="305.000000" width="52" height="21" fill="black"></rect>
+<rect x="554.000000" y="417.000000" width="54" height="21" fill="black"></rect>
+</mask></svg></svg>

@@ -1,0 +1,176 @@
+title: "神经网络 — 从输入到输出" {
+  style.font-size: 20
+  style.font-color: "#0f172a"
+}
+
+direction: right
+
+styles: {
+  style.font-size: 13
+  style.font-color: "#334155"
+}
+
+# ============================================================
+# Input
+# ============================================================
+
+input: "输入 x" {
+  shape: circle
+  style.fill: "#f1f5f9"
+  style.stroke: "#64748b"
+  style.stroke-width: 2
+  style.font-size: 15
+}
+
+# ============================================================
+# Hidden Layer — N neurons
+# ============================================================
+
+hidden-layer: "隐藏层 (N 个神经元)" {
+  style.fill: "#fef9e7"
+  style.stroke: "#f59e0b"
+  style.stroke-width: 2
+  style.border-radius: 8
+  style.font-color: "#92400e"
+  style.font-size: 14
+  n1-linear: "W1 x + b1" {
+    style.fill: "#dbeafe"
+    style.stroke: "#3b82f6"
+    style.stroke-width: 2
+    style.border-radius: 6
+    style.font-color: "#1e40af"
+    style.font-size: 11
+  }
+  n1-relu: "ReLU" {
+    style.fill: "#fee2e2"
+    style.stroke: "#ef4444"
+    style.stroke-width: 2
+    style.border-radius: 6
+    style.font-color: "#991b1b"
+    style.font-size: 11
+  }
+  n1-linear -> n1-relu
+
+  n2-linear: "W2 x + b2" {
+    style.fill: "#dbeafe"
+    style.stroke: "#3b82f6"
+    style.stroke-width: 2
+    style.border-radius: 6
+    style.font-color: "#1e40af"
+    style.font-size: 11
+  }
+  n2-relu: "ReLU" {
+    style.fill: "#fee2e2"
+    style.stroke: "#ef4444"
+    style.stroke-width: 2
+    style.border-radius: 6
+    style.font-color: "#991b1b"
+    style.font-size: 11
+  }
+  n2-linear -> n2-relu
+
+  ndots: "..." {
+    style.fill: transparent
+    style.stroke: transparent
+    style.font-size: 20
+    style.font-color: "#94a3b8"
+  }
+
+  nn-linear: "WN x + bN" {
+    style.fill: "#dbeafe"
+    style.stroke: "#3b82f6"
+    style.stroke-width: 2
+    style.border-radius: 6
+    style.font-color: "#1e40af"
+    style.font-size: 11
+  }
+  nn-relu: "ReLU" {
+    style.fill: "#fee2e2"
+    style.stroke: "#ef4444"
+    style.stroke-width: 2
+    style.border-radius: 6
+    style.font-color: "#991b1b"
+    style.font-size: 11
+  }
+  nn-linear -> nn-relu
+}
+
+# ============================================================
+# Output Layer
+# ============================================================
+
+output-layer: "输出层" {
+  style.fill: "#ecfdf5"
+  style.stroke: "#10b981"
+  style.stroke-width: 2
+  style.border-radius: 8
+  style.font-color: "#065f46"
+  style.font-size: 14
+
+  out-linear: "sum w_out_i·h_i + b_out" {
+    style.fill: "#dbeafe"
+    style.stroke: "#3b82f6"
+    style.stroke-width: 2
+    style.border-radius: 6
+    style.font-color: "#1e40af"
+    style.font-size: 11
+  }
+
+  out-note: "(不加激活函数)" {
+    style.fill: transparent
+    style.stroke: transparent
+    style.font-size: 10
+    style.font-color: "#94a3b8"
+    style.italic: true
+  }
+}
+
+# ============================================================
+# Loss
+# ============================================================
+
+loss: "Loss\nMSE = (yPred-y)^2" {
+  style.fill: "#f3e8ff"
+  style.stroke: "#8b5cf6"
+  style.stroke-width: 2
+  style.border-radius: 6
+  style.font-color: "#5b21b6"
+  style.font-size: 11
+}
+
+# ============================================================
+# Connections
+# ============================================================
+
+input -> hidden-layer: "复制 N 份"
+hidden-layer -> output-layer: "h (N维向量)"
+output-layer -> loss: "yPred"
+
+# ============================================================
+# Annotations
+# ============================================================
+
+neuron-label: "一个神经元 = Linear + ReLU" {
+  style.fill: transparent
+  style.stroke: "#e2e8f0"
+  style.stroke-dash: 4
+  style.border-radius: 4
+  style.font-size: 11
+  style.font-color: "#64748b"
+}
+
+fwd: "forward ->" {
+  style.fill: transparent
+  style.stroke: transparent
+  style.font-color: "#3b82f6"
+  style.font-size: 14
+  style.bold: true
+}
+
+bwd: "<- backward" {
+  style.fill: transparent
+  style.stroke: transparent
+  style.font-color: "#ef4444"
+  style.font-size: 14
+  style.bold: true
+}
