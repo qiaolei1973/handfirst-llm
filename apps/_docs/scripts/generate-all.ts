@@ -13,6 +13,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { homedir } from "node:os";
+import { excalidrawToSvg } from "../../../packages/excalidraw-export/src/index.ts";
 
 // ── configuration ──
 
@@ -117,7 +118,9 @@ function collect(): Source[] {
         vn,
         src: join(dir, f),
         build() {
-          sh(`npx tsx "${join(SCRIPTS, "export-excalidraw.ts")}" "${join(dir, f)}" -o "${join(out, name)}.svg"`);
+          const scene = JSON.parse(readFileSync(join(dir, f), "utf-8"));
+          const svg = excalidrawToSvg(scene);
+          writeFileSync(join(out, `${name}.svg`), svg, "utf-8");
         },
       });
     }
