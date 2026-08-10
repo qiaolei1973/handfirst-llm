@@ -8,7 +8,11 @@
     "build": "next build",
     "start": "next start",
     "predev": "tsx scripts/generate-all.ts",
-    "prebuild": "tsx scripts/generate-all.ts"
+    "prebuild": "tsx scripts/generate-all.ts",
+    "predev:force": "tsx scripts/generate-all.ts --force",
+    "prebuild:force": "tsx scripts/generate-all.ts --force",
+    "dev:force": "npm run predev:force && next dev --port 3000",
+    "build:force": "npm run prebuild:force && next build"
   },
   "dependencies": {
     "highlight.js": "^11.0.0",
