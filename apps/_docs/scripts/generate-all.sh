@@ -7,9 +7,8 @@
 # ============================================================
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-PUBLIC="$ROOT/apps/_docs/public"
-SRC_DIR="$ROOT/scripts/images"
+PUBLIC="$(cd "$(dirname "$0")/../public" && pwd)"
+SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
 FONT="$HOME/.fonts/NotoSansSC-Regular.ttf"
 
 export PATH="$HOME/.local/bin:$PATH"

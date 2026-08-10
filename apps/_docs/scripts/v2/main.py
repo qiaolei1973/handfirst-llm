@@ -18,8 +18,8 @@ import matplotlib.font_manager as fm
 import numpy as np
 from pathlib import Path
 
-OUT_V2 = Path(__file__).resolve().parent.parent.parent / "apps/_docs/public/v2"
-OUT_V1 = Path(__file__).resolve().parent.parent.parent / "apps/_docs/public/v1"
+OUT_V2 = Path(__file__).resolve().parent.parent / ".." / "public" / "v2"
+OUT_V1 = Path(__file__).resolve().parent.parent / ".." / "public" / "v1"
 OUT_V2.mkdir(parents=True, exist_ok=True)
 OUT_V1.mkdir(parents=True, exist_ok=True)
 

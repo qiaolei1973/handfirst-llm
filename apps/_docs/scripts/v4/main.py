@@ -10,7 +10,7 @@ import numpy as np
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-OUT = HERE.parent.parent.parent / "apps/_docs/public/v4"
+OUT = HERE.parent.parent / "public" / "v4"
 OUT.mkdir(parents=True, exist_ok=True)
 
 FONT_PATH = "/home/qingquan/.fonts/NotoSansSC-Regular.ttf"
