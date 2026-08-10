@@ -32,7 +32,7 @@
       "locked": false,
       "text": "反向传播 (Backpropagation)",
       "fontSize": 28,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "top"
     },
@@ -65,7 +65,7 @@
       "locked": false,
       "text": "前向算输出，反向算梯度 — 链式法则把误差从输出端传回输入端",
       "fontSize": 16,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "top"
     },
@@ -98,7 +98,7 @@
       "locked": false,
       "text": "前向传播 (Forward)",
       "fontSize": 18,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "top"
     },
@@ -131,7 +131,7 @@
       "locked": false,
       "text": "反向传播 (Backward)",
       "fontSize": 18,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "top"
     },
@@ -166,7 +166,7 @@
       "locked": false,
       "text": "x",
       "fontSize": 18,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -201,7 +201,7 @@
       "locked": false,
       "text": "z = Wx + b\n(隐藏层 Linear)",
       "fontSize": 15,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -236,7 +236,7 @@
       "locked": false,
       "text": "h = ReLU(z)\n(激活函数)",
       "fontSize": 15,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -271,7 +271,7 @@
       "locked": false,
       "text": "ŷ = Σ w_out · h + b_out\n(输出层 Linear)",
       "fontSize": 15,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -306,7 +306,7 @@
       "locked": false,
       "text": "L = (ŷ − y)²\n(MSE Loss)",
       "fontSize": 15,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -341,7 +341,7 @@
       "locked": false,
       "text": "∂L/∂ŷ = 2(ŷ − y)",
       "fontSize": 16,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -376,7 +376,7 @@
       "locked": false,
       "text": "∂L/∂w_out = ∂L/∂ŷ · h\n∂L/∂b_out = ∂L/∂ŷ\n∂L/∂h     = ∂L/∂ŷ · w_out",
       "fontSize": 14,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -411,7 +411,7 @@
       "locked": false,
       "text": "∂L/∂z = ∂L/∂h · ReLU'(z)\n(z>0 → 1,  z≤0 → 0)",
       "fontSize": 14,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -446,7 +446,7 @@
       "locked": false,
       "text": "∂L/∂W = ∂L/∂z · x\n∂L/∂b = ∂L/∂z",
       "fontSize": 14,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -797,7 +797,7 @@
       "locked": false,
       "text": "隐藏层",
       "fontSize": 14,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -830,7 +830,7 @@
       "locked": false,
       "text": "输出层",
       "fontSize": 14,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -863,7 +863,7 @@
       "locked": false,
       "text": "输出层\n.backward()",
       "fontSize": 14,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -896,7 +896,7 @@
       "locked": false,
       "text": "隐藏层\n.backward()",
       "fontSize": 14,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle"
     },
@@ -931,7 +931,7 @@
       "locked": false,
       "text": "",
       "fontSize": 16,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "top"
     },
@@ -964,7 +964,7 @@
       "locked": false,
       "text": "backward() 三步",
       "fontSize": 16,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "top"
     },
@@ -997,7 +997,7 @@
       "locked": false,
       "text": "① 收: 接收上游梯度\n② 算: 累加 W,b 梯度\n③ 传: 返回下游梯度",
       "fontSize": 14,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "left",
       "verticalAlign": "top"
     },
@@ -1122,7 +1122,7 @@
       "locked": false,
       "text": "链式法则从输出端开始，梯度沿网络反方向流动 — 每一步乘上当前层的局部导数",
       "fontSize": 14,
-      "fontFamily": 2,
+      "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "top"
     }
