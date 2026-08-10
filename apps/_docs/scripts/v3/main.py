@@ -101,39 +101,55 @@ plt.close(fig)
 print("  v3/relu-shapes.png")
 
 # ================================================================
-#  3. neurons-approximate.png — 设计数据：等距 ReLU 神经元逼近 sin
+#  3. neurons-approximate.png — 分段线性逼近 sin（设计数据）
 #
-#  教学要点：不需要训练。用等距分段线性插值构造 ReLU 分解。
-#  N 个神经元 = N 段折线。越多越逼近。
+#  断点选在 sin 的峰/谷/零点，确保每段都"切"在关键特征上。
 #  数学：PWL(x) = y0 + s0*x + sum(Δs_k * ReLU(x - break_k))
+#  段数越多 → 逼近越准。这里展示 2, 4, 8, 16 段。
 # ================================================================
-def pwl_neurons(n_segments):
-    """等距分段线性逼近 sin。返回神经元参数（标准化域 [0,1]）"""
-    breaks = np.linspace(0, 1, n_segments + 1)
-    y_breaks = np.sin(breaks * X_SCALE)
-    slopes = np.diff(y_breaks) / np.diff(breaks)
-    hw = np.ones(n_segments - 1)              # 每个 ReLU 的 w = 1
-    hb = -breaks[1:-1]                         # 折点在 break 位置
-    ow = np.diff(slopes)                       # 斜率变化量
-    ob = y_breaks[0]                           # 截距 = 第一个点
-    return hw, hb, ow, ob
+def pwl_breaks(n_segments):
+    """返回 n_segments 段折线的最优断点位置（归一化域 [0,1]）"""
+    # 把 sin 在 [0, 2π] 上的关键点（峰 π/2、谷 3π/2、零点 0,π,2π）
+    # 均匀分成 n_segments 段，每段内 sin 单调
+    if n_segments == 2:
+        return np.array([0.0, 0.25, 1.0])          # 0→π/2(峰)→2π
+    if n_segments == 4:
+        return np.array([0.0, 0.25, 0.5, 0.75, 1.0])  # 峰/零/谷/零
+    if n_segments == 8:
+        # sin 在 [0,2π] 上每 π/4 一个断点
+        return np.linspace(0, 1, 9)
+    # 16 段：每 π/8 一个断点
+    return np.linspace(0, 1, n_segments + 1)
 
-neuron_counts = [2, 4, 8, 16]
+def pwl_from_breaks(breaks):
+    """从断点位置计算 ReLU 神经元参数。
+    返回 (s0, hw, hb, ow, ob)
+    PWL(x) = ob + s0*x + Σ ow_j * ReLU(hw_j*x + hb_j)
+    """
+    yb = np.sin(breaks * X_SCALE)
+    slopes = np.diff(yb) / np.diff(breaks)
+    return (slopes[0],                # s0: 第一段斜率
+            np.ones(len(breaks) - 2),  # hw: 每个 ReLU 的 w=1
+            -breaks[1:-1],             # hb: 折点 = -break_x
+            np.diff(slopes),           # ow: 斜率变化量
+            yb[0])                     # ob: f(0)
+
+counts = [2, 4, 8, 16]
 fig, axes = plt.subplots(2, 2, figsize=(11, 8))
 axes = axes.flatten()
 x_plot = np.linspace(0, 1, 300)
 
-for i, n in enumerate(neuron_counts):
+for i, n_seg in enumerate(counts):
     ax = axes[i]
-    hw, hb, ow, ob = pwl_neurons(n)
+    s0, hw, hb, ow, ob = pwl_from_breaks(pwl_breaks(n_seg))
     h = np.maximum(0, np.outer(x_plot, hw) + hb)
-    y_pred = float(ob) + h @ ow
+    y_pred = float(ob) + s0 * x_plot + h @ ow
     mse = float(np.mean((y_pred - np.sin(x_plot * X_SCALE))**2))
 
     ax.scatter(x_orig, labels, c="#94a3b8", s=18, zorder=3, alpha=0.5)
     ax.plot(x_orig, true_y, COLORS["green"], lw=2, ls="--", alpha=0.7, label="y = sin(x)")
     ax.plot(x_plot * X_SCALE, y_pred, COLORS["purple"], lw=2.5,
-            label=f"模型 ({len(hw)+1} 段折线)")
+            label=f"模型 ({n_seg} 段折线)")
 
     for j in range(len(hw)):
         ax.plot(x_plot * X_SCALE, ow[j] * np.maximum(0, hw[j] * x_plot + hb[j]),
@@ -141,11 +157,11 @@ for i, n in enumerate(neuron_counts):
 
     ax.set_xlim(-0.3, X_SCALE + 0.3); ax.set_ylim(-1.6, 1.6); ax.grid(True, alpha=0.15)
     ax.legend(prop=fp_legend, loc="lower right", fontsize=8)
-    ax.set_title(f"{n} 段折线（{n} 个 ReLU）  MSE={mse:.4f}", fontproperties=fp_lg)
+    ax.set_title(f"{n_seg} 段折线    MSE={mse:.4f}", fontproperties=fp_lg)
     ax.set_xlabel("x", fontproperties=fp_sm); ax.set_ylabel("y", fontproperties=fp_sm)
     ax.tick_params(labelsize=8)
 
-fig.suptitle("神经元越多，折线越多 → 越逼近曲线（等距分段线性逼近，非训练结果）",
+fig.suptitle("段数越多，折线越多 → 越逼近曲线",
              fontproperties=fp_xl, y=0.98)
 fig.tight_layout(rect=[0, 0, 1, 0.95])
 fig.savefig(OUT / "neurons-approximate.png", dpi=144)
