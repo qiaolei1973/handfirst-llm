@@ -11,7 +11,14 @@
  */
 
 import { createRequire } from "module";
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+
 const { generator: newGenerator } = createRequire(import.meta.url)("roughjs");
+
+// Embedded Virgil hand-drawn font (same font Excalidraw uses)
+const __dirname = dirname(import.meta.url.replace("file://", ""));
+const VIRGIL_FONT = readFileSync(join(__dirname, "..", "Virgil-Regular.woff2")).toString("base64");
 
 // ── 类型 ──
 
@@ -65,8 +72,12 @@ export function excalidrawToSvg(scene: ExcalidrawScene, opts: ExportOptions = {}
   const vbW = maxX - minX + pad * 2;
   const vbH = maxY - minY + pad * 2;
 
-  // Arrowhead markers
+  // Arrowhead markers + Virgil font
   let defs = "";
+  defs += `<style>\n@font-face {`
+       + ` font-family: "Virgil";`
+       + ` src: url(data:font/woff2;base64,${VIRGIL_FONT}) format("woff2");`
+       + ` }\n</style>\n`;
   for (const el of elements) {
     if (el.type !== "arrow") continue;
     const pts = el.points || [];
