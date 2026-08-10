@@ -137,7 +137,7 @@ function render(el: ExcalidrawElement, sketch: boolean): string {
 
 function renderText(el: ExcalidrawElement): string {
   const fs = el.fontSize || 16;
-  const ff = "\"Virgil\", \"ZCOOL KuaiLe\", \"Segoe UI Emoji\"";
+  const ff = "Virgil, &quot;ZCOOL KuaiLe&quot;, &quot;Segoe UI Emoji&quot;";
   const lines = (el.text || "").split("\n");
   const lineH = fs * 1.3;
   const totalH = lines.length * lineH;
