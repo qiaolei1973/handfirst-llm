@@ -1,17 +1,20 @@
 // ============================================================
-// 神经网络 — 单隐藏层 ReLU + 反向传播（纯标量实现）
+// 神经网络 — 单隐藏层 ReLU + 反向传播
 //
 // 模型: y = Σ w_out_i · ReLU(w_i · x̂ + b_i) + b_out
-//       x̂ ∈ [0, 1] 是归一化后的输入
 //
-// 终端验证: pnpm exec tsx train.ts
+// 终端验证: pnpm exec tsx apps/v3/train.ts
 // 浏览器 viz: pnpm dev:v3
 // ============================================================
 
-import { fileURLToPath } from 'node:url';
-import { sinData, sampleBatch } from '@handfirst/datasets';
-import { Trainer as BaseTrainer, Layer } from '@handfirst/utils';
-import type { EpochEvent } from '@handfirst/utils';
+import { fileURLToPath } from "node:url";
+import { sinData, sampleBatch } from "@handfirst/datasets";
+import { Trainer as BaseTrainer } from "@handfirst/utils";
+import type { EpochEvent } from "@handfirst/utils";
+import { Linear } from "./nn/linear";
+import { ReLU } from "./nn/relu";
+import { Sequential } from "./nn/sequential";
+import { SGD } from "./nn/sgd";
 
 // ===== Parameter shape =====
 
@@ -25,18 +28,19 @@ export interface V3Params {
 
 // ===== Trainer =====
 
+const LR = 0.02;
+const BATCH = 40;
+
 export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
-  params!: V3Params;
-  private _hidden!: Layer; // 1→N, ReLU
-  private _output!: Layer; // N→1, Linear
+  declare params: V3Params;
+  private _model!: Sequential;
+  private _opt!: SGD;
   private _numNeurons: number;
-  private _lr = 0.02;
-  private _batchSize = 40;
   private _dataset: { features: number[]; labels: number[] };
 
   constructor(
     dataset: { features: number[]; labels: number[] },
-    numNeurons = 4,
+    numNeurons = 16,
   ) {
     super();
     this._dataset = dataset;
@@ -44,124 +48,100 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
     this._init();
   }
 
-  reset(): void {
-    this.history.length = 0;
-    this._init();
-  }
-
-  // ===== 核心: 一步训练（Mini-batch SGD） =====
+  // ===== 一步训练 =====
 
   step(): EpochEvent {
-    const batch = sampleBatch(this._dataset, this._batchSize);
+    const batch = sampleBatch(this._dataset, BATCH);
 
-    // ---- 清零梯度 ----
-    this._hidden.zeroGrad();
-    this._output.zeroGrad();
+    this._model.zeroGrad();
 
     let totalLoss = 0;
-
-    // ---- 对 batch 中每个样本做 forward + backward ----
     for (let k = 0; k < batch.length; k++) {
       const x = batch[k].feature;
       const y = batch[k].label;
 
-      // 前向传播
-      const h = this._hidden.forward([x]);              // [1] → [N]
-      const yPred = this._output.forward(Array.from(h)); // [N] → [1]
+      // 前向
+      const yPred = this._model.forward([x])[0];
 
-      // MSE loss: 累加 (yPred - y)²
-      const diff = yPred[0] - y;
+      // MSE loss
+      const diff = yPred - y;
       totalLoss += diff * diff;
 
-      // 反向传播（黑盒 — v4 展开讲数学）
-      // ∂L/∂yPred = 2*diff / batchSize
-      const gradOut = new Float64Array([(2 * diff) / this._batchSize]);
-      const gradH = this._output.backward(gradOut);
-      this._hidden.backward(gradH);
+      // 反向
+      const gradOut = new Float64Array([(2 * diff) / BATCH]);
+      this._model.backward(gradOut);
     }
 
-    const loss = totalLoss / this._batchSize;
-
-    // ---- 梯度下降更新 ----
-    for (let i = 0; i < this._hidden.w.length; i++) {
-      this._hidden.w[i] -= this._lr * this._hidden.gradW[i];
-    }
-    for (let i = 0; i < this._hidden.b.length; i++) {
-      this._hidden.b[i] -= this._lr * this._hidden.gradB[i];
-    }
-    for (let i = 0; i < this._output.w.length; i++) {
-      this._output.w[i] -= this._lr * this._output.gradW[i];
-    }
-    for (let i = 0; i < this._output.b.length; i++) {
-      this._output.b[i] -= this._lr * this._output.gradB[i];
-    }
-
-    // ---- 同步 params ----
+    this._opt.step();
     this._syncParams();
 
     const ev: EpochEvent = {
       params: { ...this.params },
-      grads: {}, // v3 不逐个暴露梯度（参数太多），v4 展开
-      loss: Number(loss.toFixed(6)),
+      grads: {},
+      loss: Number((totalLoss / BATCH).toFixed(6)),
     };
-
     this.history.push(ev);
     return ev;
   }
 
-  // ===== 预测 & 神经元信息（供图表用） =====
+  // ===== 接口 =====
+
+  reset(): void { this.history.length = 0; this._init(); }
 
   predict(x: number): number {
-    const h = this._hidden.forward([x]);
-    return this._output.forward(Array.from(h))[0];
+    return this._model.forward([x])[0];
   }
 
   getNeurons(): { w: number; b: number }[] {
-    const out: { w: number; b: number }[] = [];
-    for (let i = 0; i < this._numNeurons; i++) {
-      out.push({ w: this._hidden.w[i], b: this._hidden.b[i] });
-    }
-    return out;
+    return Array.from({ length: this._numNeurons }, (_, i) => ({
+      w: (this._model.layers[0] as Linear).w[i],
+      b: (this._model.layers[0] as Linear).b[i],
+    }));
   }
 
   // ===== 内部 =====
 
-  private _init(): void {
-    this._hidden = new Layer(1, this._numNeurons, 'relu');
-    this._output = new Layer(this._numNeurons, 1, 'linear');
+  private _init() {
+    // 模型: Linear(1→N)→ReLU→Linear(N→1)
+    const hidden = new Linear(1, this._numNeurons);
+    this._model = new Sequential([
+      hidden,
+      new ReLU(),
+      new Linear(this._numNeurons, 1),
+    ]);
+    this._opt = new SGD(this._model.parameters(), LR);
     this._syncParams();
   }
 
-  private _syncParams(): void {
+  private _syncParams() {
+    const hw = this._model.layers[0] as Linear;
+    const ow = this._model.layers[2] as Linear;
     this.params = {
       numNeurons: this._numNeurons,
-      hiddenW: Array.from(this._hidden.w),
-      hiddenB: Array.from(this._hidden.b),
-      outputW: Array.from(this._output.w),
-      outputB: this._output.b[0],
+      hiddenW: Array.from(hw.w),
+      hiddenB: Array.from(hw.b),
+      outputW: Array.from(ow.w),
+      outputB: ow.b[0],
     };
   }
 }
 
 // ===== 终端运行 =====
-//   pnpm exec tsx train.ts
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { features, labels, trueFn } = sinData(60);
   const t = new Trainer({ features, labels }, 16);
 
-  const MAX_EPOCHS = 3000;
-  for (let epoch = 0; epoch < MAX_EPOCHS; epoch++) {
+  for (let epoch = 0; epoch < 3000; epoch++) {
     const ev = t.step();
-    if (epoch % 100 === 0 || epoch === MAX_EPOCHS - 1) {
+    if (epoch % 100 === 0 || epoch === 2999) {
       console.log(
-        `epoch ${epoch + 1}: loss=${ev.loss.toFixed(6)}  W1=${t.params.hiddenW.map((v) => v.toFixed(3)).join(',')}`,
+        `epoch ${epoch + 1}: loss=${ev.loss.toFixed(6)}`,
       );
     }
   }
 
-  // 验证: 预测几个点
-  console.log('\n最终模型预测 vs 真实值:');
+  console.log("\n预测 vs 真实值:");
   for (const x of [0, 0.25, 0.5, 0.75]) {
     console.log(
       `  x̂=${x.toFixed(2)}  predict=${t.predict(x).toFixed(4)}  true=${trueFn(x).toFixed(4)}`,
