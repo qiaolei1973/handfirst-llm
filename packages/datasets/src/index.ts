@@ -65,6 +65,24 @@ export function surfaceData(size = 200): {
 }
 
 /**
+ * Random sample without replacement from a multi-dimensional dataset.
+ */
+export function sampleBatchMulti(
+  features: number[][],
+  labels: number[],
+  size: number,
+): { feature: number[]; label: number }[] {
+  const n = features.length;
+  const indices = [...Array(n).keys()]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, Math.min(size, n));
+  return indices.map((i) => ({
+    feature: features[i],
+    label: labels[i],
+  }));
+}
+
+/**
  * Random sample without replacement from a {features, labels} dataset.
  */
 export function sampleBatch(

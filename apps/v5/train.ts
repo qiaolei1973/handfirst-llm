@@ -9,95 +9,56 @@
 // ============================================================
 
 import { fileURLToPath } from "node:url";
-import { surfaceData } from "@handfirst/datasets";
-import { Trainer as BaseTrainer } from "@handfirst/utils";
+import { surfaceData, sampleBatchMulti } from "@handfirst/datasets";
+import { Trainer as BaseTrainer, arr, setArr, mat, setMat } from "@handfirst/utils";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { Adam } from "./nn/adam";
+import { trainValSplit, standardizeMulti } from "./data";
 
-// ===== Parameter shape =====
+// ===== Types =====
 
 export interface V5Params {
-  inputDim: number;
-  numNeurons: number;
-  hiddenW: number[][];  // [N × d]
-  hiddenB: number[];     // [N]
-  outputW: number[];     // [N]
-  outputB: number;
+  inputDim: number; numNeurons: number;
+  hiddenW: number[][]; hiddenB: number[];
+  outputW: number[]; outputB: number;
 }
 
-// ===== Epoch event =====
-
 export interface V5EpochEvent {
-  params: V5Params;
-  trainLoss: number;
-  valLoss: number;
-  isBest: boolean;
-  stopped?: boolean;
+  params: V5Params; trainLoss: number; valLoss: number;
+  isBest: boolean; stopped?: boolean;
 }
 
 // ===== Trainer =====
 
-const BATCH = 40;
-const PATIENCE = 200;
+const BATCH = 40, LR = 0.005, PATIENCE = 200;
 
 export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   declare params: V5Params;
   private _model!: Sequential;
   private _opt!: Adam;
-  private _inDim: number;
-  private _numNeurons: number;
+  private _dim: number;
+  private _N: number;
 
-  private _trainSet!: { features: number[][]; labels: number[] };
-  private _valSet!: { features: number[][]; labels: number[] };
-  private _xMeans: number[] = [];
-  private _xStds: number[] = [];
+  private _trainF!: number[][]; private _trainL!: number[];
+  private _valF!: number[][]; private _valL!: number[];
+  private _means!: number[]; private _stds!: number[];
 
-  // Early stopping
-  private _bestValLoss = Infinity;
-  private _bestParams: V5Params | null = null;
-  private _patienceCounter = 0;
-  private _stopped = false;
+  private _bestVal = Infinity; private _bestP: V5Params | null = null;
+  private _patience = 0; private _stopped = false;
 
-  constructor(
-    features: number[][],
-    labels: number[],
-    numNeurons = 16,
-  ) {
+  constructor(features: number[][], labels: number[], numNeurons = 16) {
     super();
-    this._inDim = features[0].length;
-    this._numNeurons = numNeurons;
+    this._dim = features[0].length;
+    this._N = numNeurons;
 
-    // ---- 80/20 train/val split ----
-    const n = features.length;
-    const nTrain = Math.floor(n * 0.8);
-    const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5);
-    const trainIdx = new Set(indices.slice(0, nTrain));
+    const fi = trainValSplit(features.map((f, i) => ({ f, l: labels[i] })));
+    this._trainF = fi.train.map(d => d.f); this._trainL = fi.train.map(d => d.l);
+    this._valF = fi.val.map(d => d.f); this._valL = fi.val.map(d => d.l);
 
-    const trainF: number[][] = [], trainL: number[] = [];
-    const valF: number[][] = [], valL: number[] = [];
-    for (let i = 0; i < n; i++) {
-      if (trainIdx.has(i)) {
-        trainF.push(features[i]); trainL.push(labels[i]);
-      } else {
-        valF.push(features[i]); valL.push(labels[i]);
-      }
-    }
-    this._trainSet = { features: trainF, labels: trainL };
-    this._valSet = { features: valF, labels: valL };
-
-    // ---- 标准化（每个特征维度独立） ----
-    this._xMeans = Array(this._inDim).fill(0);
-    this._xStds = Array(this._inDim).fill(1);
-    for (let d = 0; d < this._inDim; d++) {
-      const s = trainF.reduce((sum, f) => sum + f[d], 0);
-      this._xMeans[d] = s / nTrain;
-      const v = trainF.reduce(
-        (sum, f) => sum + (f[d] - this._xMeans[d]) ** 2, 0,
-      ) / nTrain;
-      this._xStds[d] = Math.sqrt(v) || 1;
-    }
+    const { means, stds } = standardizeMulti(this._trainF, this._dim);
+    this._means = means; this._stds = stds;
 
     this._init();
   }
@@ -105,24 +66,18 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   // ===== 一步训练 =====
 
   step(): V5EpochEvent {
-    if (this._stopped) {
-      return { ...this.history[this.history.length - 1], stopped: true };
-    }
+    if (this._stopped) return { ...this.history[this.history.length - 1], stopped: true };
 
-    const batch = sampleBatchMulti(this._trainSet, BATCH);
+    const batch = sampleBatchMulti(this._trainF, this._trainL, BATCH);
     this._model.zeroGrad();
-
     let totalLoss = 0;
+
     for (let k = 0; k < batch.length; k++) {
-      const x = this._standardize(batch[k].feature);
-      const y = batch[k].label;
-
+      const x = batch[k].feature.map((v, di) => (v - this._means[di]) / this._stds[di]);
       const yPred = this._model.forward(x)[0];
-      const diff = yPred - y;
+      const diff = yPred - batch[k].label;
       totalLoss += diff * diff;
-
-      const gradOut = new Float64Array([(2 * diff) / BATCH]);
-      this._model.backward(gradOut);
+      this._model.backward(new Float64Array([(2 * diff) / BATCH]));
     }
 
     this._opt.step();
@@ -130,142 +85,74 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     const valLoss = this._evaluate();
 
     let isBest = false;
-    if (valLoss < this._bestValLoss) {
-      this._bestValLoss = valLoss; isBest = true; this._patienceCounter = 0;
-      this._bestParams = this._snapshotParams();
-    } else {
-      this._patienceCounter++;
-    }
+    if (valLoss < this._bestVal) {
+      this._bestVal = valLoss; isBest = true; this._patience = 0; this._bestP = this._snap();
+    } else { this._patience++; }
 
-    const stopped = this._patienceCounter >= PATIENCE;
-    if (stopped) {
-      this._stopped = true;
-      if (this._bestParams) this._restoreParams(this._bestParams);
-    }
+    const stopped = this._patience >= PATIENCE;
+    if (stopped) { this._stopped = true; if (this._bestP) this._restore(this._bestP); }
 
-    this._syncParams();
-    const ev: V5EpochEvent = {
-      params: { ...this.params },
-      trainLoss: Number(trainLoss.toFixed(6)),
-      valLoss: Number(valLoss.toFixed(6)),
-      isBest,
-      stopped: stopped || undefined,
-    };
+    this._sync();
+    const ev: V5EpochEvent = { params: { ...this.params }, trainLoss: Number(trainLoss.toFixed(6)), valLoss: Number(valLoss.toFixed(6)), isBest, stopped: stopped || undefined };
     this.history.push(ev);
     return ev;
   }
 
-  // ===== 接口 =====
-
-  reset(): void { this.history.length = 0; this._stopped = false; this._patienceCounter = 0; this._bestValLoss = Infinity; this._init(); }
+  reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._init(); }
   isDone(): boolean { return this._stopped; }
 
   predict(xRaw: number[]): number {
-    return this._model.forward(this._standardize(xRaw))[0];
+    return this._model.forward(xRaw.map((v, i) => (v - this._means[i]) / this._stds[i]))[0];
   }
 
-  predictGrid(grid: number[][]): number[] {
-    return grid.map((p) => this.predict(p));
-  }
-
-  // ===== 内部 =====
-
+  // ── 内部 ──
   private _init() {
-    const hidden = new Linear(this._inDim, this._numNeurons);
-    this._model = new Sequential([hidden, new ReLU(), new Linear(this._numNeurons, 1)]);
-    this._opt = new Adam(this._model.parameters(), 0.005);
-    this._syncParams();
+    const [D, N] = [this._dim, this._N];
+    this._model = new Sequential([new Linear(D, N), new ReLU(), new Linear(N, 1)]);
+    this._opt = new Adam(this._model.parameters(), LR);
+    this._sync();
   }
 
   private _standardize(x: number[]): number[] {
-    return x.map((v, i) => (v - this._xMeans[i]) / this._xStds[i]);
+    return x.map((v, i) => (v - this._means[i]) / this._stds[i]);
   }
 
   private _evaluate(): number {
-    let totalLoss = 0;
-    for (let k = 0; k < this._valSet.features.length; k++) {
-      const x = this._standardize(this._valSet.features[k]);
-      const y = this._valSet.labels[k];
-      const diff = this._model.forward(x)[0] - y;
-      totalLoss += diff * diff;
+    let loss = 0;
+    for (let k = 0; k < this._valF.length; k++) {
+      const diff = this._model.forward(this._standardize(this._valF[k]))[0] - this._valL[k];
+      loss += diff * diff;
     }
-    return totalLoss / this._valSet.features.length;
+    return loss / this._valF.length;
   }
 
-  private _matrixW(): number[][] {
-    const hw = this._model.layers[0] as Linear;
-    const rows: number[][] = [];
-    for (let j = 0; j < this._numNeurons; j++) {
-      rows.push(Array.from(
-        hw.w.subarray(j * this._inDim, (j + 1) * this._inDim),
-      ));
-    }
-    return rows;
-  }
-
-  private _copyMatrixTo(arr: number[][], dst: Float64Array) {
-    for (let j = 0; j < arr.length; j++)
-      for (let i = 0; i < arr[j].length; i++)
-        dst[j * this._inDim + i] = arr[j][i];
-  }
-
-  private _snapshotParams(): V5Params {
-    this._syncParams();
-    return { ...this.params };
-  }
-
-  private _restoreParams(p: V5Params) {
-    (this._model.layers[0] as Linear).b.set(new Float64Array(p.hiddenB));
-    (this._model.layers[2] as Linear).w.set(new Float64Array(p.outputW));
+  private _snap(): V5Params { this._sync(); return { ...this.params }; }
+  private _restore(p: V5Params) {
+    setArr((this._model.layers[0] as Linear).b, p.hiddenB);
+    setArr((this._model.layers[2] as Linear).w, p.outputW);
     (this._model.layers[2] as Linear).b[0] = p.outputB;
-    this._copyMatrixTo(p.hiddenW, (this._model.layers[0] as Linear).w);
-    this._syncParams();
+    setMat((this._model.layers[0] as Linear).w, p.hiddenW, this._dim);
+    this._sync();
   }
 
-  private _syncParams() {
-    const hw = this._model.layers[0] as Linear;
-    const ow = this._model.layers[2] as Linear;
+  private _sync() {
+    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
     this.params = {
-      inputDim: this._inDim,
-      numNeurons: this._numNeurons,
-      hiddenW: this._matrixW(),
-      hiddenB: Array.from(hw.b),
-      outputW: Array.from(ow.w),
-      outputB: ow.b[0],
+      inputDim: this._dim, numNeurons: this._N,
+      hiddenW: mat(hw.w, this._N, this._dim), hiddenB: arr(hw.b),
+      outputW: arr(ow.w), outputB: ow.b[0],
     };
   }
 }
 
-// ===== 多维 batch 采样 =====
-
-function sampleBatchMulti(
-  dataset: { features: number[][]; labels: number[] },
-  size: number,
-): { feature: number[]; label: number }[] {
-  const n = dataset.features.length;
-  const indices = [...Array(n).keys()]
-    .sort(() => Math.random() - 0.5)
-    .slice(0, Math.min(size, n));
-  return indices.map((i) => ({
-    feature: dataset.features[i],
-    label: dataset.labels[i],
-  }));
-}
-
-// ===== 终端运行 =====
+// ===== CLI =====
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { features, labels } = surfaceData(200);
   const t = new Trainer(features, labels, 16);
-
-  for (let epoch = 0; epoch < 2000; epoch++) {
+  for (let e = 0; e < 2000; e++) {
     const ev = t.step();
-    if (epoch % 100 === 0 || ev.stopped) {
-      const bestMark = ev.isBest ? " ★" : "";
-      console.log(
-        `epoch ${epoch + 1}: trainLoss=${ev.trainLoss.toFixed(6)}  valLoss=${ev.valLoss.toFixed(6)}${bestMark}`,
-      );
-    }
+    if (e % 100 === 0 || ev.stopped) console.log(`epoch ${e+1}: trainLoss=${ev.trainLoss.toFixed(6)}  valLoss=${ev.valLoss.toFixed(6)}${ev.isBest ? " ★" : ""}`);
     if (ev.stopped) break;
   }
 }

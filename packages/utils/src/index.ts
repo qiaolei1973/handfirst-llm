@@ -1,4 +1,5 @@
 export { Mat } from './mat';
+export { arr, setArr, mat, setMat } from './serial';
 export { mse, lossCoeffs } from './loss';
 export type { LossFn } from './loss';
 
