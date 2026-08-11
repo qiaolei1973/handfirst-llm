@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * generate-all.ts — 生成所有图片（数据图用 matplotlib，架构图用 D2）
+ * generate-all.ts — 生成所有图片（matplotlib / excalidraw）
  *
  * 缓存：对每个源文件存 sha256，hash 不变 → 跳过
  * 强制重生成: tsx generate-all.ts --force  或  GENERATE_ALL_FORCE=1 tsx generate-all.ts
@@ -116,20 +116,39 @@ function collect(): Source[] {
 function listPy(dir: string): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => f.endsWith(".py") && basename(f, ".py") !== "precompute")
+    .filter((f) => f.endsWith(".py") && f !== "precompute.py" && f !== "generate-steps.py")
     .sort();
 }
 
 function listExcalidraw(dir: string): string[] {
   if (!existsSync(dir)) return [];
-  return readdirSync(dir).filter((f) => f.endsWith(".excalidraw")).sort();
+  return readdirSync(dir)
+    .filter((f) => f.endsWith(".excalidraw") && f !== "backprop-steps.excalidraw")
+    .sort();
+}
+
+// ── step diagram generator ──
+// backprop-steps.excalidraw is the master; generate-step variants from it.
+
+function generateSteps() {
+  const master = join(SCRIPTS, "v3", "backprop-steps.excalidraw");
+  if (!existsSync(master)) return;
+  if (!cacheMiss("v3", master)) {
+    console.log("  v3/backprop-steps  (cached)");
+    return;
+  }
+  console.log("  v3/backprop-steps → step variants");
+  execSync(`python3 "${join(SCRIPTS, "v3", "generate-steps.py")}"`, { stdio: "pipe" });
 }
 
 // ── main ──
 
-const sources = collect();
-
 console.log("==> Generate images...");
+
+// Step 0: generate progressive step variants from the master
+generateSteps();
+
+const sources = collect();
 
 for (const s of sources) {
   const label = `${s.vn}/${basename(s.src)}`;

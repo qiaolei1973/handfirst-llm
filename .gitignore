@@ -22,3 +22,7 @@ apps/_docs/public/recap/*.svg
 
 # Build cache (content hashes for generate-all.sh)
 apps/_docs/public/.cache/
+
+# Generated step excalidraw variants (backprop-step0, backprop-step-1, …, backprop-step-5)
+apps/_docs/scripts/v3/backprop-step0.excalidraw
+apps/_docs/scripts/v3/backprop-step-[1-5].excalidraw

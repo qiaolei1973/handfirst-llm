@@ -173,69 +173,81 @@ v1 和 v2 里算梯度很简单——模型只有一层 Linear，对 loss 求导
     ∂w_i    ∂yPred   ∂h      ∂w_i
 ```
 
-误差从输出端开始，沿网络结构**反方向**一层一层流回去。
+误差从输出端开始，沿网络结构**反方向**一层一层流回去。下面是计算图视角——圆是值（x、z、h、ŷ、L），边上是局部偏导数，红色箭头是梯度流向。
 
 ---
 
-以下对**一个样本 (x, y)**，用 MSE 损失 `L = (yPred − y)²`，逐步推导。
+**① 前向：算出每个节点的值**
 
-#### 第一步：从 Loss 到输出层
+![前向传播：x → z → h → ŷ → L](/v3/backprop-step-1.svg)
+<!-- gen: excalidraw v3/backprop-step-1.excalidraw → v3/backprop-step-1.svg -->
+
+这是 forward pass——从输入 x 一路算到 Loss。边上标注的是每步的局部偏导数：`∂z/∂x = W`、`∂h/∂z = ReLU'(z)`… 它们等下在链式法则里都要用到。
+
+---
+
+**② 反向第一步：从 Loss 求 ∂L/∂ŷ**
+
+![反向 Step 2：∂L/∂ŷ = 2(ŷ−y)](/v3/backprop-step-2.svg)
+<!-- gen: excalidraw v3/backprop-step-2.excalidraw → v3/backprop-step-2.svg -->
+
+梯度从 L 出发，沿红色箭头回传。用 MSE：`L = (ŷ − y)²`，所以 `∂L/∂ŷ = 2(ŷ − y)`。
+
+这是链式法则的起点——最粗的箭头，因为离 Loss 最近、信息最完整。
+
+---
+
+**③ 反向第二步：穿过输出层，∂L/∂h = ∂L/∂ŷ · w_out**
+
+![反向 Step 3：链式法则穿过输出层](/v3/backprop-step-3.svg)
+<!-- gen: excalidraw v3/backprop-step-3.excalidraw → v3/backprop-step-3.svg -->
+
+输出层没有激活函数，`ŷ = Σ w_out_j · h_j + b_out`。链式法则：
 
 ```
-∂L/∂yPred = 2(yPred − y)          ← v2 里已经见过
+∂L/∂w_out_j = ∂L/∂ŷ · h_j
+∂L/∂b_out   = ∂L/∂ŷ
+∂L/∂h_j     = ∂L/∂ŷ · w_out_j    ← 传给下游
 ```
 
-输出层没有激活函数，`yPred = Σ w_out_j · h_j + b_out`。对每个参数求导：
+> 直觉：`∂L/∂h_j` 是"改变 h_j 会对 loss 产生多大影响"。h_j 通过权重 w_out_j 影响 ŷ，所以梯度要乘上 w_out_j 往回传。
 
-```
-∂L/∂w_out_j = ∂L/∂yPred · h_j    = 2(yPred − y) · h_j        (1)
-∂L/∂b_out   = ∂L/∂yPred · 1      = 2(yPred − y)              (2)
-```
+---
 
-还要算传给隐藏层的梯度——链式法则继续往下走：
+**④ 反向第三步：穿过 ReLU**
 
-```
-∂L/∂h_j = ∂L/∂yPred · w_out_j    = 2(yPred − y) · w_out_j   (3)
-```
-
-> 直觉：`∂L/∂h_j` 的意思是"改变 h_j 会对 loss 产生多大影响"。h_j 通过权重 w_out_j 影响 yPred，所以梯度乘上 w_out_j 才能往回传。
-
-#### 第二步：穿过 ReLU，到隐藏层参数
+![反向 Step 4：穿过 ReLU 激活函数](/v3/backprop-step-4.svg)
+<!-- gen: excalidraw v3/backprop-step-4.excalidraw → v3/backprop-step-4.svg -->
 
 隐藏层：`h_j = ReLU(z_j)`，`z_j = w_j · x + b_j`。
 
-ReLU 的导数很简单——z > 0 时直通（导数 = 1），z ≤ 0 时截断（导数 = 0）：
+ReLU 的导数很简单：
 
 ```
-        ⎧ 1    z_j > 0
+        ⎧ 1    z_j > 0    → 直通
 ReLU'(z_j) ⎨
-        ⎩ 0    z_j ≤ 0
+        ⎩ 0    z_j ≤ 0    → 截断
 ```
 
-用链式法则穿过 ReLU：
+用链式法则：`∂L/∂z_j = ∂L/∂h_j · ReLU'(z_j)`。
 
-```
-∂L/∂z_j = ∂L/∂h_j · ReLU'(z_j)                              (4)
-```
+> 如果该神经元没激活（z ≤ 0），`∂L/∂z_j = 0`——这个神经元的参数本次更新量为零。这就是"**死神经元**"的数学原因。
 
-> 如果该神经元没激活（z_j ≤ 0），`∂L/∂z_j = 0`——这个神经元的所有参数本次更新量为零。这正是"**死神经元**"现象的数学原因：一旦 ReLU 的输出为 0，梯度就被截断，参数不再更新。
+---
+
+**⑤ 反向最后一步：隐藏层参数**
+
+![反向 Step 5：∂L/∂W = ∂L/∂z · x](/v3/backprop-step-5.svg)
+<!-- gen: excalidraw v3/backprop-step-5.excalidraw → v3/backprop-step-5.svg -->
 
 最后一步，从 z_j 到 w_j 和 b_j：
 
 ```
-∂L/∂w_j = ∂L/∂z_j · x                                       (5)
-∂L/∂b_j = ∂L/∂z_j · 1                                       (6)
+∂L/∂w_j = ∂L/∂z_j · x
+∂L/∂b_j = ∂L/∂z_j
 ```
 
-#### 合在一起
-
-把 (1)~(6) 串起来，对于一个样本 (x, y)，梯度从输出端流向输入端：
-
-![前向传播与反向传播：链式法则把误差从输出端传回输入端](/v3/backprop.svg)
-<!-- gen: excalidraw v3/backprop.excalidraw → v3/backprop.svg -->
-
-
-> 如果 ReLU 没激活（z ≤ 0），`ReLU'(z) = 0`，该神经元的 `∂L/∂w` 和 `∂L/∂b` 都是 0。
+反向传播到这里结束——所有参数的梯度都算出来了。注意红色箭头越来越细：梯度从输出端传到输入端，每过一层都会"衰减"一些信息。
 
 ---
 
