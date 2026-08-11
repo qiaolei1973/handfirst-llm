@@ -21,7 +21,8 @@ export interface ITrainer {
 // ---- 连接初始化（服务端第一次推送） ----
 
 export interface InitData {
-  features: number[];
+  /** 1D for single-feature datasets (v1-v4), 2D for multi-feature (v5+) */
+  features: number[] | number[][];
   labels: number[];
   trueFnLabel: string;
   params: unknown;

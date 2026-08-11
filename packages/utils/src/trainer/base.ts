@@ -17,7 +17,7 @@ export abstract class Trainer<P = unknown, E extends object = object> {
   static server(opts: {
     port?: number;
     maxEpochs: number;
-    features: number[];
+    features: number[] | number[][];
     labels: number[];
     trueFnLabel: string;
     factory: () => Trainer;

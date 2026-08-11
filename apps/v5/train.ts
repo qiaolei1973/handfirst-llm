@@ -8,8 +8,8 @@
 // ============================================================
 
 import { fileURLToPath } from "node:url";
-import { surfaceData, sampleBatch } from "@handfirst/datasets";
-import { Layer } from "@handfirst/utils";
+import { surfaceData } from "@handfirst/datasets";
+import { Trainer as BaseTrainer, Layer } from "@handfirst/utils";
 import type { EpochEvent } from "@handfirst/utils";
 
 // ===== Parameter shape =====
@@ -46,9 +46,7 @@ const BETA2 = 0.999;
 const EPS = 1e-8;
 const PATIENCE = 200;
 
-export class Trainer {
-  params!: V5Params;
-  history: V5EpochEvent[] = [];
+export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   private _hidden!: Layer;
   private _output!: Layer;
   private _inputDim: number;
@@ -86,6 +84,7 @@ export class Trainer {
     labels: number[],
     numNeurons = 16,
   ) {
+    super();
     this._inputDim = features[0].length;
     this._numNeurons = numNeurons;
 
