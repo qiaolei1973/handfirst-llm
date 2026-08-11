@@ -11,10 +11,6 @@ import json
 
 fig, ax = plt.subplots(figsize=(10, 5.5))
 
-# 占位：真实 loss 数据由 train.ts 写入 loss.json 后替换
-ax.plot([], [], color="#3b82f6", linewidth=2, label="训练 loss")
-ax.plot([], [], color="#ef4444", linewidth=2, label="验证 loss")
-
 # 模拟示例数据以展示曲线形状
 epochs = np.arange(1, 501)
 train_loss = 0.3 * np.exp(-epochs / 80) + 0.05 * np.exp(-epochs / 300) + 0.02 * np.random.randn(len(epochs)) + 0.02
