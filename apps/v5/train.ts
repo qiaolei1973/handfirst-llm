@@ -12,8 +12,6 @@ import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { Adam } from "./nn/adam";
 
-// ===== 参数形状（仪表盘协议） =====
-
 export interface V5Params {
   inputDim: number; numNeurons: number;
   hiddenW: number[][]; hiddenB: number[];
@@ -25,8 +23,6 @@ export interface V5EpochEvent {
   stopped?: boolean;
 }
 
-// ===== Trainer =====
-
 const BATCH = 40, LR = 0.005, PATIENCE = 200;
 
 export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
@@ -35,34 +31,26 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     return { inputDim: this._dim, numNeurons: this._N, hiddenW: mat(hw.w, this._N, this._dim), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
   }
 
-  private _model!: Sequential;
-  private _opt!: Adam;
-  private _dim: number;
-  private _N: number;
-
-  private _trainF!: number[][]; private _trainL!: number[];
-  private _valF!: number[][]; private _valL!: number[];
-  private _means: number[] = []; private _stds: number[] = [];
-
-  private _bestVal = Infinity;
-  private _patience = 0; private _stopped = false;
+  private _model: Sequential;
+  private _opt: Adam;
+  private _dim: number; private _N: number;
+  private _trainF: number[][]; private _trainL: number[];
+  private _valF: number[][]; private _valL: number[];
+  private _means: number[]; private _stds: number[];
+  private _bestVal = Infinity; private _patience = 0; private _stopped = false;
 
   constructor(
-    trainF: number[][], trainL: number[],
-    valF: number[][], valL: number[],
-    means: number[], stds: number[],
-    numNeurons = 16,
+    trainF: number[][], trainL: number[], valF: number[][], valL: number[],
+    means: number[], stds: number[], numNeurons = 16,
   ) {
     super();
-    this._dim = trainF[0].length;
-    this._N = numNeurons;
+    this._dim = trainF[0].length; this._N = numNeurons;
     this._trainF = trainF; this._trainL = trainL;
-    this._valF = valF;     this._valL = valL;
-    this._means = means;   this._stds = stds;
-    this._init();
+    this._valF = valF; this._valL = valL;
+    this._means = means; this._stds = stds;
+    this._model = new Sequential([new Linear(this._dim, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
+    this._opt = new Adam(this._model.parameters(), LR);
   }
-
-  // ===== 一步训练 =====
 
   step(): V5EpochEvent {
     if (this._stopped) return { ...this.history[this.history.length - 1], stopped: true };
@@ -71,16 +59,14 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     this._model.zeroGrad();
     let totalLoss = 0;
 
-    for (let k = 0; k < batch.length; k++) {
-      const diff = this._model.forward(batch[k].feature)[0] - batch[k].label;
+    for (const { feature, label } of batch) {
+      const diff = this._model.forward(feature)[0] - label;
       totalLoss += diff * diff;
       this._model.backward(new Float64Array([(2 * diff) / BATCH]));
     }
 
     this._opt.step();
-    const trainLoss = totalLoss / BATCH;
 
-    // 验证集评估
     let valLoss = 0;
     for (let k = 0; k < this._valF.length; k++) {
       const diff = this._model.forward(this._valF[k])[0] - this._valL[k];
@@ -95,21 +81,20 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     if (stopped) this._stopped = true;
 
     const ev: V5EpochEvent = {
-      params: this.params, trainLoss: Number(trainLoss.toFixed(6)),
+      params: this.params, trainLoss: Number((totalLoss / BATCH).toFixed(6)),
       valLoss: Number(valLoss.toFixed(6)), stopped: stopped || undefined,
     };
     this.history.push(ev);
     return ev;
   }
 
-  reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._init(); }
+  reset(): void {
+    this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity;
+    this._model = new Sequential([new Linear(this._dim, this._N), new ReLU(), new Linear(this._N, 1)]);
+    this._opt = new Adam(this._model.parameters(), LR);
+  }
 
   predict(xRaw: number[]): number {
     return this._model.forward(xRaw.map((v, i) => (v - this._means[i]) / this._stds[i]))[0];
-  }
-
-  private _init() {
-    this._model = new Sequential([new Linear(this._dim, this._N), new ReLU(), new Linear(this._N, 1)]);
-    this._opt = new Adam(this._model.parameters(), LR);
   }
 }
