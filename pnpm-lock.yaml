@@ -176,6 +176,37 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  apps/v5:
+    dependencies:
+      '@handfirst/charts':
+        specifier: workspace:*
+        version: link:../../packages/charts
+      '@handfirst/datasets':
+        specifier: workspace:*
+        version: link:../../packages/datasets
+      '@handfirst/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      next:
+        specifier: ^15.1.0
+        version: 15.5.22(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.51.0)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.8(react@19.2.8)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/charts: {}
 
   packages/datasets: {}
@@ -1397,6 +1428,7 @@ snapshots:
 
   excalirender@0.1.4(@types/node@22.20.1):
     dependencies:
+      excalirender: 0.1.5(@types/node@22.20.1)
       roughjs: 4.6.6
       sharp: 0.35.3(@types/node@22.20.1)
     transitivePeerDependencies:

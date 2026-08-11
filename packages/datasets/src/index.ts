@@ -38,6 +38,33 @@ export function sinData(size = 60): {
 }
 
 /**
+ * 2D 曲面数据 — f(x₁, x₂) = sin(√(x₁²+x₂²)) + noise（中心辐射涟漪）。
+ * x₁, x₂ 已归一化到 [0, 1]（对应原始范围 [-2, 2]）。
+ */
+export function surfaceData(size = 200): {
+  features: [number, number][];
+  labels: number[];
+  trueFn: (x1: number, x2: number) => number;
+  scale: number;
+} {
+  const scale = 2;
+  const trueFn = (x1: number, x2: number) => {
+    const r = Math.sqrt(x1 * x1 + x2 * x2);
+    return Math.sin(r * scale * Math.PI);
+  };
+  const features: [number, number][] = [];
+  const labels: number[] = [];
+  for (let i = 0; i < size; i++) {
+    const x1 = 2 * Math.random() - 1; // [-1, 1]
+    const x2 = 2 * Math.random() - 1; // [-1, 1]
+    features.push([x1, x2]);
+    const noise = (Math.random() - 0.5) * 0.3;
+    labels.push(trueFn(x1, x2) + noise);
+  }
+  return { features, labels, trueFn, scale };
+}
+
+/**
  * Random sample without replacement from a {features, labels} dataset.
  */
 export function sampleBatch(

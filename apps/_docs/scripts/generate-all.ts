@@ -71,7 +71,7 @@ function cleanStale() {
 
 // ── sources ──
 
-const VERSIONS = ["v1", "v2", "v3", "v4", "recap"] as const;
+const VERSIONS = ["v1", "v2", "v3", "v4", "v5", "recap"] as const;
 
 type Source = {
   vn: string;
