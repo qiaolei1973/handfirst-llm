@@ -101,7 +101,7 @@ Math.max(0, w * x + b); // ReLU(w·x + b)：线性变换 → 过 ReLU
 最后用一层**不带激活函数**的 Linear 把 N 个值加权求和，得到最终预测：
 
 ![神经元、隐藏层、Linear、ReLU 之间的结构关系](/v3/architecture.svg)
-<!-- gen: d2 v3/architecture.d2 → v3/architecture.svg -->
+<!-- gen: excalidraw v3/architecture.excalidraw → v3/architecture.svg -->
 
 注意区分：
 - **一个神经元** = 一次 Linear + 一个 ReLU
@@ -232,7 +232,7 @@ ReLU'(z_j) ⎨
 把 (1)~(6) 串起来，对于一个样本 (x, y)，梯度从输出端流向输入端：
 
 ![前向传播与反向传播：链式法则把误差从输出端传回输入端](/v3/backprop.svg)
-<!-- gen: d2 v3/backprop.d2 → v3/backprop.svg -->
+<!-- gen: excalidraw v3/backprop.excalidraw → v3/backprop.svg -->
 
 
 > 如果 ReLU 没激活（z ≤ 0），`ReLU'(z) = 0`，该神经元的 `∂L/∂w` 和 `∂L/∂b` 都是 0。

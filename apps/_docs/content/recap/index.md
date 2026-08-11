@@ -17,7 +17,7 @@
 所有概念——不管听起来多复杂——都是这四步里某一步的细节。
 
 ![训练循环全景：预测→损失→梯度→更新，四步循环，以及标准化、SGD、Early Stopping 等配套概念](/recap/training-loop.svg)
-<!-- gen: d2 recap/training-loop.d2 → recap/training-loop.svg -->
+<!-- gen: excalidraw recap/training-loop.excalidraw → recap/training-loop.svg -->
 
 下面我们把这个循环拆开，看看每一步里装着什么。
 
@@ -314,13 +314,6 @@ Adam 是业界默认首选——拿来就用，几乎不用调。
 ```
 
 这就是机器学习的全部。不管多复杂的模型——GPT、扩散模型、推荐系统——本质上都在做同一件事：**预测 → 算损失 → 求梯度 → 更新参数**。只是每一步的实现更复杂。
-
----
-
-## 概念地图
-
-![概念地图：机器学习所有核心概念的层级关系——从5大主干（模型、损失、梯度、优化器、防线）向下展开](/recap/concept-map.svg)
-<!-- gen: d2 recap/concept-map.d2 → recap/concept-map.svg -->
 
 ---
 

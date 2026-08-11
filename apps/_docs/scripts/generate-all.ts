@@ -12,14 +12,12 @@ import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
-import { homedir } from "node:os";
-import { renderSync } from "excalirender";
+import excalirender from "excalirender";
 
 // ── configuration ──
 
 const PUBLIC = resolve(import.meta.dirname!, "..", "public");
 const SCRIPTS = import.meta.dirname!;
-const D2 = join(homedir(), ".local", "bin", "d2");
 const CACHE = join(PUBLIC, ".cache");
 const FORCE = process.env["GENERATE_ALL_FORCE"] === "1" || process.argv.includes("--force");
 
@@ -78,7 +76,7 @@ const VERSIONS = ["v1", "v2", "v3", "v4", "recap"] as const;
 type Source = {
   vn: string;
   src: string; // absolute path
-  build(): void;
+  build(): Promise<void>;
 };
 
 function collect(): Source[] {
@@ -93,20 +91,8 @@ function collect(): Source[] {
       sources.push({
         vn,
         src: join(dir, f),
-        build() {
+        async build() {
           sh(`python3 "${join(dir, f)}"`);
-        },
-      });
-    }
-
-    // D2 scripts
-    for (const f of listD2(dir)) {
-      const name = basename(f, ".d2");
-      sources.push({
-        vn,
-        src: join(dir, f),
-        build() {
-          sh(`"${D2}" "${join(dir, f)}" "${join(out, name)}.svg"`);
         },
       });
     }
@@ -117,10 +103,8 @@ function collect(): Source[] {
       sources.push({
         vn,
         src: join(dir, f),
-        build() {
-          const scene = JSON.parse(readFileSync(join(dir, f), "utf-8"));
-          const svg = renderSync(scene);
-          writeFileSync(join(out, `${name}.svg`), svg, "utf-8");
+        async build() {
+          await excalirender(join(dir, f), { output: join(out, `${name}.svg`) });
         },
       });
     }
@@ -134,11 +118,6 @@ function listPy(dir: string): string[] {
   return readdirSync(dir)
     .filter((f) => f.endsWith(".py") && basename(f, ".py") !== "precompute")
     .sort();
-}
-
-function listD2(dir: string): string[] {
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir).filter((f) => f.endsWith(".d2")).sort();
 }
 
 function listExcalidraw(dir: string): string[] {
@@ -158,7 +137,7 @@ for (const s of sources) {
   if (cacheMiss(s.vn, s.src)) {
     console.log(`  ${label}`);
     try {
-      s.build();
+      await s.build();
     } catch (err: any) {
       console.error(`  ✗ ${label} failed:`);
       console.error(err.stderr?.toString() ?? String(err));
