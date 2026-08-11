@@ -32,11 +32,12 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
   private _model!: Sequential;
   private _opt!: SGD;
   private _N: number;
-  private _data: { features: number[]; labels: number[] };
+  private _trainF: number[]; private _trainL: number[];
 
-  constructor(data: { features: number[]; labels: number[] }, numNeurons = 16) {
+  constructor(features: number[], labels: number[], numNeurons = 16) {
     super();
-    this._data = data;
+    this._trainF = features;
+    this._trainL = labels;
     this._N = numNeurons;
     this._init();
   }
@@ -44,7 +45,7 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
   // ===== 一步训练 =====
 
   step(): EpochEvent {
-    const batch = sampleBatch(this._data, BATCH);
+    const batch = sampleBatch(this._trainF, this._trainL, BATCH);
     this._model.zeroGrad();
     let totalLoss = 0;
 

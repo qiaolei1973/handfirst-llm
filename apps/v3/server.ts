@@ -9,5 +9,5 @@ Trainer.server({
   features,
   labels,
   trueFnLabel: 'y = sin(x)',
-  factory: () => new Trainer({ features, labels }, 16),
+  factory: () => new Trainer(features, labels, 16),
 });
