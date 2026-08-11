@@ -15,8 +15,8 @@ importers:
   apps/_docs:
     dependencies:
       excalirender:
-        specifier: ^0.1.2
-        version: 0.1.2(@types/node@22.20.1)
+        specifier: ^0.1.4
+        version: 0.1.4(@types/node@22.20.1)
       highlight.js:
         specifier: ^11.0.0
         version: 11.11.1
@@ -179,12 +179,6 @@ importers:
   packages/charts: {}
 
   packages/datasets: {}
-
-  packages/excalidraw-export:
-    dependencies:
-      roughjs:
-        specifier: ^4.6.6
-        version: 4.6.6
 
   packages/utils:
     dependencies:
@@ -801,6 +795,10 @@ packages:
     resolution: {integrity: sha512-zl9PvkLmivwb23CR9tXksOOtvk3gCEMy2vuoPVh9KCR8VjS1+fgIhnMPO8a0XaXQQWscEOpt1QzL1Zp69cFxeg==}
     hasBin: true
 
+  excalirender@0.1.4:
+    resolution: {integrity: sha512-jmZvRPdyQpT2nAeHU0ZtXEGt0BOO6afVuvuVPFylMQFKue+pgxSusCR4Uc8E2WXDxidRiFTHwX7RB8oBFEJuWQ==}
+    hasBin: true
+
   fill-range@7.1.1:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
@@ -1399,6 +1397,14 @@ snapshots:
 
   excalirender@0.1.2(@types/node@22.20.1):
     dependencies:
+      roughjs: 4.6.6
+      sharp: 0.35.3(@types/node@22.20.1)
+    transitivePeerDependencies:
+      - '@types/node'
+
+  excalirender@0.1.4(@types/node@22.20.1):
+    dependencies:
+      excalirender: 0.1.2(@types/node@22.20.1)
       roughjs: 4.6.6
       sharp: 0.35.3(@types/node@22.20.1)
     transitivePeerDependencies:

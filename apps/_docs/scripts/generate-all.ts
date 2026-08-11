@@ -13,7 +13,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { homedir } from "node:os";
-import { excalidrawToSvg } from "excalirender";
+import { renderSync } from "excalirender";
 
 // ── configuration ──
 
@@ -119,7 +119,7 @@ function collect(): Source[] {
         src: join(dir, f),
         build() {
           const scene = JSON.parse(readFileSync(join(dir, f), "utf-8"));
-          const svg = excalidrawToSvg(scene);
+          const svg = renderSync(scene);
           writeFileSync(join(out, `${name}.svg`), svg, "utf-8");
         },
       });
