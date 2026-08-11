@@ -56,6 +56,9 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
 
     const { mean, std } = standardize1D(this._trainF);
     this._xMean = mean; this._xStd = std;
+    // 预先标准化
+    this._trainF = this._trainF.map(v => (v - mean) / std);
+    this._valF = this._valF.map(v => (v - mean) / std);
 
     this._init();
   }
@@ -70,16 +73,20 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
     let totalLoss = 0;
 
     for (let k = 0; k < batch.length; k++) {
-      const x = (batch[k].feature - this._xMean) / this._xStd;
-      const yPred = this._model.forward([x])[0];
-      const diff = yPred - batch[k].label;
+      const diff = this._model.forward([batch[k].feature])[0] - batch[k].label;
       totalLoss += diff * diff;
       this._model.backward(new Float64Array([(2 * diff) / BATCH]));
     }
 
     this._opt.step();
     const trainLoss = totalLoss / BATCH;
-    const valLoss = this._evaluate();
+
+    let valLoss = 0;
+    for (let k = 0; k < this._valF.length; k++) {
+      const diff = this._model.forward([this._valF[k]])[0] - this._valL[k];
+      valLoss += diff * diff;
+    }
+    valLoss /= this._valF.length;
 
     if (valLoss < this._bestVal) { this._bestVal = valLoss; this._patience = 0; }
     else { this._patience++; }
@@ -107,20 +114,8 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
     return Array.from({ length: this._N }, (_, i) => ({ w: hw.w[i], b: hw.b[i] }));
   }
 
-  // ── 内部 ──
-
   private _init() {
     this._model = new Sequential([new Linear(1, this._N), new ReLU(), new Linear(this._N, 1)]);
     this._opt = new Adam(this._model.parameters(), 0.001);
-  }
-
-  private _evaluate(): number {
-    let loss = 0;
-    for (let k = 0; k < this._valF.length; k++) {
-      const x = (this._valF[k] - this._xMean) / this._xStd;
-      const diff = this._model.forward([x])[0] - this._valL[k];
-      loss += diff * diff;
-    }
-    return loss / this._valF.length;
   }
 }

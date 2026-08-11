@@ -48,18 +48,22 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   private _bestVal = Infinity;
   private _patience = 0; private _stopped = false;
 
-
   constructor(features: number[][], labels: number[], numNeurons = 16) {
     super();
     this._dim = features[0].length;
     this._N = numNeurons;
 
     const fi = trainValSplit(features.map((f, i) => ({ f, l: labels[i] })));
-    this._trainF = fi.train.map(d => d.f); this._trainL = fi.train.map(d => d.l);
-    this._valF = fi.val.map(d => d.f); this._valL = fi.val.map(d => d.l);
+    this._trainF = fi.train.map(d => d.f);
+    this._trainL = fi.train.map(d => d.l);
+    this._valF = fi.val.map(d => d.f);
+    this._valL = fi.val.map(d => d.l);
 
     const { means, stds } = standardizeMulti(this._trainF, this._dim);
     this._means = means; this._stds = stds;
+    // 预先标准化：后续训练和评估直接用，不再做运行时转换
+    this._trainF = this._trainF.map(f => f.map((v, i) => (v - means[i]) / stds[i]));
+    this._valF = this._valF.map(f => f.map((v, i) => (v - means[i]) / stds[i]));
 
     this._init();
   }
@@ -74,16 +78,21 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     let totalLoss = 0;
 
     for (let k = 0; k < batch.length; k++) {
-      const x = batch[k].feature.map((v, di) => (v - this._means[di]) / this._stds[di]);
-      const yPred = this._model.forward(x)[0];
-      const diff = yPred - batch[k].label;
+      const diff = this._model.forward(batch[k].feature)[0] - batch[k].label;
       totalLoss += diff * diff;
       this._model.backward(new Float64Array([(2 * diff) / BATCH]));
     }
 
     this._opt.step();
     const trainLoss = totalLoss / BATCH;
-    const valLoss = this._evaluate();
+
+    // 验证集评估
+    let valLoss = 0;
+    for (let k = 0; k < this._valF.length; k++) {
+      const diff = this._model.forward(this._valF[k])[0] - this._valL[k];
+      valLoss += diff * diff;
+    }
+    valLoss /= this._valF.length;
 
     if (valLoss < this._bestVal) { this._bestVal = valLoss; this._patience = 0; }
     else { this._patience++; }
@@ -106,23 +115,8 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     return this._model.forward(xRaw.map((v, i) => (v - this._means[i]) / this._stds[i]))[0];
   }
 
-  // ── 内部 ──
-
   private _init() {
     this._model = new Sequential([new Linear(this._dim, this._N), new ReLU(), new Linear(this._N, 1)]);
     this._opt = new Adam(this._model.parameters(), LR);
-  }
-
-  private _standardize(x: number[]): number[] {
-    return x.map((v, i) => (v - this._means[i]) / this._stds[i]);
-  }
-
-  private _evaluate(): number {
-    let loss = 0;
-    for (let k = 0; k < this._valF.length; k++) {
-      const diff = this._model.forward(this._standardize(this._valF[k]))[0] - this._valL[k];
-      loss += diff * diff;
-    }
-    return loss / this._valF.length;
   }
 }
