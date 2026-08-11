@@ -22,10 +22,10 @@ val_loss = 0.32 * np.exp(-epochs / 70) + 0.06 * np.exp(-epochs / 250) + 0.025 * 
 
 ax.plot(epochs, train_loss, color="#3b82f6", linewidth=1.5, alpha=0.8, label="训练 loss")
 ax.plot(epochs, val_loss, color="#ef4444", linewidth=1.5, alpha=0.8, label="验证 loss")
-ax.set_xlabel("Epoch", fontsize=12)
-ax.set_ylabel("MSE Loss", fontsize=12)
-ax.set_title("训练/验证 Loss 下降曲线", fontsize=14)
-ax.legend(fontsize=12)
+ax.set_xlabel("Epoch", fontsize=12, fontproperties=_cjk_font.cjk_fp)
+ax.set_ylabel("MSE Loss", fontsize=12, fontproperties=_cjk_font.cjk_fp)
+ax.set_title("训练/验证 Loss 下降曲线", fontsize=14, fontproperties=_cjk_font.cjk_fp)
+ax.legend(fontsize=12, prop=_cjk_font.cjk_fp)
 ax.grid(True, alpha=0.3)
 
 out = Path(__file__).resolve().parent.parent.parent / "public" / "v5" / "loss-curve.png"
