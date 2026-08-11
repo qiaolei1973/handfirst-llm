@@ -1,7 +1,7 @@
 import { getNavigation, readContentFile, renderMarkdown } from '@/lib/markdown';
+import { ImageViewer } from '@handfirst/components';
 import { notFound } from 'next/navigation';
 import { NavSidebar } from './NavSidebar';
-import { ImageViewer } from './ImageViewer';
 
 interface PageParams {
   slug?: string[];
