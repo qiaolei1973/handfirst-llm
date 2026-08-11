@@ -10,7 +10,6 @@
 import { fileURLToPath } from "node:url";
 import { surfaceData } from "@handfirst/datasets";
 import { Trainer as BaseTrainer, Layer } from "@handfirst/utils";
-import type { EpochEvent } from "@handfirst/utils";
 
 // ===== Parameter shape =====
 
@@ -25,18 +24,12 @@ export interface V5Params {
 
 // ===== Epoch event =====
 
-export interface V5EpochEvent extends EpochEvent<V5Params> {
+export interface V5EpochEvent {
+  params: V5Params;
   trainLoss: number;
   valLoss: number;
   isBest: boolean;
   stopped?: boolean;
-}
-
-// ===== Adam state =====
-
-interface AdamMatrix {
-  m: number[][];
-  v: number[][];
 }
 
 // ===== Trainer =====
@@ -47,6 +40,7 @@ const EPS = 1e-8;
 const PATIENCE = 200;
 
 export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
+  declare params: V5Params;
   private _hidden!: Layer;
   private _output!: Layer;
   private _inputDim: number;
@@ -93,7 +87,6 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     const nTrain = Math.floor(n * 0.8);
     const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5);
     const trainIdx = new Set(indices.slice(0, nTrain));
-    const valIdx = new Set(indices.slice(nTrain));
 
     const trainFeatures: number[][] = [];
     const trainLabels: number[] = [];
@@ -349,7 +342,7 @@ function sampleBatchMulti(
 // ===== 终端运行 =====
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { features, labels, trueFn } = surfaceData(200);
+  const { features, labels } = surfaceData(200);
   const t = new Trainer(features, labels, 16);
 
   const MAX_EPOCHS = 2000;

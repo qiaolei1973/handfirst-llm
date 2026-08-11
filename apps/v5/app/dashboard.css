@@ -59,15 +59,6 @@
   text-align: center;
 }
 
-.heatmap-canvas {
-  width: 100%;
-  max-width: 400px;
-  height: auto;
-  aspect-ratio: 1;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-}
-
 .loss-canvas {
   width: 100%;
   height: 400px;
@@ -79,4 +70,23 @@
   margin-top: 8px;
   font-size: 12px;
   color: #94a3b8;
+}
+
+/* ---- Neuron activation grid ---- */
+.neuron-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.neuron-cell {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+.neuron-cell canvas {
+  display: block;
 }

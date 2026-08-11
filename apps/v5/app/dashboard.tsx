@@ -1,7 +1,7 @@
 "use client";
 
 import "./dashboard.css";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createLineChart, COLORS } from "@handfirst/charts";
 import type { LineChartHandle } from "@handfirst/charts";
 import type { WsTrainer } from "@handfirst/utils";
@@ -43,54 +43,53 @@ function predict(params: V5Params, x: number[]): number {
   return y;
 }
 
-// ---- Surface Heatmap ----
+// ---- Heatmap engine ----
+// Renders a scalar function f(x1,x2) over [-1,1]x[-1,1] as a coolwarm heatmap.
 
-const HEATMAP_SIZE = 60;
+const HM = 80; // heatmap pixel size (per subplot)
 
-function renderHeatmap(
+function renderScalarField(
   ctx: CanvasRenderingContext2D,
-  params: V5Params | null,
-  width: number,
-  height: number,
+  w: number, h: number,
+  fn: (x1: number, x2: number) => number,
+  title: string,
 ) {
-  const w = width, h = height;
   ctx.clearRect(0, 0, w, h);
-
-  if (!params) {
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "14px sans-serif";
-    ctx.fillText("训练中…", w / 2 - 30, h / 2);
-    return;
-  }
-
   const imageData = ctx.createImageData(w, h);
   for (let py = 0; py < h; py++) {
     for (let px = 0; px < w; px++) {
-      const x1 = (px / w) * 2 - 1; // [-1, 1]
-      const x2 = -(py / h) * 2 + 1; // [1, -1] (flip Y)
-      const z = predict(params, [x1, x2]);
-
-      // Map [-1, 1] output to color: blue (-1) → white (0) → red (+1)
-      const t = (z + 1) / 2; // [0, 1]
-      const clamped = Math.max(0, Math.min(1, t));
-      const r = Math.round(clamped * 220 + 35);
-      const g = Math.round(80 + (1 - Math.abs(clamped - 0.5) * 2) * 100);
-      const b2 = Math.round((1 - clamped) * 220 + 35);
+      const x1 = (px / w) * 2 - 1;
+      const x2 = -(py / h) * 2 + 1;
+      const z = fn(x1, x2);
+      const t = Math.max(0, Math.min(1, (z + 1) / 2));
+      const r = Math.round(t * 220 + 35);
+      const g = Math.round(80 + (1 - Math.abs(t - 0.5) * 2) * 100);
+      const b = Math.round((1 - t) * 220 + 35);
       const idx = (py * w + px) * 4;
       imageData.data[idx] = r;
-      imageData.data[idx + 1] = Math.round(clamped * 50 + 100);
-      imageData.data[idx + 2] = b2;
+      imageData.data[idx + 1] = Math.round(t * 50 + 100);
+      imageData.data[idx + 2] = b;
       imageData.data[idx + 3] = 255;
     }
   }
   ctx.putImageData(imageData, 0, 0);
-
-  // Axes labels
+  // Title
   ctx.fillStyle = "#475569";
   ctx.font = "11px sans-serif";
-  ctx.fillText("x₁ →", w - 30, h - 6);
-  ctx.fillText("x₂ →", 2, 12);
-  ctx.fillText("预测曲面 heatmap (蓝=-1, 红=+1)", w / 2 - 70, h - 6);
+  ctx.textAlign = "center";
+  ctx.fillText(title, w / 2, h - 4);
+  ctx.textAlign = "start";
+}
+
+function neuronFn(params: V5Params, j: number): (x1: number, x2: number) => number {
+  const d = params.inputDim;
+  return (x1, x2) => {
+    let z = params.hiddenB[j];
+    for (let i = 0; i < d; i++) {
+      z += params.hiddenW[j][i] * (i === 0 ? x1 : x2);
+    }
+    return z > 0 ? z : 0;
+  };
 }
 
 // ---- Component ----
@@ -109,8 +108,10 @@ export function Dashboard({ trainer, title = "v5" }: DashboardProps) {
   const [history, setHistory] = useState<{ epoch: number; trainLoss: number; valLoss: number }[]>([]);
 
   const lossChartRef = useRef<HTMLCanvasElement>(null);
-  const heatmapRef = useRef<HTMLCanvasElement>(null);
+  const surfRef = useRef<HTMLCanvasElement>(null);
+  const neuronRefs = useRef<(HTMLCanvasElement | null)[]>([]);
   const lossChartHandle = useRef<LineChartHandle | null>(null);
+  const MAX_SHOWN = 16;
 
   // Epoch handler
   useEffect(() => {
@@ -127,13 +128,33 @@ export function Dashboard({ trainer, title = "v5" }: DashboardProps) {
     });
   }, [trainer]);
 
-  // Heatmap render
+  // Prediction surface heatmap
   useEffect(() => {
-    const canvas = heatmapRef.current;
+    const canvas = surfRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    renderHeatmap(ctx, params, canvas.width, canvas.height);
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    if (!params) {
+      ctx.fillStyle = "#94a3b8"; ctx.font = "14px sans-serif";
+      ctx.fillText("训练中…", w/2-30, h/2);
+      return;
+    }
+    renderScalarField(ctx, w, h, (x1, x2) => predict(params, [x1, x2]), "x1 → (蓝=-1, 红=+1) ← x2");
+  }, [params]);
+
+  // Neuron activation heatmaps
+  useEffect(() => {
+    if (!params) return;
+    const N = Math.min(params.numNeurons, MAX_SHOWN);
+    for (let j = 0; j < N; j++) {
+      const canvas = neuronRefs.current[j];
+      if (!canvas) continue;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) continue;
+      renderScalarField(ctx, canvas.width, canvas.height, neuronFn(params, j), `神经元 ${j+1}`);
+    }
   }, [params]);
 
   // Loss chart render
@@ -191,14 +212,25 @@ export function Dashboard({ trainer, title = "v5" }: DashboardProps) {
       </header>
 
       <div className="dash-grid">
-        <div className="dash-panel" style={{ gridColumn: "1 / 2" }}>
-          <canvas ref={heatmapRef} width={400} height={400} className="heatmap-canvas" />
-          <div className="panel-label">模型预测曲面</div>
+        <div className="dash-panel">
+          <canvas ref={surfRef} width={320} height={320} style={{ width: 320, height: 320 }} />
+          <div className="panel-label">预测曲面</div>
         </div>
-        <div className="dash-panel" style={{ gridColumn: "2 / 3" }}>
+        <div className="dash-panel">
           <canvas ref={lossChartRef} className="loss-canvas" />
           <div className="panel-label">Loss 曲线</div>
         </div>
+      </div>
+      <div className="neuron-grid">
+        {Array.from({ length: MAX_SHOWN }, (_, j) => (
+          <div key={j} className="neuron-cell">
+            <canvas
+              ref={(el) => { neuronRefs.current[j] = el; }}
+              width={HM} height={HM}
+              style={{ width: HM, height: HM }}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
