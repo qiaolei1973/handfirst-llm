@@ -21,7 +21,6 @@ interface V5EpochData {
   params: V5Params;
   trainLoss: number;
   valLoss: number;
-  isBest: boolean;
   stopped?: boolean;
   epoch: number;
 }

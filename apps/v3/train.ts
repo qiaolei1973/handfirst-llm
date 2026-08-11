@@ -4,10 +4,9 @@
 // 模型: y = Σ w_out_i · ReLU(w_i · x̂ + b_i) + b_out
 // ============================================================
 
-import { fileURLToPath } from "node:url";
 import { Trainer as BaseTrainer, arr } from "@handfirst/utils";
 import type { EpochEvent } from "@handfirst/utils";
-import { sinData, sampleBatch } from "@handfirst/datasets";
+import { sampleBatch } from "@handfirst/datasets";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
@@ -81,18 +80,4 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
     this._model = new Sequential([new Linear(1, N), new ReLU(), new Linear(N, 1)]);
     this._opt = new SGD(this._model.parameters(), LR);
   }
-}
-
-// ===== 终端验证 =====
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { features, labels, trueFn } = sinData(60);
-  const t = new Trainer({ features, labels }, 16);
-  for (let e = 0; e < 3000; e++) {
-    const ev = t.step();
-    if (e % 100 === 0 || e === 2999) console.log(`epoch ${e+1}: loss=${ev.loss.toFixed(6)}`);
-  }
-  console.log("\n预测 vs 真实值:");
-  for (const x of [0, 0.25, 0.5, 0.75])
-    console.log(`  x̂=${x.toFixed(2)}  predict=${t.predict(x).toFixed(4)}  true=${trueFn(x).toFixed(4)}`);
 }

@@ -5,9 +5,8 @@
 //        ŷ  = Σ_j w_out_j·h_j + b_out
 // ============================================================
 
-import { fileURLToPath } from "node:url";
 import { Trainer as BaseTrainer, arr, mat } from "@handfirst/utils";
-import { surfaceData, sampleBatchMulti } from "@handfirst/datasets";
+import { sampleBatchMulti } from "@handfirst/datasets";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
@@ -24,7 +23,7 @@ export interface V5Params {
 
 export interface V5EpochEvent {
   params: V5Params; trainLoss: number; valLoss: number;
-  isBest: boolean; stopped?: boolean;
+  stopped?: boolean;
 }
 
 // ===== Trainer =====
@@ -47,8 +46,8 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   private _means: number[] = []; private _stds: number[] = [];
 
   private _bestVal = Infinity;
-  private _bestState: Float64Array[] | null = null;
   private _patience = 0; private _stopped = false;
+
 
   constructor(features: number[][], labels: number[], numNeurons = 16) {
     super();
@@ -86,24 +85,21 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     const trainLoss = totalLoss / BATCH;
     const valLoss = this._evaluate();
 
-    let isBest = false;
-    if (valLoss < this._bestVal) {
-      this._bestVal = valLoss; isBest = true; this._patience = 0;
-      this._bestState = this._model.stateDict();
-    } else { this._patience++; }
+    if (valLoss < this._bestVal) { this._bestVal = valLoss; this._patience = 0; }
+    else { this._patience++; }
 
     const stopped = this._patience >= PATIENCE;
-    if (stopped) { this._stopped = true; this._model.loadStateDict(this._bestState!); }
+    if (stopped) this._stopped = true;
 
     const ev: V5EpochEvent = {
       params: this.params, trainLoss: Number(trainLoss.toFixed(6)),
-      valLoss: Number(valLoss.toFixed(6)), isBest, stopped: stopped || undefined,
+      valLoss: Number(valLoss.toFixed(6)), stopped: stopped || undefined,
     };
     this.history.push(ev);
     return ev;
   }
 
-  reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._bestState = null; this._init(); }
+  reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._init(); }
   isDone(): boolean { return this._stopped; }
 
   predict(xRaw: number[]): number {
@@ -128,17 +124,5 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
       loss += diff * diff;
     }
     return loss / this._valF.length;
-  }
-}
-
-// ===== 终端验证 =====
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { features, labels } = surfaceData(200);
-  const t = new Trainer(features, labels, 16);
-  for (let e = 0; e < 2000; e++) {
-    const ev = t.step();
-    if (e % 100 === 0 || ev.stopped) console.log(`epoch ${e+1}: trainLoss=${ev.trainLoss.toFixed(6)}  valLoss=${ev.valLoss.toFixed(6)}${ev.isBest ? " ★" : ""}`);
-    if (ev.stopped) break;
   }
 }

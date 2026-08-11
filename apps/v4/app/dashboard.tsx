@@ -30,7 +30,6 @@ interface V4EpochData {
   params: V4Params;
   trainLoss: number;
   valLoss: number;
-  isBest: boolean;
   stopped?: boolean;
   epoch: number;
 }
@@ -83,7 +82,8 @@ export function Dashboard({
   const [params, setParams] = useState<V4Params | null>(null);
   const [trainLoss, setTrainLoss] = useState<number | null>(null);
   const [valLoss, setValLoss] = useState<number | null>(null);
-  const [isBest, setIsBest] = useState(false);
+  const [bestValLoss, setBestValLoss] = useState(Infinity);
+  const isBest = valLoss !== null && valLoss < bestValLoss;
   const [stopped, setStopped] = useState(false);
   const [history, setHistory] = useState<V4EpochData[]>([]);
   const [dataset, setDataset] = useState<{
@@ -202,7 +202,7 @@ export function Dashboard({
       setParams(p);
       setTrainLoss(null);
       setValLoss(null);
-      setIsBest(false);
+      setBestValLoss(Infinity);
       setStopped(false);
       setHistory([]);
       setEpoch(0);
@@ -214,7 +214,7 @@ export function Dashboard({
       setParams(e.params);
       setTrainLoss(e.trainLoss);
       setValLoss(e.valLoss);
-      setIsBest(e.isBest);
+      if (e.valLoss < bestValLoss) setBestValLoss(e.valLoss);
       setHistory((prev) => [...prev, e]);
 
       if (e.stopped) {
@@ -232,7 +232,7 @@ export function Dashboard({
       setEpoch(0);
       setTrainLoss(null);
       setValLoss(null);
-      setIsBest(false);
+      setBestValLoss(Infinity);
       setStopped(false);
       if (trainer.dataset) {
         const p = trainer.dataset.params as V4Params;
