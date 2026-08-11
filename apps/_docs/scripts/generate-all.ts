@@ -116,7 +116,7 @@ function collect(): Source[] {
 function listPy(dir: string): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => f.endsWith(".py") && f !== "precompute.py" && f !== "generate-steps.py")
+    .filter((f) => f.endsWith(".py") && !f.startsWith("_") && f !== "precompute.py" && f !== "generate-steps.py")
     .sort();
 }
 

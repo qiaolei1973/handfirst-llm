@@ -3,6 +3,7 @@
 """
 import matplotlib
 matplotlib.use("Agg")
+import _cjk_font
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
@@ -28,19 +29,26 @@ fig = plt.figure(figsize=(16, 10))
 ax = fig.add_subplot(111, projection="3d")
 
 # 半透明曲面
-ax.plot_surface(X1, X2, Z, cmap="coolwarm", alpha=0.5, edgecolor="none")
-# 噪声采样点
-ax.scatter(x1s, x2s, ys, c="#1e293b", s=15, alpha=0.7, label="训练样本 (200 points)")
+surf = ax.plot_surface(X1, X2, Z, cmap="coolwarm", alpha=0.5, edgecolor="none")
 
-ax.set_xlabel("x₁ (特征1)", fontsize=12)
-ax.set_ylabel("x₂ (特征2)", fontsize=12)
+# 噪声采样点（不带 label，legend 通过 proxy 创建）
+ax.scatter(x1s, x2s, ys, c="#1e293b", s=15, alpha=0.7)
+
+ax.set_xlabel("x1 (特征 1)", fontsize=12)
+ax.set_ylabel("x2 (特征 2)", fontsize=12)
 ax.set_zlabel("y (目标值)", fontsize=12)
 ax.set_title(r"$f(x_1, x_2) = \sin(\sqrt{x_1^2 + x_2^2} \cdot 2\pi)$  + noise", fontsize=15)
-ax.legend(fontsize=12)
+
+# Proxy legend — 3D scatter legend shows too many dots by default
+from matplotlib.lines import Line2D
+proxy = Line2D([0], [0], marker="o", color="w", markerfacecolor="#1e293b",
+               markersize=8, alpha=0.7, label="训练样本 (200 points)")
+ax.legend(handles=[proxy], fontsize=12)
+
 ax.view_init(elev=25, azim=-60)
 
 out = Path(__file__).resolve().parent.parent.parent / "public" / "v5" / "true-surface.png"
 out.parent.mkdir(exist_ok=True)
 fig.savefig(out, dpi=120, bbox_inches="tight")
-print(f"  → {out.relative_to(out.parent.parent.parent)}")
+print(f"  -> {out.relative_to(out.parent.parent.parent)}")
 plt.close()
