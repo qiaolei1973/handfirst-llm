@@ -5,4 +5,4 @@ allowBuilds:
   esbuild: true
   sharp: true
 minimumReleaseAgeExclude:
-  - excalirender@0.1.2 || 0.1.4
+  - excalirender@0.1.2 || 0.1.4 || 0.1.5

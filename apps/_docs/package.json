@@ -15,7 +15,7 @@
     "build:force": "npm run prebuild:force && next build"
   },
   "dependencies": {
-    "excalirender": "^0.1.4",
+    "excalirender": "^0.1.5",
     "highlight.js": "^11.0.0",
     "marked": "^15.0.0",
     "next": "^15.1.0",

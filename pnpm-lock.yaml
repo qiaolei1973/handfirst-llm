@@ -15,8 +15,8 @@ importers:
   apps/_docs:
     dependencies:
       excalirender:
-        specifier: ^0.1.4
-        version: 0.1.4(@types/node@22.20.1)
+        specifier: ^0.1.5
+        version: 0.1.5(@types/node@22.20.1)
       highlight.js:
         specifier: ^11.0.0
         version: 11.11.1
@@ -791,12 +791,12 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  excalirender@0.1.2:
-    resolution: {integrity: sha512-zl9PvkLmivwb23CR9tXksOOtvk3gCEMy2vuoPVh9KCR8VjS1+fgIhnMPO8a0XaXQQWscEOpt1QzL1Zp69cFxeg==}
-    hasBin: true
-
   excalirender@0.1.4:
     resolution: {integrity: sha512-jmZvRPdyQpT2nAeHU0ZtXEGt0BOO6afVuvuVPFylMQFKue+pgxSusCR4Uc8E2WXDxidRiFTHwX7RB8oBFEJuWQ==}
+    hasBin: true
+
+  excalirender@0.1.5:
+    resolution: {integrity: sha512-v4y1S1amIzRdC+IRTJh2/jEeU89nQfK/kD8KZdi1WrIaw26NnQB1SxFEg2/f74lLknJqfos34WDbAUjwLITFbg==}
     hasBin: true
 
   fill-range@7.1.1:
@@ -1395,16 +1395,16 @@ snapshots:
       '@esbuild/win32-ia32': 0.28.1
       '@esbuild/win32-x64': 0.28.1
 
-  excalirender@0.1.2(@types/node@22.20.1):
+  excalirender@0.1.4(@types/node@22.20.1):
     dependencies:
       roughjs: 4.6.6
       sharp: 0.35.3(@types/node@22.20.1)
     transitivePeerDependencies:
       - '@types/node'
 
-  excalirender@0.1.4(@types/node@22.20.1):
+  excalirender@0.1.5(@types/node@22.20.1):
     dependencies:
-      excalirender: 0.1.2(@types/node@22.20.1)
+      excalirender: 0.1.4(@types/node@22.20.1)
       roughjs: 4.6.6
       sharp: 0.35.3(@types/node@22.20.1)
     transitivePeerDependencies:
