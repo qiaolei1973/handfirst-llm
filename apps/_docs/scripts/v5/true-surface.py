@@ -30,6 +30,7 @@ ax = fig.add_subplot(111, projection="3d")
 
 # 半透明曲面
 surf = ax.plot_surface(X1, X2, Z, cmap="coolwarm", alpha=0.5, edgecolor="none")
+fig.colorbar(surf, ax=ax, shrink=0.5, aspect=10, label="y")
 
 # 噪声采样点（不带 label，legend 通过 proxy 创建）
 ax.scatter(x1s, x2s, ys, c="#1e293b", s=15, alpha=0.7)

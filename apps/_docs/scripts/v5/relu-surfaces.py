@@ -22,11 +22,12 @@ fig, axes = plt.subplots(2, 2, figsize=(16, 13), subplot_kw={"projection": "3d"}
 
 for ax, (w1, w2, b, title) in zip(axes.flat, cases):
     Z = np.maximum(w1 * X1 + w2 * X2 + b, 0)
-    ax.plot_surface(X1, X2, Z, cmap="coolwarm", alpha=0.8, edgecolor="none")
+    surf = ax.plot_surface(X1, X2, Z, cmap="coolwarm", alpha=0.8, edgecolor="none")
     ax.set_xlabel("x1", fontsize=10, fontproperties=_cjk_font.cjk_fp)
     ax.set_ylabel("x2", fontsize=10, fontproperties=_cjk_font.cjk_fp)
     ax.set_title(title, fontsize=13, fontproperties=_cjk_font.cjk_fp)
     ax.view_init(elev=25, azim=-55)
+    fig.colorbar(surf, ax=ax, shrink=0.5, aspect=10, label="h")
 
 fig.suptitle("ReLU(w1*x1 + w2*x2 + b) 的四种曲面形态", fontsize=16, y=0.98, fontproperties=_cjk_font.cjk_fp)
 
