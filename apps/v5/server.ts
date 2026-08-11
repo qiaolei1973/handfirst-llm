@@ -1,7 +1,8 @@
-import { surfaceData } from "@handfirst/datasets";
+import { surfaceData, prepare } from "./data";
 import { Trainer } from "./train";
 
 const { features, labels } = surfaceData(200);
+const d = prepare(features, labels);
 
 Trainer.server({
   port: 3105,
@@ -9,5 +10,5 @@ Trainer.server({
   features,
   labels,
   trueFnLabel: "f(x1,x2) = sin(sqrt(x1^2+x2^2) * 2pi)",
-  factory: () => new Trainer(features, labels, 16),
+  factory: () => new Trainer(d.trainF, d.trainL, d.valF, d.valL, d.means, d.stds, 16),
 });

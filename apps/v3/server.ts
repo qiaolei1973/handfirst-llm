@@ -1,4 +1,4 @@
-import { sinData } from '@handfirst/datasets';
+import { sinData } from './data';
 import { Trainer } from './train';
 
 const { features, labels, trueFn } = sinData(60);

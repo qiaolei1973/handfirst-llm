@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@handfirst/charts": "workspace:*",
-    "@handfirst/datasets": "workspace:*",
     "@handfirst/utils": "workspace:*",
     "next": "^15.1.0",
     "react": "^19.0.0",

@@ -6,7 +6,7 @@
 // ============================================================
 
 import { fileURLToPath } from 'node:url';
-import { linearData, sampleBatch } from '@handfirst/datasets';
+import { linearData, sampleBatch } from './data';
 import { Trainer as BaseTrainer } from '@handfirst/utils';
 import type { EpochEvent } from '@handfirst/utils';
 
@@ -75,7 +75,7 @@ export class Trainer extends BaseTrainer {
     const { features: X, labels: Y } = this.dataset;
 
     // 随机采样（无放回 mini-batch）—— SGD 的核心
-    const batch = sampleBatch({ features: X, labels: Y }, this._batchSize);
+    const batch = sampleBatch(X, Y, this._batchSize);
 
     let gradW = 0;
     let gradBias = 0;

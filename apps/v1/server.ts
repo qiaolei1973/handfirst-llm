@@ -1,4 +1,4 @@
-import { linearData } from '@handfirst/datasets';
+import { linearData } from './data';
 import { Trainer } from './train_class';
 
 const { features, labels, trueFn } = linearData(12, 20);

@@ -6,7 +6,7 @@
 // ============================================================
 
 import { fileURLToPath } from 'node:url';
-import { linearData } from '@handfirst/datasets';
+import { linearData } from './data';
 import { Trainer as BaseTrainer } from '@handfirst/utils';
 import type { EpochEvent } from '@handfirst/utils';
 

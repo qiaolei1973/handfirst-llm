@@ -14,8 +14,6 @@ export interface ITrainer {
   readonly history: readonly unknown[];
   step(): object;
   reset(): void;
-  /** 可选：训练是否已完成（例如 early stopping 触发）。返回 true 时 WS 服务会发送 done 并停止。 */
-  isDone?(): boolean;
 }
 
 // ---- 连接初始化（服务端第一次推送） ----
@@ -47,7 +45,6 @@ export type ServerMsg =
 export type WsTrainer = {
   readonly params: unknown;
   readonly history: readonly (EpochEvent & { epoch: number })[];
-  readonly isDone: boolean;
   readonly dataset: InitData | null;
   readonly lastEvent: (EpochEvent & { epoch: number }) | null;
 

@@ -16,7 +16,6 @@ export function useWsTrainer(url: string): WsTrainer {
   const stateRef = useRef({
     params: undefined as unknown,
     history: [] as EpochData[],
-    isDone: false,
     dataset: null as InitData | null,
     lastEvent: null as EpochData | null,
   });
@@ -46,7 +45,6 @@ export function useWsTrainer(url: string): WsTrainer {
             s.dataset = msg.data;
             s.params = msg.data.params;
             s.history = [];
-            s.isDone = false;
             s.lastEvent = null;
             ls.init.forEach((fn) => fn(msg.data));
             break;
@@ -60,14 +58,12 @@ export function useWsTrainer(url: string): WsTrainer {
             break;
           }
           case 'done': {
-            s.isDone = true;
             ls.done.forEach((fn) => fn());
             break;
           }
           case 'reset': {
             s.params = msg.params;
             s.history = [];
-            s.isDone = false;
             s.lastEvent = null;
             ls.reset.forEach((fn) => fn());
             break;
@@ -143,7 +139,6 @@ export function useWsTrainer(url: string): WsTrainer {
   return {
     get params() { return stateRef.current.params; },
     get history() { return stateRef.current.history; },
-    get isDone() { return stateRef.current.isDone; },
     get dataset() { return stateRef.current.dataset; },
     get lastEvent() { return stateRef.current.lastEvent; },
     step,

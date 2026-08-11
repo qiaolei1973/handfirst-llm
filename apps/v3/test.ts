@@ -1,6 +1,6 @@
 // 终端验证：pnpm exec tsx apps/v3/test.ts
 import { fileURLToPath } from "node:url";
-import { sinData } from "@handfirst/datasets";
+import { sinData } from "./data";
 import { Trainer } from "./train";
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

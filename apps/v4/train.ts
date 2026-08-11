@@ -6,12 +6,11 @@
 // ============================================================
 
 import { Trainer as BaseTrainer, arr } from "@handfirst/utils";
-import { sampleBatch } from "@handfirst/datasets";
+import { sampleBatch } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { Adam } from "./nn/adam";
-import { trainValSplit, standardize1D } from "./data";
 
 // ===== 参数形状（仪表盘协议） =====
 
@@ -46,20 +45,17 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   private _bestVal = Infinity;
   private _patience = 0; private _stopped = false;
 
-  constructor(features: number[], labels: number[], numNeurons = 16) {
+  constructor(
+    trainF: number[], trainL: number[],
+    valF: number[], valL: number[],
+    mean: number, std: number,
+    numNeurons = 16,
+  ) {
     super();
     this._N = numNeurons;
-
-    const fi = trainValSplit(features.map((f, i) => ({ f, l: labels[i] })));
-    this._trainF = fi.train.map(d => d.f); this._trainL = fi.train.map(d => d.l);
-    this._valF = fi.val.map(d => d.f); this._valL = fi.val.map(d => d.l);
-
-    const { mean, std } = standardize1D(this._trainF);
-    this._xMean = mean; this._xStd = std;
-    // 预先标准化
-    this._trainF = this._trainF.map(v => (v - mean) / std);
-    this._valF = this._valF.map(v => (v - mean) / std);
-
+    this._trainF = trainF; this._trainL = trainL;
+    this._valF = valF;     this._valL = valL;
+    this._xMean = mean;    this._xStd = std;
     this._init();
   }
 
@@ -68,7 +64,7 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   step(): V4EpochEvent {
     if (this._stopped) return { ...this.history[this.history.length - 1], stopped: true };
 
-    const batch = sampleBatch({ features: this._trainF, labels: this._trainL }, BATCH);
+    const batch = sampleBatch(this._trainF, this._trainL, BATCH);
     this._model.zeroGrad();
     let totalLoss = 0;
 
@@ -103,7 +99,6 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   }
 
   reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._init(); }
-  isDone(): boolean { return this._stopped; }
 
   predict(xRaw: number): number {
     return this._model.forward([(xRaw - this._xMean) / this._xStd])[0];

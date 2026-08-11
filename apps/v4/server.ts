@@ -1,7 +1,8 @@
-import { sinData } from '@handfirst/datasets';
+import { sinData, prepare } from './data';
 import { Trainer } from './train';
 
 const { features, labels, trueFn } = sinData(60);
+const d = prepare(features, labels);
 
 Trainer.server({
   port: 3104,
@@ -9,5 +10,5 @@ Trainer.server({
   features,
   labels,
   trueFnLabel: 'y = sin(x)',
-  factory: () => new Trainer({ features, labels }, 16),
+  factory: () => new Trainer(d.trainF, d.trainL, d.valF, d.valL, d.mean, d.std, 16),
 });

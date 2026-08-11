@@ -54,9 +54,6 @@ importers:
       '@handfirst/charts':
         specifier: workspace:*
         version: link:../../packages/charts
-      '@handfirst/datasets':
-        specifier: workspace:*
-        version: link:../../packages/datasets
       '@handfirst/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -88,9 +85,6 @@ importers:
       '@handfirst/charts':
         specifier: workspace:*
         version: link:../../packages/charts
-      '@handfirst/datasets':
-        specifier: workspace:*
-        version: link:../../packages/datasets
       '@handfirst/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -122,9 +116,6 @@ importers:
       '@handfirst/charts':
         specifier: workspace:*
         version: link:../../packages/charts
-      '@handfirst/datasets':
-        specifier: workspace:*
-        version: link:../../packages/datasets
       '@handfirst/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -153,9 +144,6 @@ importers:
       '@handfirst/charts':
         specifier: workspace:*
         version: link:../../packages/charts
-      '@handfirst/datasets':
-        specifier: workspace:*
-        version: link:../../packages/datasets
       '@handfirst/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -184,9 +172,6 @@ importers:
       '@handfirst/charts':
         specifier: workspace:*
         version: link:../../packages/charts
-      '@handfirst/datasets':
-        specifier: workspace:*
-        version: link:../../packages/datasets
       '@handfirst/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -230,8 +215,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.4
         version: 19.2.4(@types/react@19.2.17)
-
-  packages/datasets: {}
 
   packages/utils:
     dependencies:

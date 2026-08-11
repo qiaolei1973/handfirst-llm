@@ -1,4 +1,4 @@
-import { linearData } from '@handfirst/datasets';
+import { linearData } from './data';
 
 
 let W: number = 1;

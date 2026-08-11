@@ -6,12 +6,11 @@
 // ============================================================
 
 import { Trainer as BaseTrainer, arr, mat } from "@handfirst/utils";
-import { sampleBatchMulti } from "@handfirst/datasets";
+import { sampleBatch } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { Adam } from "./nn/adam";
-import { trainValSplit, standardizeMulti } from "./data";
 
 // ===== 参数形状（仪表盘协议） =====
 
@@ -48,23 +47,18 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   private _bestVal = Infinity;
   private _patience = 0; private _stopped = false;
 
-  constructor(features: number[][], labels: number[], numNeurons = 16) {
+  constructor(
+    trainF: number[][], trainL: number[],
+    valF: number[][], valL: number[],
+    means: number[], stds: number[],
+    numNeurons = 16,
+  ) {
     super();
-    this._dim = features[0].length;
+    this._dim = trainF[0].length;
     this._N = numNeurons;
-
-    const fi = trainValSplit(features.map((f, i) => ({ f, l: labels[i] })));
-    this._trainF = fi.train.map(d => d.f);
-    this._trainL = fi.train.map(d => d.l);
-    this._valF = fi.val.map(d => d.f);
-    this._valL = fi.val.map(d => d.l);
-
-    const { means, stds } = standardizeMulti(this._trainF, this._dim);
-    this._means = means; this._stds = stds;
-    // 预先标准化：后续训练和评估直接用，不再做运行时转换
-    this._trainF = this._trainF.map(f => f.map((v, i) => (v - means[i]) / stds[i]));
-    this._valF = this._valF.map(f => f.map((v, i) => (v - means[i]) / stds[i]));
-
+    this._trainF = trainF; this._trainL = trainL;
+    this._valF = valF;     this._valL = valL;
+    this._means = means;   this._stds = stds;
     this._init();
   }
 
@@ -73,7 +67,7 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   step(): V5EpochEvent {
     if (this._stopped) return { ...this.history[this.history.length - 1], stopped: true };
 
-    const batch = sampleBatchMulti(this._trainF, this._trainL, BATCH);
+    const batch = sampleBatch(this._trainF, this._trainL, BATCH);
     this._model.zeroGrad();
     let totalLoss = 0;
 
@@ -109,7 +103,6 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   }
 
   reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._init(); }
-  isDone(): boolean { return this._stopped; }
 
   predict(xRaw: number[]): number {
     return this._model.forward(xRaw.map((v, i) => (v - this._means[i]) / this._stds[i]))[0];

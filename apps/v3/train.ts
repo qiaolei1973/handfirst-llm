@@ -6,7 +6,7 @@
 
 import { Trainer as BaseTrainer, arr } from "@handfirst/utils";
 import type { EpochEvent } from "@handfirst/utils";
-import { sampleBatch } from "@handfirst/datasets";
+import { sampleBatch } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";

@@ -1,4 +1,4 @@
-import { linearData } from '@handfirst/datasets';
+import { linearData } from './data';
 import { Trainer, normalize } from './train';
 
 const ds = normalize(linearData(12, 20));
