@@ -9,7 +9,7 @@
 
 import { fileURLToPath } from "node:url";
 import { sinData, sampleBatch } from "@handfirst/datasets";
-import { Trainer as BaseTrainer, arr, setArr } from "@handfirst/utils";
+import { Trainer as BaseTrainer, arr } from "@handfirst/utils";
 import type { EpochEvent } from "@handfirst/utils";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
@@ -28,7 +28,7 @@ export interface V3Params {
 const LR = 0.02, BATCH = 40;
 
 export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
-  declare params: V3Params;
+  get params(): V3Params { return this._dump(); }
   private _model!: Sequential;
   private _opt!: SGD;
   private _N: number;
@@ -42,10 +42,9 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
       new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1),
     ]);
     this._opt = new SGD(this._model.parameters(), LR);
-    this._sync();
   }
 
-  reset(): void { this.history.length = 0; this._init(); }
+  // ===== 一步训练 =====
 
   step(): EpochEvent {
     const batch = sampleBatch(this._data, BATCH);
@@ -59,11 +58,13 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
       this._model.backward(new Float64Array([(2 * diff) / BATCH]));
     }
 
-    this._opt.step(); this._sync();
-    const ev: EpochEvent = { params: { ...this.params }, grads: {}, loss: Number((totalLoss / BATCH).toFixed(6)) };
+    this._opt.step();
+    const ev: EpochEvent = { params: this._dump(), grads: {}, loss: Number((totalLoss / BATCH).toFixed(6)) };
     this.history.push(ev);
     return ev;
   }
+
+  reset(): void { this.history.length = 0; this._init(); }
 
   predict(x: number): number { return this._model.forward([x])[0]; }
 
@@ -77,13 +78,11 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
     const N = this._N;
     this._model = new Sequential([new Linear(1, N), new ReLU(), new Linear(N, 1)]);
     this._opt = new SGD(this._model.parameters(), LR);
-    this._sync();
   }
 
-  private _sync() {
-    const hw = this._model.layers[0] as Linear;
-    const ow = this._model.layers[2] as Linear;
-    this.params = { numNeurons: this._N, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
+  private _dump(): V3Params {
+    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
+    return { numNeurons: this._N, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
   }
 }
 

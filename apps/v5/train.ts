@@ -10,7 +10,7 @@
 
 import { fileURLToPath } from "node:url";
 import { surfaceData, sampleBatchMulti } from "@handfirst/datasets";
-import { Trainer as BaseTrainer, arr, setArr, mat, setMat } from "@handfirst/utils";
+import { Trainer as BaseTrainer, arr, mat } from "@handfirst/utils";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
@@ -35,7 +35,7 @@ export interface V5EpochEvent {
 const BATCH = 40, LR = 0.005, PATIENCE = 200;
 
 export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
-  declare params: V5Params;
+  get params(): V5Params { return this._dumpParams(); }
   private _model!: Sequential;
   private _opt!: Adam;
   private _dim: number;
@@ -45,7 +45,7 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   private _valF!: number[][]; private _valL!: number[];
   private _means!: number[]; private _stds!: number[];
 
-  private _bestVal = Infinity; private _bestP: V5Params | null = null;
+  private _bestVal = Infinity;
   private _patience = 0; private _stopped = false;
 
   constructor(features: number[][], labels: number[], numNeurons = 16) {
@@ -86,14 +86,16 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
 
     let isBest = false;
     if (valLoss < this._bestVal) {
-      this._bestVal = valLoss; isBest = true; this._patience = 0; this._bestP = this._snap();
+      this._bestVal = valLoss; isBest = true; this._patience = 0; this._snap();
     } else { this._patience++; }
 
     const stopped = this._patience >= PATIENCE;
-    if (stopped) { this._stopped = true; if (this._bestP) this._restore(this._bestP); }
+    if (stopped) { this._stopped = true; this._restore(); }
 
-    this._sync();
-    const ev: V5EpochEvent = { params: { ...this.params }, trainLoss: Number(trainLoss.toFixed(6)), valLoss: Number(valLoss.toFixed(6)), isBest, stopped: stopped || undefined };
+    const ev: V5EpochEvent = {
+      params: this._dumpParams(), trainLoss: Number(trainLoss.toFixed(6)),
+      valLoss: Number(valLoss.toFixed(6)), isBest, stopped: stopped || undefined,
+    };
     this.history.push(ev);
     return ev;
   }
@@ -106,11 +108,27 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   }
 
   // ── 内部 ──
+
+  // 早停快照直接存 Float64Array，不经过 JSON 中间层
+  private _bestHW: Float64Array | null = null;
+  private _bestHB: Float64Array | null = null;
+  private _bestOW: Float64Array | null = null;
+  private _bestOB = 0;
+
   private _init() {
     const [D, N] = [this._dim, this._N];
     this._model = new Sequential([new Linear(D, N), new ReLU(), new Linear(N, 1)]);
     this._opt = new Adam(this._model.parameters(), LR);
-    this._sync();
+    this._bestHW = this._bestHB = this._bestOW = null; this._bestOB = 0;
+  }
+
+  private _dumpParams(): V5Params {
+    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
+    return {
+      inputDim: this._dim, numNeurons: this._N,
+      hiddenW: mat(hw.w, this._N, this._dim), hiddenB: arr(hw.b),
+      outputW: arr(ow.w), outputB: ow.b[0],
+    };
   }
 
   private _standardize(x: number[]): number[] {
@@ -126,22 +144,20 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     return loss / this._valF.length;
   }
 
-  private _snap(): V5Params { this._sync(); return { ...this.params }; }
-  private _restore(p: V5Params) {
-    setArr((this._model.layers[0] as Linear).b, p.hiddenB);
-    setArr((this._model.layers[2] as Linear).w, p.outputW);
-    (this._model.layers[2] as Linear).b[0] = p.outputB;
-    setMat((this._model.layers[0] as Linear).w, p.hiddenW, this._dim);
-    this._sync();
+  private _snap() {
+    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
+    this._bestHW = new Float64Array(hw.w);
+    this._bestHB = new Float64Array(hw.b);
+    this._bestOW = new Float64Array(ow.w);
+    this._bestOB = ow.b[0];
   }
 
-  private _sync() {
-    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    this.params = {
-      inputDim: this._dim, numNeurons: this._N,
-      hiddenW: mat(hw.w, this._N, this._dim), hiddenB: arr(hw.b),
-      outputW: arr(ow.w), outputB: ow.b[0],
-    };
+  private _restore() {
+    if (!this._bestHW) return;
+    (this._model.layers[0] as Linear).w.set(this._bestHW);
+    (this._model.layers[0] as Linear).b.set(this._bestHB);
+    (this._model.layers[2] as Linear).w.set(this._bestOW);
+    (this._model.layers[2] as Linear).b[0] = this._bestOB;
   }
 }
 

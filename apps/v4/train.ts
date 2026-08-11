@@ -10,7 +10,7 @@
 
 import { fileURLToPath } from "node:url";
 import { sinData, sampleBatch } from "@handfirst/datasets";
-import { Trainer as BaseTrainer, arr, setArr } from "@handfirst/utils";
+import { Trainer as BaseTrainer, arr } from "@handfirst/utils";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
@@ -34,7 +34,7 @@ export interface V4EpochEvent {
 const BATCH = 40, PATIENCE = 300;
 
 export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
-  declare params: V4Params;
+  get params(): V4Params { return this._dump(); }
   private _model!: Sequential;
   private _opt!: Adam;
   private _N: number;
@@ -43,7 +43,11 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   private _valF!: number[]; private _valL!: number[];
   private _xMean = 0; private _xStd = 1;
 
-  private _bestValLoss = Infinity; private _bestP: V4Params | null = null;
+  private _bestVal = Infinity;
+  private _bestHW: Float64Array | null = null;
+  private _bestHB: Float64Array | null = null;
+  private _bestOW: Float64Array | null = null;
+  private _bestOB = 0;
   private _patience = 0; private _stopped = false;
 
   constructor(features: number[], labels: number[], numNeurons = 16) {
@@ -59,6 +63,8 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
 
     this._init();
   }
+
+  // ===== 一步训练 =====
 
   step(): V4EpochEvent {
     if (this._stopped) return { ...this.history[this.history.length - 1], stopped: true };
@@ -78,20 +84,26 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
     const trainLoss = totalLoss / BATCH; const valLoss = this._evaluate();
 
     let isBest = false;
-    if (valLoss < this._bestValLoss) {
-      this._bestValLoss = valLoss; isBest = true; this._patience = 0; this._bestP = this._snap();
+    if (valLoss < this._bestVal) {
+      this._bestVal = valLoss; isBest = true; this._patience = 0;
+      this._bestHW = new Float64Array((this._model.layers[0] as Linear).w);
+      this._bestHB = new Float64Array((this._model.layers[0] as Linear).b);
+      this._bestOW = new Float64Array((this._model.layers[2] as Linear).w);
+      this._bestOB = (this._model.layers[2] as Linear).b[0];
     } else { this._patience++; }
 
     const stopped = this._patience >= PATIENCE;
-    if (stopped) { this._stopped = true; if (this._bestP) this._restore(this._bestP); }
+    if (stopped) { this._stopped = true; this._restore(); }
 
-    this._sync();
-    const ev: V4EpochEvent = { params: { ...this.params }, trainLoss: Number(trainLoss.toFixed(6)), valLoss: Number(valLoss.toFixed(6)), isBest, stopped: stopped || undefined };
+    const ev: V4EpochEvent = {
+      params: this._dump(), trainLoss: Number(trainLoss.toFixed(6)),
+      valLoss: Number(valLoss.toFixed(6)), isBest, stopped: stopped || undefined,
+    };
     this.history.push(ev);
     return ev;
   }
 
-  reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestValLoss = Infinity; this._init(); }
+  reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._init(); }
   isDone(): boolean { return this._stopped; }
   predict(xRaw: number): number { return this._model.forward([(xRaw - this._xMean) / this._xStd])[0]; }
 
@@ -105,7 +117,12 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
     const N = this._N;
     this._model = new Sequential([new Linear(1, N), new ReLU(), new Linear(N, 1)]);
     this._opt = new Adam(this._model.parameters(), 0.001);
-    this._sync();
+    this._bestHW = this._bestHB = this._bestOW = null; this._bestOB = 0;
+  }
+
+  private _dump(): V4Params {
+    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
+    return { numNeurons: this._N, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
   }
 
   private _evaluate(): number {
@@ -118,18 +135,12 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
     return loss / this._valF.length;
   }
 
-  private _snap(): V4Params { this._sync(); return { ...this.params }; }
-  private _restore(p: V4Params) {
-    setArr((this._model.layers[0] as Linear).w, p.hiddenW);
-    setArr((this._model.layers[0] as Linear).b, p.hiddenB);
-    setArr((this._model.layers[2] as Linear).w, p.outputW);
-    (this._model.layers[2] as Linear).b[0] = p.outputB;
-    this._sync();
-  }
-
-  private _sync() {
-    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    this.params = { numNeurons: this._N, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
+  private _restore() {
+    if (!this._bestHW) return;
+    (this._model.layers[0] as Linear).w.set(this._bestHW);
+    (this._model.layers[0] as Linear).b.set(this._bestHB);
+    (this._model.layers[2] as Linear).w.set(this._bestOW);
+    (this._model.layers[2] as Linear).b[0] = this._bestOB;
   }
 }
 
