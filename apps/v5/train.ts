@@ -1,23 +1,20 @@
 // ============================================================
-// 多维输入神经网络 — d 个特征 → N 个 ReLU 神经元 → ŷ
+// 多维输入 — d 个特征 → N 个神经元 → ŷ
 //
 // 模型: h_j = ReLU(Σ_i W_{j,i}·x_i + b_j)
 //        ŷ  = Σ_j w_out_j·h_j + b_out
-//
-// 终端验证: pnpm exec tsx apps/v5/train.ts
-// 浏览器 viz: pnpm dev:v5
 // ============================================================
 
 import { fileURLToPath } from "node:url";
-import { surfaceData, sampleBatchMulti } from "@handfirst/datasets";
 import { Trainer as BaseTrainer, arr, mat } from "@handfirst/utils";
+import { surfaceData, sampleBatchMulti } from "@handfirst/datasets";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { Adam } from "./nn/adam";
 import { trainValSplit, standardizeMulti } from "./data";
 
-// ===== Types =====
+// ===== 参数形状（仪表盘协议） =====
 
 export interface V5Params {
   inputDim: number; numNeurons: number;
@@ -35,7 +32,11 @@ export interface V5EpochEvent {
 const BATCH = 40, LR = 0.005, PATIENCE = 200;
 
 export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
-  get params(): V5Params { return this._dumpParams(); }
+  get params(): V5Params {
+    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
+    return { inputDim: this._dim, numNeurons: this._N, hiddenW: mat(hw.w, this._N, this._dim), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
+  }
+
   private _model!: Sequential;
   private _opt!: Adam;
   private _dim: number;
@@ -43,9 +44,10 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
 
   private _trainF!: number[][]; private _trainL!: number[];
   private _valF!: number[][]; private _valL!: number[];
-  private _means!: number[]; private _stds!: number[];
+  private _means: number[] = []; private _stds: number[] = [];
 
   private _bestVal = Infinity;
+  private _bestState: Float64Array[] | null = null;
   private _patience = 0; private _stopped = false;
 
   constructor(features: number[][], labels: number[], numNeurons = 16) {
@@ -86,21 +88,22 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
 
     let isBest = false;
     if (valLoss < this._bestVal) {
-      this._bestVal = valLoss; isBest = true; this._patience = 0; this._snap();
+      this._bestVal = valLoss; isBest = true; this._patience = 0;
+      this._bestState = this._model.stateDict();
     } else { this._patience++; }
 
     const stopped = this._patience >= PATIENCE;
-    if (stopped) { this._stopped = true; this._restore(); }
+    if (stopped) { this._stopped = true; this._model.loadStateDict(this._bestState!); }
 
     const ev: V5EpochEvent = {
-      params: this._dumpParams(), trainLoss: Number(trainLoss.toFixed(6)),
+      params: this.params, trainLoss: Number(trainLoss.toFixed(6)),
       valLoss: Number(valLoss.toFixed(6)), isBest, stopped: stopped || undefined,
     };
     this.history.push(ev);
     return ev;
   }
 
-  reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._init(); }
+  reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._bestState = null; this._init(); }
   isDone(): boolean { return this._stopped; }
 
   predict(xRaw: number[]): number {
@@ -109,26 +112,9 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
 
   // ── 内部 ──
 
-  // 早停快照直接存 Float64Array，不经过 JSON 中间层
-  private _bestHW: Float64Array | null = null;
-  private _bestHB: Float64Array | null = null;
-  private _bestOW: Float64Array | null = null;
-  private _bestOB = 0;
-
   private _init() {
-    const [D, N] = [this._dim, this._N];
-    this._model = new Sequential([new Linear(D, N), new ReLU(), new Linear(N, 1)]);
+    this._model = new Sequential([new Linear(this._dim, this._N), new ReLU(), new Linear(this._N, 1)]);
     this._opt = new Adam(this._model.parameters(), LR);
-    this._bestHW = this._bestHB = this._bestOW = null; this._bestOB = 0;
-  }
-
-  private _dumpParams(): V5Params {
-    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    return {
-      inputDim: this._dim, numNeurons: this._N,
-      hiddenW: mat(hw.w, this._N, this._dim), hiddenB: arr(hw.b),
-      outputW: arr(ow.w), outputB: ow.b[0],
-    };
   }
 
   private _standardize(x: number[]): number[] {
@@ -143,25 +129,9 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     }
     return loss / this._valF.length;
   }
-
-  private _snap() {
-    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    this._bestHW = new Float64Array(hw.w);
-    this._bestHB = new Float64Array(hw.b);
-    this._bestOW = new Float64Array(ow.w);
-    this._bestOB = ow.b[0];
-  }
-
-  private _restore() {
-    if (!this._bestHW) return;
-    (this._model.layers[0] as Linear).w.set(this._bestHW);
-    (this._model.layers[0] as Linear).b.set(this._bestHB);
-    (this._model.layers[2] as Linear).w.set(this._bestOW);
-    (this._model.layers[2] as Linear).b[0] = this._bestOB;
-  }
 }
 
-// ===== CLI =====
+// ===== 终端验证 =====
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { features, labels } = surfaceData(200);

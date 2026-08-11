@@ -2,22 +2,19 @@
 // 神经网络 + 标准化 + Adam + 训练/验证分离 + Early Stopping
 //
 // 模型: y = Σ w_out_i · ReLU(w_i · x_std + b_i) + b_out
-//       x_std = (x - μ) / σ    ← 标准化（Z-score）
-//
-// 终端验证: pnpm exec tsx apps/v4/train.ts
-// 浏览器 viz: pnpm dev:v4
+//       x_std = (x - μ) / σ
 // ============================================================
 
 import { fileURLToPath } from "node:url";
-import { sinData, sampleBatch } from "@handfirst/datasets";
 import { Trainer as BaseTrainer, arr } from "@handfirst/utils";
+import { sinData, sampleBatch } from "@handfirst/datasets";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { Adam } from "./nn/adam";
 import { trainValSplit, standardize1D } from "./data";
 
-// ===== Types =====
+// ===== 参数形状（仪表盘协议） =====
 
 export interface V4Params {
   numNeurons: number; hiddenW: number[]; hiddenB: number[];
@@ -34,7 +31,11 @@ export interface V4EpochEvent {
 const BATCH = 40, PATIENCE = 300;
 
 export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
-  get params(): V4Params { return this._dump(); }
+  get params(): V4Params {
+    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
+    return { numNeurons: this._N, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
+  }
+
   private _model!: Sequential;
   private _opt!: Adam;
   private _N: number;
@@ -44,10 +45,7 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   private _xMean = 0; private _xStd = 1;
 
   private _bestVal = Infinity;
-  private _bestHW: Float64Array | null = null;
-  private _bestHB: Float64Array | null = null;
-  private _bestOW: Float64Array | null = null;
-  private _bestOB = 0;
+  private _bestState: Float64Array[] | null = null;
   private _patience = 0; private _stopped = false;
 
   constructor(features: number[], labels: number[], numNeurons = 16) {
@@ -75,37 +73,39 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
 
     for (let k = 0; k < batch.length; k++) {
       const x = (batch[k].feature - this._xMean) / this._xStd;
-      const yPred = this._model.forward([x])[0]; const diff = yPred - batch[k].label;
+      const yPred = this._model.forward([x])[0];
+      const diff = yPred - batch[k].label;
       totalLoss += diff * diff;
       this._model.backward(new Float64Array([(2 * diff) / BATCH]));
     }
 
     this._opt.step();
-    const trainLoss = totalLoss / BATCH; const valLoss = this._evaluate();
+    const trainLoss = totalLoss / BATCH;
+    const valLoss = this._evaluate();
 
     let isBest = false;
     if (valLoss < this._bestVal) {
       this._bestVal = valLoss; isBest = true; this._patience = 0;
-      this._bestHW = new Float64Array((this._model.layers[0] as Linear).w);
-      this._bestHB = new Float64Array((this._model.layers[0] as Linear).b);
-      this._bestOW = new Float64Array((this._model.layers[2] as Linear).w);
-      this._bestOB = (this._model.layers[2] as Linear).b[0];
+      this._bestState = this._model.stateDict();
     } else { this._patience++; }
 
     const stopped = this._patience >= PATIENCE;
-    if (stopped) { this._stopped = true; this._restore(); }
+    if (stopped) { this._stopped = true; this._model.loadStateDict(this._bestState!); }
 
     const ev: V4EpochEvent = {
-      params: this._dump(), trainLoss: Number(trainLoss.toFixed(6)),
+      params: this.params, trainLoss: Number(trainLoss.toFixed(6)),
       valLoss: Number(valLoss.toFixed(6)), isBest, stopped: stopped || undefined,
     };
     this.history.push(ev);
     return ev;
   }
 
-  reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._init(); }
+  reset(): void { this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity; this._bestState = null; this._init(); }
   isDone(): boolean { return this._stopped; }
-  predict(xRaw: number): number { return this._model.forward([(xRaw - this._xMean) / this._xStd])[0]; }
+
+  predict(xRaw: number): number {
+    return this._model.forward([(xRaw - this._xMean) / this._xStd])[0];
+  }
 
   getNeurons(): { w: number; b: number }[] {
     const hw = this._model.layers[0] as Linear;
@@ -113,16 +113,10 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   }
 
   // ── 内部 ──
-  private _init() {
-    const N = this._N;
-    this._model = new Sequential([new Linear(1, N), new ReLU(), new Linear(N, 1)]);
-    this._opt = new Adam(this._model.parameters(), 0.001);
-    this._bestHW = this._bestHB = this._bestOW = null; this._bestOB = 0;
-  }
 
-  private _dump(): V4Params {
-    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    return { numNeurons: this._N, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
+  private _init() {
+    this._model = new Sequential([new Linear(1, this._N), new ReLU(), new Linear(this._N, 1)]);
+    this._opt = new Adam(this._model.parameters(), 0.001);
   }
 
   private _evaluate(): number {
@@ -134,17 +128,9 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
     }
     return loss / this._valF.length;
   }
-
-  private _restore() {
-    if (!this._bestHW) return;
-    (this._model.layers[0] as Linear).w.set(this._bestHW);
-    (this._model.layers[0] as Linear).b.set(this._bestHB);
-    (this._model.layers[2] as Linear).w.set(this._bestOW);
-    (this._model.layers[2] as Linear).b[0] = this._bestOB;
-  }
 }
 
-// ===== CLI =====
+// ===== 终端验证 =====
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { features, labels } = sinData(60);

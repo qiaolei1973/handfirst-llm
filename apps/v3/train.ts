@@ -2,21 +2,18 @@
 // 神经网络 — 单隐藏层 ReLU + 反向传播
 //
 // 模型: y = Σ w_out_i · ReLU(w_i · x̂ + b_i) + b_out
-//
-// 终端验证: pnpm exec tsx apps/v3/train.ts
-// 浏览器 viz: pnpm dev:v3
 // ============================================================
 
 import { fileURLToPath } from "node:url";
-import { sinData, sampleBatch } from "@handfirst/datasets";
 import { Trainer as BaseTrainer, arr } from "@handfirst/utils";
 import type { EpochEvent } from "@handfirst/utils";
+import { sinData, sampleBatch } from "@handfirst/datasets";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { SGD } from "./nn/sgd";
 
-// ===== Types =====
+// ===== 参数形状（仪表盘协议） =====
 
 export interface V3Params {
   numNeurons: number; hiddenW: number[]; hiddenB: number[];
@@ -28,7 +25,11 @@ export interface V3Params {
 const LR = 0.02, BATCH = 40;
 
 export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
-  get params(): V3Params { return this._dump(); }
+  get params(): V3Params {
+    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
+    return { numNeurons: this._N, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
+  }
+
   private _model!: Sequential;
   private _opt!: SGD;
   private _N: number;
@@ -38,10 +39,7 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
     super();
     this._data = data;
     this._N = numNeurons;
-    this._model = new Sequential([
-      new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1),
-    ]);
-    this._opt = new SGD(this._model.parameters(), LR);
+    this._init();
   }
 
   // ===== 一步训练 =====
@@ -59,7 +57,10 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
     }
 
     this._opt.step();
-    const ev: EpochEvent = { params: this._dump(), grads: {}, loss: Number((totalLoss / BATCH).toFixed(6)) };
+    const ev: EpochEvent = {
+      params: this.params, grads: {},
+      loss: Number((totalLoss / BATCH).toFixed(6)),
+    };
     this.history.push(ev);
     return ev;
   }
@@ -74,19 +75,15 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
   }
 
   // ── 内部 ──
+
   private _init() {
     const N = this._N;
     this._model = new Sequential([new Linear(1, N), new ReLU(), new Linear(N, 1)]);
     this._opt = new SGD(this._model.parameters(), LR);
   }
-
-  private _dump(): V3Params {
-    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    return { numNeurons: this._N, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
-  }
 }
 
-// ===== CLI =====
+// ===== 终端验证 =====
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { features, labels, trueFn } = sinData(60);
