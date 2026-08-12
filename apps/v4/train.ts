@@ -18,10 +18,9 @@ export interface V4Params {
 
 export interface V4EpochEvent {
   params: V4Params; trainLoss: number; valLoss: number;
-  stopped?: boolean;
 }
 
-const BATCH = 40, PATIENCE = 300;
+const BATCH = 40;
 
 export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   get params(): V4Params {
@@ -35,7 +34,6 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   private _trainF: number[]; private _trainL: number[];
   private _valF: number[]; private _valL: number[];
   private _xMean: number; private _xStd: number;
-  private _bestVal = Infinity; private _patience = 0; private _stopped = false;
 
   constructor(
     trainF: number[], trainL: number[], valF: number[], valL: number[],
@@ -52,8 +50,6 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   }
 
   step(): V4EpochEvent {
-    if (this._stopped) return { ...this.history[this.history.length - 1], stopped: true };
-
     const batch = sampleBatch(this._trainF, this._trainL, BATCH);
     this._model.zeroGrad();
     let totalLoss = 0;
@@ -73,23 +69,12 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
     }
     valLoss /= this._valF.length;
 
-    if (valLoss < this._bestVal) { this._bestVal = valLoss; this._patience = 0; }
-    else { this._patience++; }
-
-    const stopped = this._patience >= PATIENCE;
-    if (stopped) this._stopped = true;
-
     const ev: V4EpochEvent = {
       params: this.params, trainLoss: Number((totalLoss / BATCH).toFixed(6)),
-      valLoss: Number(valLoss.toFixed(6)), stopped: stopped || undefined,
+      valLoss: Number(valLoss.toFixed(6)),
     };
     this.history.push(ev);
     return ev;
-  }
-
-  reset(): void {
-    super.reset();
-    this._stopped = false; this._patience = 0; this._bestVal = Infinity;
   }
 
   predict(xRaw: number): number { return this._model.forward([(xRaw - this._xMean) / this._xStd])[0]; }

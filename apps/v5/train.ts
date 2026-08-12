@@ -20,10 +20,9 @@ export interface V5Params {
 
 export interface V5EpochEvent {
   params: V5Params; trainLoss: number; valLoss: number;
-  stopped?: boolean;
 }
 
-const BATCH = 40, LR = 0.005, PATIENCE = 200;
+const BATCH = 40, LR = 0.005;
 
 export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   get params(): V5Params {
@@ -37,8 +36,6 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   private _trainF: number[][]; private _trainL: number[];
   private _valF: number[][]; private _valL: number[];
   private _means: number[]; private _stds: number[];
-  private _bestVal = Infinity; private _patience = 0; private _stopped = false;
-
   constructor(
     trainF: number[][], trainL: number[], valF: number[][], valL: number[],
     means: number[], stds: number[], numNeurons = 16,
@@ -54,8 +51,6 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   }
 
   step(): V5EpochEvent {
-    if (this._stopped) return { ...this.history[this.history.length - 1], stopped: true };
-
     const batch = sampleBatch(this._trainF, this._trainL, BATCH);
     this._model.zeroGrad();
     let totalLoss = 0;
@@ -75,23 +70,12 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     }
     valLoss /= this._valF.length;
 
-    if (valLoss < this._bestVal) { this._bestVal = valLoss; this._patience = 0; }
-    else { this._patience++; }
-
-    const stopped = this._patience >= PATIENCE;
-    if (stopped) this._stopped = true;
-
     const ev: V5EpochEvent = {
       params: this.params, trainLoss: Number((totalLoss / BATCH).toFixed(6)),
-      valLoss: Number(valLoss.toFixed(6)), stopped: stopped || undefined,
+      valLoss: Number(valLoss.toFixed(6)),
     };
     this.history.push(ev);
     return ev;
-  }
-
-  reset(): void {
-    super.reset();
-    this._stopped = false; this._patience = 0; this._bestVal = Infinity;
   }
 
   predict(xRaw: number[]): number {

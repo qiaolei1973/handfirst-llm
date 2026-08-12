@@ -40,9 +40,7 @@ export class WSServer {
       const send = (msg: ServerMsg) => { if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg)); };
       const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
 
-      // stopped 字段由 step() 返回，不需要单独的 isDone() 方法
-      const done = (ev: Record<string, unknown>) =>
-        ev.stopped === true || trainer.history.length >= this._maxEpochs;
+      const done = () => trainer.history.length >= this._maxEpochs;
 
       send({ type: 'init', data: { ...initData, params: trainer.params } });
 
@@ -57,7 +55,7 @@ export class WSServer {
             timer = setInterval(() => {
               const ev = trainer.step() as Record<string, unknown>;
               send({ type: 'epoch', data: { ...ev, epoch: trainer.history.length } });
-              if (done(ev)) { stop(); send({ type: 'done' }); }
+              if (done()) { stop(); send({ type: 'done' }); }
             }, interval);
             break;
           }
@@ -65,7 +63,7 @@ export class WSServer {
           case 'step': {
             const ev = trainer.step() as Record<string, unknown>;
             send({ type: 'epoch', data: { ...ev, epoch: trainer.history.length } });
-            if (done(ev)) send({ type: 'done' });
+            if (done()) send({ type: 'done' });
             break;
           }
           case 'reset':
