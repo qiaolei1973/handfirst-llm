@@ -56,10 +56,4 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
     return ev;
   }
 
-  predict(x: number): number { return this._model.forward([x])[0]; }
-
-  getNeurons(): { w: number; b: number }[] {
-    const hw = this._model.layers[0] as Linear;
-    return Array.from({ length: this._N }, (_, i) => ({ w: hw.w[i], b: hw.b[i] }));
-  }
 }

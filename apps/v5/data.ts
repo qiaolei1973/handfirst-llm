@@ -61,5 +61,5 @@ export function prepare(
   trainF = trainF.map(f => f.map((v, i) => (v - means[i]) / stds[i]));
   valF = valF.map(f => f.map((v, i) => (v - means[i]) / stds[i]));
 
-  return { trainF, trainL, valF, valL, means, stds };
+  return { trainF, trainL, valF, valL };
 }

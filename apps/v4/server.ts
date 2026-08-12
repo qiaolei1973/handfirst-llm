@@ -10,5 +10,5 @@ Trainer.server({
   features,
   labels,
   trueFnLabel: 'y = sin(x)',
-  factory: () => new Trainer(d.trainF, d.trainL, d.valF, d.valL, d.mean, d.std, 16),
+  factory: () => new Trainer(d.trainF, d.trainL, d.valF, d.valL, 16),
 });

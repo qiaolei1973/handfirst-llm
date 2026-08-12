@@ -41,6 +41,5 @@ export function prepare(features: number[], labels: number[]) {
   return {
     trainF: trainF.map(x => (x - mean) / std), trainL,
     valF: valF.map(x => (x - mean) / std), valL,
-    mean, std,
   };
 }

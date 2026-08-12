@@ -33,17 +33,12 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   private _N: number;
   private _trainF: number[]; private _trainL: number[];
   private _valF: number[]; private _valL: number[];
-  private _xMean: number; private _xStd: number;
 
-  constructor(
-    trainF: number[], trainL: number[], valF: number[], valL: number[],
-    mean: number, std: number, numNeurons = 16,
-  ) {
+  constructor(trainF: number[], trainL: number[], valF: number[], valL: number[], numNeurons = 16) {
     super();
     this._N = numNeurons;
     this._trainF = trainF; this._trainL = trainL;
     this._valF = valF; this._valL = valL;
-    this._xMean = mean; this._xStd = std;
     this._model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new Adam(this._model.parameters(), 0.001);
     this._setupReset(this._model, this._opt);
@@ -77,5 +72,4 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
     return ev;
   }
 
-  predict(xRaw: number): number { return this._model.forward([(xRaw - this._xMean) / this._xStd])[0]; }
 }
