@@ -43,31 +43,34 @@ export class Linear {
   forward(x: Float64Array | number[]): Float64Array {
     this._x = x instanceof Float64Array ? x : new Float64Array(x);
 
-    const W = new Mat(this.outDim, this.inDim, this.w);
-    const X = new Mat(this.inDim, 1, this._x);
-    const B = new Mat(this.outDim, 1, this.b);
+    const weightMat = new Mat(this.outDim, this.inDim, this.w);
+    const inputMat = new Mat(this.inDim, 1, this._x);
+    const biasMat  = new Mat(this.outDim, 1, this.b);
 
-    const out = W.matmul(X).add(B);
-    return out.data;
+    return weightMat.matmul(inputMat).add(biasMat).data;
   }
 
-  // ---- 反向 ----
+  // ---- 反向：链式法则 ----
+  //
+  // 已知上游梯度 ∂L/∂y（shape [outDim × 1]），需要计算：
+  //   ∂L/∂W = ∂L/∂y ⊗ x      （外积，shape [outDim × inDim]）
+  //   ∂L/∂b = ∂L/∂y           （shape [outDim × 1]）
+  //   ∂L/∂x = W^T · ∂L/∂y     （传给前一层，shape [inDim × 1]）
 
   backward(gradOut: Float64Array): Float64Array {
     if (!this._x) throw new Error("必须先调用 forward()");
 
-    const GO = new Mat(this.outDim, 1, gradOut);
-    const X  = new Mat(this.inDim, 1, this._x);
+    const gradOutMat = new Mat(this.outDim, 1, gradOut);
+    const inputMat   = new Mat(this.inDim, 1, this._x);
 
-    // ∂L/∂W = GO @ X^T（外积），∂L/∂b = GO
-    const dW = GO.matmul(X.transpose());
-    for (let i = 0; i < dW.data.length; i++) this.gradW[i] += dW.data[i];
-    for (let j = 0; j < this.outDim; j++) this.gradB[j] += GO.data[j];
+    // ∂L/∂W = ∂L/∂y ⊗ x，∂L/∂b = ∂L/∂y
+    const gradWMat = gradOutMat.matmul(inputMat.transpose());
+    for (let i = 0; i < gradWMat.data.length; i++) this.gradW[i] += gradWMat.data[i];
+    for (let j = 0; j < this.outDim; j++) this.gradB[j] += gradOutMat.data[j];
 
-    // ∂L/∂x = W^T @ gradOut
-    const WT = new Mat(this.outDim, this.inDim, this.w);
-    const gradIn = WT.transpose().matmul(GO);
-    return gradIn.data;
+    // ∂L/∂x = W^T · ∂L/∂y
+    const weightMat = new Mat(this.outDim, this.inDim, this.w);
+    return weightMat.transpose().matmul(gradOutMat).data;
   }
 
   // ---- 工具 ----
