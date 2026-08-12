@@ -19,6 +19,7 @@ export class Trainer extends BaseTrainer {
   private _opt: Adam;
   private _train: DataLoader;
   private _val: DataLoader;
+
   constructor(
     trainF: number[][], trainL: number[], valF: number[][], valL: number[],
     numNeurons = 16,
@@ -56,5 +57,4 @@ export class Trainer extends BaseTrainer {
       valLoss: Number(valLoss.toFixed(6)),
     };
   }
-
 }
