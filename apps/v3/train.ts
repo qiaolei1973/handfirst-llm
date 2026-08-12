@@ -36,6 +36,7 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
     this._features = features; this._labels = labels;
     this._model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new SGD(this._model.parameters(), LR);
+    this._setupReset(this._model, this._opt);
   }
 
   step(): EpochEvent {
@@ -53,12 +54,6 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
     const ev: EpochEvent = { params: this.params, grads: {}, loss: Number((totalLoss / BATCH).toFixed(6)) };
     this.history.push(ev);
     return ev;
-  }
-
-  reset(): void {
-    super.reset();
-    this._model.resetParameters();
-    this._opt.reset();
   }
 
   predict(x: number): number { return this._model.forward([x])[0]; }

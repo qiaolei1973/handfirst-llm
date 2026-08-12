@@ -50,6 +50,7 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     this._means = means; this._stds = stds;
     this._model = new Sequential([new Linear(this._dim, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new Adam(this._model.parameters(), LR);
+    this._setupReset(this._model, this._opt);
   }
 
   step(): V5EpochEvent {
@@ -90,8 +91,6 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
 
   reset(): void {
     super.reset();
-    this._model.resetParameters();
-    this._opt.reset();
     this._stopped = false; this._patience = 0; this._bestVal = Infinity;
   }
 
