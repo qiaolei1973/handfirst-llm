@@ -100,6 +100,8 @@ Math.max(0, w * x + b); // ReLU(w·x + b)：线性变换 → 过 ReLU
 
 最后用一层**不带激活函数**的 Linear 把 N 个值加权求和，得到最终预测：
 
+> **为什么权重必须随机初始化？** 如果所有神经元的 `w` 和 `b` 初始值相同，它们在前向时输出一样、反向时梯度一样、更新后还是一样——N 个神经元退化成一个。用小随机数初始化，每个神经元的"出发点"不同，它们才能各自学到不同的折线。这和 `reset()` 后恢复到相同的初始权重是一个道理——确定性重现，不是重新 random。
+
 ![神经元、隐藏层、Linear、ReLU 之间的结构关系](/v3/architecture.svg)
 <!-- gen: excalidraw v3/architecture.excalidraw → v3/architecture.svg -->
 
