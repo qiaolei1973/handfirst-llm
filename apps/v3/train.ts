@@ -58,7 +58,7 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
   reset(): void {
     super.reset();
     this._model.resetParameters();
-    this._opt = new SGD(this._model.parameters(), LR);
+    this._opt.reset();
   }
 
   predict(x: number): number { return this._model.forward([x])[0]; }

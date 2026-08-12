@@ -89,7 +89,7 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   reset(): void {
     super.reset();
     this._model.resetParameters();
-    this._opt = new Adam(this._model.parameters(), 0.001);
+    this._opt.reset();
     this._stopped = false; this._patience = 0; this._bestVal = Infinity;
   }
 

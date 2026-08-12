@@ -14,6 +14,8 @@ export class SGD {
     this._params = params;
   }
 
+  reset(): void { /* SGD 无内部状态，无需重置 */ }
+
   step(): void {
     for (const p of this._params) {
       for (let i = 0; i < p.data.length; i++) {
