@@ -42,7 +42,7 @@ export class WSServer {
 
       const done = () => trainer.history.length >= this._maxEpochs;
 
-      send({ type: 'init', data: { ...initData, params: trainer.params } });
+      send({ type: 'init', data: { ...initData, params: (trainer as any).params } });
 
       ws.on('message', (raw) => {
         let msg: ClientMsg;
@@ -68,7 +68,7 @@ export class WSServer {
           }
           case 'reset':
             stop(); trainer.reset();
-            send({ type: 'reset', params: trainer.params });
+            send({ type: 'reset', params: (trainer as any).params });
             break;
         }
       });

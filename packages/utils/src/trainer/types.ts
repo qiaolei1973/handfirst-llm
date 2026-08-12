@@ -10,7 +10,6 @@ export interface EpochEvent {
 // ---- Trainer 接口（WS 层不关心 params 形状） ----
 
 export interface ITrainer {
-  params: unknown;
   readonly history: readonly unknown[];
   step(): object;
   reset(): void;

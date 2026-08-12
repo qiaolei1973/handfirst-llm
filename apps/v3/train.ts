@@ -13,34 +13,32 @@ import { SGD } from "./nn/sgd";
 
 const LR = 0.02, BATCH = 40;
 
-export class Trainer extends BaseTrainer<unknown, unknown> {
-  get params() { return this._model.paramsJSON(); }
-
-  private _model: Sequential;
+export class Trainer extends BaseTrainer {
+  readonly model: Sequential;
   private _opt: SGD;
   private _loader: DataLoader;
 
   constructor(features: number[], labels: number[], numNeurons = 16) {
     super();
     this._loader = new DataLoader(features, labels, BATCH);
-    this._model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
-    this._opt = new SGD(this._model.parameters(), LR);
-    this._setupReset(this._model, this._opt);
+    this.model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
+    this._opt = new SGD(this.model.parameters(), LR);
+    this._setupReset(this.model, this._opt);
   }
 
   step() {
     const batch = this._loader.nextBatch();
-    this._model.zeroGrad();
+    this.model.zeroGrad();
     let totalLoss = 0;
 
     for (const { feature, label } of batch) {
-      const diff = this._model.forward([feature])[0] - label;
+      const diff = this.model.forward([feature])[0] - label;
       totalLoss += diff * diff;
-      this._model.backward(new Float64Array([(2 * diff) / BATCH]));
+      this.model.backward(new Float64Array([(2 * diff) / BATCH]));
     }
 
     this._opt.step();
-    const ev = { params: this.params, grads: {}, loss: Number((totalLoss / BATCH).toFixed(6)) };
+    const ev = { loss: Number((totalLoss / BATCH).toFixed(6)) };
     this.history.push(ev);
     return ev;
   }

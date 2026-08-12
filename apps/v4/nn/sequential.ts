@@ -48,12 +48,6 @@ export class Sequential {
     return out;
   }
 
-  /** 序列化可学习参数（给仪表盘用） */
-  paramsJSON() {
-    const hw = this.layers[0] as Linear, ow = this.layers[2] as Linear;
-    return { hiddenW: Array.from(hw.w), hiddenB: Array.from(hw.b), outputW: Array.from(ow.w), outputB: ow.b[0], numNeurons: hw.outDim };
-  }
-
   /** 重置所有层参数到初始随机值 */
   resetParameters(): void {
     for (const layer of this.layers) {

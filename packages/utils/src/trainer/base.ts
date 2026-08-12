@@ -1,10 +1,9 @@
 import { WSServer } from './ws-server';
 
-export abstract class Trainer<P = unknown, E extends object = object> {
-  abstract params: P;
-  readonly history: E[] = [];
+export abstract class Trainer {
+  readonly history: object[] = [];
 
-  abstract step(): E;
+  abstract step(): object;
 
   private _resettableModel: { resetParameters(): void } | null = null;
   private _resettableOpt: { reset(): void } | null = null;
