@@ -12,22 +12,13 @@ import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { Adam } from "./nn/adam";
 
-export interface V5Params {
-  inputDim: number; numNeurons: number;
-  hiddenW: number[][]; hiddenB: number[];
-  outputW: number[]; outputB: number;
-}
-
-export interface V5EpochEvent {
-  params: V5Params; trainLoss: number; valLoss: number;
-}
-
 const BATCH = 40, LR = 0.005;
 
-export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
-  get params(): V5Params {
+export class Trainer extends BaseTrainer<unknown, unknown> {
+  // dashboard 用：把 Float64Array 转成 JSON 可传的格式
+  get params() {
     const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    return { inputDim: hw.inDim, numNeurons: hw.outDim, hiddenW: mat(hw.w, hw.outDim, hw.inDim), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
+    return { hiddenW: mat(hw.w, hw.outDim, hw.inDim), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
   }
 
   private _model: Sequential;
@@ -46,7 +37,7 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     this._setupReset(this._model, this._opt);
   }
 
-  step(): V5EpochEvent {
+  step() {
     const batch = this._train.nextBatch();
     this._model.zeroGrad();
     let totalLoss = 0;
@@ -66,12 +57,11 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     }
     valLoss /= this._val.features.length;
 
-    const ev: V5EpochEvent = {
-      params: this.params, trainLoss: Number((totalLoss / BATCH).toFixed(6)),
+    return {
+      params: this.params,
+      trainLoss: Number((totalLoss / BATCH).toFixed(6)),
       valLoss: Number(valLoss.toFixed(6)),
     };
-    this.history.push(ev);
-    return ev;
   }
 
 }

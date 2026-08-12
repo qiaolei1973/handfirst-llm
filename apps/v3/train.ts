@@ -5,22 +5,16 @@
 // ============================================================
 
 import { Trainer as BaseTrainer, arr } from "@handfirst/utils";
-import type { EpochEvent } from "@handfirst/utils";
 import { DataLoader } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { SGD } from "./nn/sgd";
 
-export interface V3Params {
-  numNeurons: number; hiddenW: number[]; hiddenB: number[];
-  outputW: number[]; outputB: number;
-}
-
 const LR = 0.02, BATCH = 40;
 
-export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
-  get params(): V3Params {
+export class Trainer extends BaseTrainer<unknown, unknown> {
+  get params() {
     const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
     return { numNeurons: hw.outDim, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
   }
@@ -37,7 +31,7 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
     this._setupReset(this._model, this._opt);
   }
 
-  step(): EpochEvent {
+  step() {
     const batch = this._loader.nextBatch();
     this._model.zeroGrad();
     let totalLoss = 0;
@@ -49,7 +43,7 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
     }
 
     this._opt.step();
-    const ev: EpochEvent = { params: this.params, grads: {}, loss: Number((totalLoss / BATCH).toFixed(6)) };
+    const ev = { params: this.params, grads: {}, loss: Number((totalLoss / BATCH).toFixed(6)) };
     this.history.push(ev);
     return ev;
   }

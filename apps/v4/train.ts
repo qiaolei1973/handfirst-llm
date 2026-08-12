@@ -11,19 +11,10 @@ import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { Adam } from "./nn/adam";
 
-export interface V4Params {
-  numNeurons: number; hiddenW: number[]; hiddenB: number[];
-  outputW: number[]; outputB: number;
-}
-
-export interface V4EpochEvent {
-  params: V4Params; trainLoss: number; valLoss: number;
-}
-
 const BATCH = 40;
 
-export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
-  get params(): V4Params {
+export class Trainer extends BaseTrainer<unknown, unknown> {
+  get params() {
     const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
     return { numNeurons: hw.outDim, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
   }
@@ -42,7 +33,7 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
     this._setupReset(this._model, this._opt);
   }
 
-  step(): V4EpochEvent {
+  step() {
     const batch = this._train.nextBatch();
     this._model.zeroGrad();
     let totalLoss = 0;
@@ -62,12 +53,11 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
     }
     valLoss /= this._val.features.length;
 
-    const ev: V4EpochEvent = {
-      params: this.params, trainLoss: Number((totalLoss / BATCH).toFixed(6)),
+    return {
+      params: this.params,
+      trainLoss: Number((totalLoss / BATCH).toFixed(6)),
       valLoss: Number(valLoss.toFixed(6)),
     };
-    this.history.push(ev);
-    return ev;
   }
 
 }

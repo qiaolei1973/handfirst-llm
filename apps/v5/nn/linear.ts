@@ -16,7 +16,11 @@ export class Linear {
   private _initB: Float64Array | null = null;
   private _x: Float64Array | null = null;
 
-  constructor(inDim: number, outDim: number) {
+  constructor(
+    inDim: number,
+    outDim: number,
+    readonly name = "",
+  ) {
     this.inDim = inDim;
     this.outDim = outDim;
     const n = outDim * inDim;
