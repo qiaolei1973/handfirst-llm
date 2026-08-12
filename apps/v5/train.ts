@@ -27,12 +27,11 @@ const BATCH = 40, LR = 0.005;
 export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
   get params(): V5Params {
     const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    return { inputDim: this._dim, numNeurons: this._N, hiddenW: mat(hw.w, this._N, this._dim), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
+    return { inputDim: hw.inDim, numNeurons: hw.outDim, hiddenW: mat(hw.w, hw.outDim, hw.inDim), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
   }
 
   private _model: Sequential;
   private _opt: Adam;
-  private _dim: number; private _N: number;
   private _trainF: number[][]; private _trainL: number[];
   private _valF: number[][]; private _valL: number[];
   constructor(
@@ -40,10 +39,9 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     numNeurons = 16,
   ) {
     super();
-    this._dim = trainF[0].length; this._N = numNeurons;
     this._trainF = trainF; this._trainL = trainL;
     this._valF = valF; this._valL = valL;
-    this._model = new Sequential([new Linear(this._dim, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
+    this._model = new Sequential([new Linear(trainF[0].length, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new Adam(this._model.parameters(), LR);
     this._setupReset(this._model, this._opt);
   }

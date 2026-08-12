@@ -22,17 +22,15 @@ const LR = 0.02, BATCH = 40;
 export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
   get params(): V3Params {
     const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    return { numNeurons: this._N, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
+    return { numNeurons: hw.outDim, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
   }
 
   private _model: Sequential;
   private _opt: SGD;
-  private _N: number;
   private _features: number[]; private _labels: number[];
 
   constructor(features: number[], labels: number[], numNeurons = 16) {
     super();
-    this._N = numNeurons;
     this._features = features; this._labels = labels;
     this._model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new SGD(this._model.parameters(), LR);

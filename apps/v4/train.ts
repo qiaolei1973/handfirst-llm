@@ -25,18 +25,16 @@ const BATCH = 40;
 export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   get params(): V4Params {
     const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    return { numNeurons: this._N, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
+    return { numNeurons: hw.outDim, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
   }
 
   private _model: Sequential;
   private _opt: Adam;
-  private _N: number;
   private _trainF: number[]; private _trainL: number[];
   private _valF: number[]; private _valL: number[];
 
   constructor(trainF: number[], trainL: number[], valF: number[], valL: number[], numNeurons = 16) {
     super();
-    this._N = numNeurons;
     this._trainF = trainF; this._trainL = trainL;
     this._valF = valF; this._valL = valL;
     this._model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
