@@ -1,12 +1,8 @@
 /**
- * Linear 层 — 全连接（Wx + b），无激活。
- *
- * 这个类是神经网络里最基本的运算单元：
- *   y = W·x + b
- *
- * forward() 计算输出，同时缓存输入，供 backward() 使用。
- * backward() 接收上游梯度 ∂L/∂y，计算 ∂L/∂W、∂L/∂b 并传给下游。
+ * Linear 层 — y = W·x + b，矩阵实现。
  */
+
+import { Mat } from "@handfirst/utils";
 
 export class Linear {
   readonly w: Float64Array;
@@ -30,13 +26,9 @@ export class Linear {
     this.gradW = new Float64Array(n);
     this.gradB = new Float64Array(outDim);
 
-    // 随机初始化，存的初始值供 resetParameters 恢复
-    for (let i = 0; i < n; i++) {
-      this.w[i] = Math.random() * 1.2 - 0.6;
-    }
-    for (let j = 0; j < outDim; j++) {
-      this.b[j] = -this.w[j * inDim] * Math.random();
-    }
+    for (let i = 0; i < n; i++) this.w[i] = Math.random() * 1.2 - 0.6;
+    for (let j = 0; j < outDim; j++) this.b[j] = -this.w[j * inDim] * Math.random();
+
     this._initW = new Float64Array(this.w);
     this._initB = new Float64Array(this.b);
   }
@@ -46,59 +38,41 @@ export class Linear {
     if (this._initB) this.b.set(this._initB);
   }
 
-  // ---- 前向 ----
+  // ---- 前向：y = W @ x + b ----
 
   forward(x: Float64Array | number[]): Float64Array {
-    const xn = x instanceof Float64Array ? x : new Float64Array(x);
-    this._x = xn;
+    this._x = x instanceof Float64Array ? x : new Float64Array(x);
 
-    const out = new Float64Array(this.outDim);
-    for (let j = 0; j < this.outDim; j++) {
-      let s = this.b[j];
-      const off = j * this.inDim;
-      for (let i = 0; i < this.inDim; i++) {
-        s += this.w[off + i] * xn[i];
-      }
-      out[j] = s;
-    }
-    return out;
+    const W = new Mat(this.outDim, this.inDim, this.w);
+    const X = new Mat(this.inDim, 1, this._x);
+    const B = new Mat(this.outDim, 1, this.b);
+
+    const out = W.matmul(X).add(B);
+    return out.data;
   }
 
   // ---- 反向 ----
 
   backward(gradOut: Float64Array): Float64Array {
-    const x = this._x;
-    if (!x) throw new Error("必须先调用 forward()");
+    if (!this._x) throw new Error("必须先调用 forward()");
 
-    // 累加 ∂L/∂W 和 ∂L/∂b
-    for (let j = 0; j < this.outDim; j++) {
-      const go = gradOut[j];
-      if (go === 0) continue;
-      const off = j * this.inDim;
-      for (let i = 0; i < this.inDim; i++) {
-        this.gradW[off + i] += go * x[i];
-      }
-      this.gradB[j] += go;
-    }
+    const GO = new Mat(this.outDim, 1, gradOut);
+    const X  = new Mat(this.inDim, 1, this._x);
 
-    // ∂L/∂x = Wᵀ · ∂L/∂y
-    const gradIn = new Float64Array(this.inDim);
-    for (let i = 0; i < this.inDim; i++) {
-      let s = 0;
-      for (let j = 0; j < this.outDim; j++) {
-        s += this.w[j * this.inDim + i] * gradOut[j];
-      }
-      gradIn[i] = s;
-    }
-    return gradIn;
+    // ∂L/∂W = GO @ X^T（外积），∂L/∂b = GO
+    const dW = GO.matmul(X.transpose());
+    for (let i = 0; i < dW.data.length; i++) this.gradW[i] += dW.data[i];
+    for (let j = 0; j < this.outDim; j++) this.gradB[j] += GO.data[j];
+
+    // ∂L/∂x = W^T @ gradOut
+    const WT = new Mat(this.outDim, this.inDim, this.w);
+    const gradIn = WT.transpose().matmul(GO);
+    return gradIn.data;
   }
 
   // ---- 工具 ----
 
-  zeroGrad(): void {
-    this.gradW.fill(0);
-    this.gradB.fill(0);
-  }
+  zeroGrad(): void { this.gradW.fill(0); this.gradB.fill(0); }
 
   parameters(): Array<{ data: Float64Array; grad: Float64Array }> {
     return [
