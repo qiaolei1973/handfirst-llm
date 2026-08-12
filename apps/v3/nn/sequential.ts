@@ -48,16 +48,10 @@ export class Sequential {
     return out;
   }
 
-  /** 导出所有可学习参数（Float64Array 的深拷贝快照）。 */
-  stateDict(): Float64Array[] {
-    return this.parameters().map(p => new Float64Array(p.data));
-  }
-
-  /** 从 state_dict 快照恢复参数。 */
-  loadStateDict(state: Float64Array[]): void {
-    const params = this.parameters();
-    for (let i = 0; i < params.length; i++) {
-      params[i].data.set(state[i]);
+  /** 重置所有层参数到初始随机值 */
+  resetParameters(): void {
+    for (const layer of this.layers) {
+      if ("resetParameters" in layer) layer.resetParameters();
     }
   }
 }

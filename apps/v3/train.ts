@@ -56,8 +56,8 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
   }
 
   reset(): void {
-    this.history.length = 0;
-    this._model = new Sequential([new Linear(1, this._N), new ReLU(), new Linear(this._N, 1)]);
+    super.reset();
+    this._model.resetParameters();
     this._opt = new SGD(this._model.parameters(), LR);
   }
 

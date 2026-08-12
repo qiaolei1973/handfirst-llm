@@ -87,9 +87,10 @@ export class Trainer extends BaseTrainer<V4Params, V4EpochEvent> {
   }
 
   reset(): void {
-    this.history.length = 0; this._stopped = false; this._patience = 0; this._bestVal = Infinity;
-    this._model = new Sequential([new Linear(1, this._N), new ReLU(), new Linear(this._N, 1)]);
+    super.reset();
+    this._model.resetParameters();
     this._opt = new Adam(this._model.parameters(), 0.001);
+    this._stopped = false; this._patience = 0; this._bestVal = Infinity;
   }
 
   predict(xRaw: number): number { return this._model.forward([(xRaw - this._xMean) / this._xStd])[0]; }

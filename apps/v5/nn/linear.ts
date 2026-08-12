@@ -16,6 +16,8 @@ export class Linear {
   readonly inDim: number;
   readonly outDim: number;
 
+  private _initW: Float64Array | null = null;
+  private _initB: Float64Array | null = null;
   private _x: Float64Array | null = null;
 
   constructor(inDim: number, outDim: number) {
@@ -28,15 +30,20 @@ export class Linear {
     this.gradW = new Float64Array(n);
     this.gradB = new Float64Array(outDim);
 
-    // 小随机初始化，打破对称性
+    // 随机初始化，存的初始值供 resetParameters 恢复
     for (let i = 0; i < n; i++) {
       this.w[i] = Math.random() * 1.2 - 0.6;
     }
-    // ReLU 折点随机分布：b = -w·r, r∈[0,1]，让折点 x=-b/w 在输入范围内
     for (let j = 0; j < outDim; j++) {
-      const r = Math.random();
-      this.b[j] = -this.w[j * inDim] * r;
+      this.b[j] = -this.w[j * inDim] * Math.random();
     }
+    this._initW = new Float64Array(this.w);
+    this._initB = new Float64Array(this.b);
+  }
+
+  resetParameters(): void {
+    if (this._initW) this.w.set(this._initW);
+    if (this._initB) this.b.set(this._initB);
   }
 
   // ---- 前向 ----
