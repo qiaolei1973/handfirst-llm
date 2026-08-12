@@ -5,7 +5,7 @@
 //        ŷ  = Σ_j w_out_j·h_j + b_out
 // ============================================================
 
-import { Trainer as BaseTrainer, arr, mat } from "@handfirst/utils";
+import { Trainer as BaseTrainer } from "@handfirst/utils";
 import { DataLoader } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
@@ -16,10 +16,7 @@ const BATCH = 40, LR = 0.005;
 
 export class Trainer extends BaseTrainer<unknown, unknown> {
   // dashboard 用：把 Float64Array 转成 JSON 可传的格式
-  get params() {
-    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    return { hiddenW: mat(hw.w, hw.outDim, hw.inDim), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
-  }
+  get params() { return this._model.paramsJSON(); }
 
   private _model: Sequential;
   private _opt: Adam;

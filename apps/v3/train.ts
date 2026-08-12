@@ -4,7 +4,7 @@
 // 模型: y = Σ w_out_i · ReLU(w_i · x̂ + b_i) + b_out
 // ============================================================
 
-import { Trainer as BaseTrainer, arr } from "@handfirst/utils";
+import { Trainer as BaseTrainer } from "@handfirst/utils";
 import { DataLoader } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
@@ -14,10 +14,7 @@ import { SGD } from "./nn/sgd";
 const LR = 0.02, BATCH = 40;
 
 export class Trainer extends BaseTrainer<unknown, unknown> {
-  get params() {
-    const hw = this._model.layers[0] as Linear, ow = this._model.layers[2] as Linear;
-    return { numNeurons: hw.outDim, hiddenW: arr(hw.w), hiddenB: arr(hw.b), outputW: arr(ow.w), outputB: ow.b[0] };
-  }
+  get params() { return this._model.paramsJSON(); }
 
   private _model: Sequential;
   private _opt: SGD;
