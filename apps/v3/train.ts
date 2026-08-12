@@ -6,7 +6,7 @@
 
 import { Trainer as BaseTrainer, arr } from "@handfirst/utils";
 import type { EpochEvent } from "@handfirst/utils";
-import { sampleBatch } from "./data";
+import { DataLoader } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
@@ -27,18 +27,18 @@ export class Trainer extends BaseTrainer<V3Params, EpochEvent> {
 
   private _model: Sequential;
   private _opt: SGD;
-  private _features: number[]; private _labels: number[];
+  private _loader: DataLoader;
 
   constructor(features: number[], labels: number[], numNeurons = 16) {
     super();
-    this._features = features; this._labels = labels;
+    this._loader = new DataLoader(features, labels, BATCH);
     this._model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new SGD(this._model.parameters(), LR);
     this._setupReset(this._model, this._opt);
   }
 
   step(): EpochEvent {
-    const batch = sampleBatch(this._features, this._labels, BATCH);
+    const batch = this._loader.nextBatch();
     this._model.zeroGrad();
     let totalLoss = 0;
 

@@ -7,11 +7,18 @@ export function sinData(size = 60) {
   return { features, labels, trueFn, xScale };
 }
 
-/** 随机采样 batch（无放回） */
-export function sampleBatch(
-  features: number[], labels: number[], size: number,
-): { feature: number; label: number }[] {
-  const n = features.length;
-  const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, Math.min(size, n));
-  return indices.map((i) => ({ feature: features[i], label: labels[i] }));
+/** 数据加载器：随机洗牌 + 按 batchSize 取数 */
+export class DataLoader {
+  constructor(
+    readonly features: number[],
+    readonly labels: number[],
+    private _batchSize: number,
+  ) {}
+
+  nextBatch(): { feature: number; label: number }[] {
+    const n = this.features.length;
+    const m = Math.min(this._batchSize, n);
+    const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, m);
+    return indices.map((i) => ({ feature: this.features[i], label: this.labels[i] }));
+  }
 }

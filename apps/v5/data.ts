@@ -13,13 +13,19 @@ export function surfaceData(size = 200) {
   return { features, labels, trueFn, scale };
 }
 
-/** 随机采样 batch（无放回）— v5 接受 number[][] 特征 */
-export function sampleBatch(
-  features: number[][], labels: number[], size: number,
-): { feature: number[]; label: number }[] {
-  const n = features.length;
-  const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, Math.min(size, n));
-  return indices.map((i) => ({ feature: features[i], label: labels[i] }));
+export class DataLoader {
+  constructor(
+    readonly features: number[][],
+    readonly labels: number[],
+    private _batchSize: number,
+  ) {}
+
+  nextBatch(): { feature: number[]; label: number }[] {
+    const n = this.features.length;
+    const m = Math.min(this._batchSize, n);
+    const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, m);
+    return indices.map((i) => ({ feature: this.features[i], label: this.labels[i] }));
+  }
 }
 
 function trainValSplit<T>(data: T[]) {

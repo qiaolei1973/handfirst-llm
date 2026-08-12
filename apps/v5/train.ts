@@ -6,7 +6,7 @@
 // ============================================================
 
 import { Trainer as BaseTrainer, arr, mat } from "@handfirst/utils";
-import { sampleBatch } from "./data";
+import { DataLoader } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
@@ -32,22 +32,22 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
 
   private _model: Sequential;
   private _opt: Adam;
-  private _trainF: number[][]; private _trainL: number[];
-  private _valF: number[][]; private _valL: number[];
+  private _train: DataLoader;
+  private _val: DataLoader;
   constructor(
     trainF: number[][], trainL: number[], valF: number[][], valL: number[],
     numNeurons = 16,
   ) {
     super();
-    this._trainF = trainF; this._trainL = trainL;
-    this._valF = valF; this._valL = valL;
+    this._train = new DataLoader(trainF, trainL, BATCH);
+    this._val = new DataLoader(valF, valL, valF.length);
     this._model = new Sequential([new Linear(trainF[0].length, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new Adam(this._model.parameters(), LR);
     this._setupReset(this._model, this._opt);
   }
 
   step(): V5EpochEvent {
-    const batch = sampleBatch(this._trainF, this._trainL, BATCH);
+    const batch = this._train.nextBatch();
     this._model.zeroGrad();
     let totalLoss = 0;
 
@@ -60,11 +60,11 @@ export class Trainer extends BaseTrainer<V5Params, V5EpochEvent> {
     this._opt.step();
 
     let valLoss = 0;
-    for (let k = 0; k < this._valF.length; k++) {
-      const diff = this._model.forward(this._valF[k])[0] - this._valL[k];
+    for (let k = 0; k < this._val.features.length; k++) {
+      const diff = this._model.forward(this._val.features[k])[0] - this._val.labels[k];
       valLoss += diff * diff;
     }
-    valLoss /= this._valF.length;
+    valLoss /= this._val.features.length;
 
     const ev: V5EpochEvent = {
       params: this.params, trainLoss: Number((totalLoss / BATCH).toFixed(6)),
