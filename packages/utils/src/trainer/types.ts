@@ -12,7 +12,6 @@ export interface EpochEvent {
 export interface ITrainer {
   readonly history: readonly unknown[];
   step(): object;
-  reset(): void;
 }
 
 // ---- 连接初始化（服务端第一次推送） ----

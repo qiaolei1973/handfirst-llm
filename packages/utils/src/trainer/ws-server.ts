@@ -67,7 +67,7 @@ export class WSServer {
             break;
           }
           case 'reset':
-            stop(); trainer.reset();
+            stop(); (trainer as any).reset?.();
             send({ type: 'reset', params: (trainer as any).params });
             break;
         }

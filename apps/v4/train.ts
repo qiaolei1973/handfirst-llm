@@ -25,7 +25,6 @@ export class Trainer extends BaseTrainer {
     this._val = new DataLoader(valF, valL, valF.length);
     this.model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new Adam(this.model.parameters(), 0.001);
-    this._setupReset(this.model, this._opt);
   }
 
   step() {

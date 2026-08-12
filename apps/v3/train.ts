@@ -23,7 +23,6 @@ export class Trainer extends BaseTrainer {
     this._loader = new DataLoader(features, labels, BATCH);
     this.model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new SGD(this.model.parameters(), LR);
-    this._setupReset(this.model, this._opt);
   }
 
   step() {

@@ -5,24 +5,6 @@ export abstract class Trainer {
 
   abstract step(): object;
 
-  private _resettableModel: { resetParameters(): void } | null = null;
-  private _resettableOpt: { reset(): void } | null = null;
-
-  /** 子类 constructor 中调用一次，将 model/opt 注册到 reset() */
-  protected _setupReset(
-    model: { resetParameters(): void },
-    opt: { reset(): void },
-  ): void {
-    this._resettableModel = model;
-    this._resettableOpt = opt;
-  }
-
-  reset(): void {
-    this.history.length = 0;
-    this._resettableModel?.resetParameters();
-    this._resettableOpt?.reset();
-  }
-
   static server(opts: {
     port?: number;
     maxEpochs: number;

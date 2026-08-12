@@ -17,6 +17,11 @@ Trainer.server({
   trueFnLabel: "y = sin(x)",
   factory: () => {
     const t = new Trainer(features, labels, 16);
-    return { step: () => ({ ...t.step(), params: dumpModel(t) }), reset: t.reset.bind(t), history: t.history, params: dumpModel(t) };
+    const opt = (t as any)._opt;
+    return {
+      step: () => ({ ...t.step(), params: dumpModel(t) }),
+      reset: () => { t.history.length = 0; t.model.resetParameters(); opt.reset(); },
+      history: t.history, params: dumpModel(t),
+    };
   },
 });
