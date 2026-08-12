@@ -46,7 +46,7 @@ export class Linear {
     if (this._initB) this.b.set(this._initB);
   }
 
-  // ---- 前向 ----
+  // ---- 前向：y = W·x + b（每个输出 = 权重 × 对应输入 + 偏置） ----
 
   forward(x: Float64Array | number[]): Float64Array {
     const xn = x instanceof Float64Array ? x : new Float64Array(x);
@@ -54,7 +54,7 @@ export class Linear {
 
     const out = new Float64Array(this.outDim);
     for (let j = 0; j < this.outDim; j++) {
-      let s = this.b[j];
+      let s = this.b[j];           // y_j = b_j + Σ_i w_{j,i} · x_i
       const off = j * this.inDim;
       for (let i = 0; i < this.inDim; i++) {
         s += this.w[off + i] * xn[i];
@@ -64,24 +64,29 @@ export class Linear {
     return out;
   }
 
-  // ---- 反向 ----
+  // ---- 反向：链式法则 ----
+  //
+  // 已知上游梯度 ∂L/∂y，需要计算：
+  //   ∂L/∂W：对每个 w_{j,i}，累加 gradOut_j · x_i
+  //   ∂L/∂b：对每个 b_j，累加 gradOut_j
+  //   ∂L/∂x：传给前一层 = Σ_j w_{j,i} · gradOut_j
 
   backward(gradOut: Float64Array): Float64Array {
     const x = this._x;
     if (!x) throw new Error("必须先调用 forward()");
 
-    // 累加 ∂L/∂W 和 ∂L/∂b
+    // ∂L/∂W 和 ∂L/∂b
     for (let j = 0; j < this.outDim; j++) {
-      const go = gradOut[j];
-      if (go === 0) continue;
+      const gradY = gradOut[j];
+      if (gradY === 0) continue;
       const off = j * this.inDim;
       for (let i = 0; i < this.inDim; i++) {
-        this.gradW[off + i] += go * x[i];
+        this.gradW[off + i] += gradY * x[i];
       }
-      this.gradB[j] += go;
+      this.gradB[j] += gradY;
     }
 
-    // ∂L/∂x = Wᵀ · ∂L/∂y
+    // ∂L/∂x = W^T · ∂L/∂y（传给前一层）
     const gradIn = new Float64Array(this.inDim);
     for (let i = 0; i < this.inDim; i++) {
       let s = 0;
