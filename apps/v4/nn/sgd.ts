@@ -12,8 +12,6 @@ export class SGD {
     private _lr: number = 0.02,
   ) {}
 
-  reset(): void { /* SGD 无内部状态，无需重置 */ }
-
   step(): void {
     for (const p of this._params) {
       for (let i = 0; i < p.data.length; i++) {

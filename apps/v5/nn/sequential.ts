@@ -47,11 +47,4 @@ export class Sequential {
     }
     return out;
   }
-
-  /** 重置所有层参数到初始随机值 */
-  resetParameters(): void {
-    for (const layer of this.layers) {
-      if ("resetParameters" in layer) layer.resetParameters();
-    }
-  }
 }

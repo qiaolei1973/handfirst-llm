@@ -34,7 +34,7 @@ export class WSServer {
     if (actualPort !== port) console.log(`  ⚠️  端口 ${port} 已被占用，改用: ${actualPort}`);
 
     this._wss.on('connection', (ws: WebSocket) => {
-      const trainer = factory();
+      let trainer = factory();
       let timer: ReturnType<typeof setInterval> | null = null;
 
       const send = (msg: ServerMsg) => { if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg)); };
@@ -67,7 +67,8 @@ export class WSServer {
             break;
           }
           case 'reset':
-            stop(); (trainer as any).reset?.();
+            stop();
+            trainer = factory();
             send({ type: 'reset', params: (trainer as any).params });
             break;
         }

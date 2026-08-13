@@ -18,10 +18,8 @@ Trainer.server({
   trueFnLabel: "f(x1,x2) = sin(sqrt(x1^2+x2^2) * 2pi)",
   factory: () => {
     const t = new Trainer(d.trainF, d.trainL, d.valF, d.valL, 16);
-    const opt = (t as any)._opt; // Adam, private
     return {
       step: () => ({ ...t.step(), params: dumpModel(t) }),
-      reset: () => { t.history.length = 0; t.model.resetParameters(); opt.reset(); },
       history: t.history, params: dumpModel(t),
     };
   },

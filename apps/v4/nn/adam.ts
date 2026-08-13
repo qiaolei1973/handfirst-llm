@@ -28,12 +28,6 @@ export class Adam {
     }
   }
 
-  reset(): void {
-    for (const m of this._ms) m.fill(0);
-    for (const v of this._vs) v.fill(0);
-    this._t = 0;
-  }
-
   step(): void {
     this._t++;
     for (let k = 0; k < this._params.length; k++) {

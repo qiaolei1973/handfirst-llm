@@ -31,14 +31,6 @@ export class Linear {
     for (let j = 0; j < outDim; j++) {
       this.bias.data[j] = Math.random() * 1.2 - 0.6;
     }
-
-    this.weight.saveInit();
-    this.bias.saveInit();
-  }
-
-  resetParameters(): void {
-    this.weight.reset();
-    this.bias.reset();
   }
 
   // ---- 前向：y = W·x + b（每个输出 = 权重 × 对应输入 + 偏置） ----
