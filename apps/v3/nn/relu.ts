@@ -6,6 +6,8 @@
  * z ≤ 0 → 输出 0，导数 = 0
  */
 
+import type { Parameter } from "./parameter";
+
 export class ReLU {
   private _z: Float64Array | null = null;
 
@@ -28,7 +30,7 @@ export class ReLU {
     return out;
   }
 
-  parameters(): Array<{ data: Float64Array; grad: Float64Array }> {
+  parameters(): Parameter[] {
     return [];
   }
 }

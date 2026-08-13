@@ -7,7 +7,7 @@ const d = prepare(features, labels);
 
 function dumpModel(t: Trainer) {
   const [hw, ow] = t.model.layers.filter(l => l instanceof Linear) as Linear[];
-  return { inputDim: hw.inDim, numNeurons: hw.outDim, hiddenW: Array.from(hw.w), hiddenB: Array.from(hw.b), outputW: Array.from(ow.w), outputB: ow.b[0] };
+  return { inputDim: hw.inDim, numNeurons: hw.outDim, hiddenW: Array.from(hw.weight.data), hiddenB: Array.from(hw.bias.data), outputW: Array.from(ow.weight.data), outputB: ow.bias.data[0] };
 }
 
 Trainer.server({

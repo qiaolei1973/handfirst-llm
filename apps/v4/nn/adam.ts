@@ -8,13 +8,15 @@
  *   参数 -= lr · m̂ / √(v̂ + ε)
  */
 
+import { Parameter } from "./parameter";
+
 export class Adam {
   private _ms: Float64Array[] = [];
   private _vs: Float64Array[] = [];
   private _t = 0;
 
   constructor(
-    private _params: Array<{ data: Float64Array; grad: Float64Array }>,
+    private _params: Parameter[],
     private _lr = 0.001,
     private _beta1 = 0.9,
     private _beta2 = 0.999,
@@ -35,15 +37,15 @@ export class Adam {
   step(): void {
     this._t++;
     for (let k = 0; k < this._params.length; k++) {
-      const { data, grad } = this._params[k];
+      const p = this._params[k];
       const m = this._ms[k];
       const v = this._vs[k];
-      for (let i = 0; i < data.length; i++) {
-        m[i] = this._beta1 * m[i] + (1 - this._beta1) * grad[i];
-        v[i] = this._beta2 * v[i] + (1 - this._beta2) * grad[i] * grad[i];
+      for (let i = 0; i < p.data.length; i++) {
+        m[i] = this._beta1 * m[i] + (1 - this._beta1) * p.grad[i];
+        v[i] = this._beta2 * v[i] + (1 - this._beta2) * p.grad[i] * p.grad[i];
         const mHat = m[i] / (1 - Math.pow(this._beta1, this._t));
         const vHat = v[i] / (1 - Math.pow(this._beta2, this._t));
-        data[i] -= this._lr * mHat / (Math.sqrt(vHat) + this._eps);
+        p.data[i] -= this._lr * mHat / (Math.sqrt(vHat) + this._eps);
       }
     }
   }

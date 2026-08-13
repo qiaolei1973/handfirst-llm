@@ -5,6 +5,7 @@
  * backward: 梯度从输出端反向往回传
  */
 
+import type { Parameter } from "./parameter";
 import type { Linear } from "./linear";
 import type { ReLU } from "./relu";
 
@@ -40,8 +41,8 @@ export class Sequential {
     }
   }
 
-  parameters(): Array<{ data: Float64Array; grad: Float64Array }> {
-    const out: Array<{ data: Float64Array; grad: Float64Array }> = [];
+  parameters(): Parameter[] {
+    const out: Parameter[] = [];
     for (const layer of this.layers) {
       out.push(...layer.parameters());
     }

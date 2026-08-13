@@ -4,15 +4,13 @@
  *   参数 = 参数 - lr × 梯度
  */
 
-export class SGD {
-  private _params: Array<{ data: Float64Array; grad: Float64Array }>;
+import { Parameter } from "./parameter";
 
+export class SGD {
   constructor(
-    params: Array<{ data: Float64Array; grad: Float64Array }>,
+    private _params: Parameter[],
     private _lr: number = 0.02,
-  ) {
-    this._params = params;
-  }
+  ) {}
 
   reset(): void { /* SGD 无内部状态，无需重置 */ }
 

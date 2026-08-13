@@ -6,6 +6,7 @@
  */
 
 import { Mat } from "@handfirst/utils";
+import type { Parameter } from "./parameter";
 
 export class ReLU {
   private _z: Mat | null = null;
@@ -29,7 +30,7 @@ export class ReLU {
     return out;
   }
 
-  parameters(): Array<{ data: Float64Array; grad: Float64Array }> {
+  parameters(): Parameter[] {
     return [];
   }
 }
