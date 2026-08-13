@@ -27,7 +27,7 @@ export class Linear {
       this.weight.data[i] = Math.random() * 1.2 - 0.6;
     }
     for (let j = 0; j < outDim; j++) {
-      this.bias.data[j] = -this.weight.data[j * inDim] * Math.random();
+      this.bias.data[j] = Math.random() * 1.2 - 0.6;
     }
 
     this.weight.saveInit();
