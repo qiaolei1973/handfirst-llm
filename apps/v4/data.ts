@@ -14,16 +14,31 @@ export function sinData(size = 60) {
 }
 
 export class DataLoader {
+  private _indices: number[] = [];
+  private _pos = 0;
+
   constructor(
     readonly dataset: Dataset,
     private _batchSize: number,
-  ) {}
+  ) {
+    this._shuffle();
+  }
 
-  nextBatch(): { feature: number; label: number }[] {
+  /** 取下一个 batch，遍历完一个 epoch 返回 null 并重新 shuffle */
+  next(): { feature: number; label: number }[] | null {
+    if (this._pos >= this._indices.length) {
+      this._shuffle();
+      return null;
+    }
+    const batch = this._indices.slice(this._pos, this._pos + this._batchSize);
+    this._pos += this._batchSize;
+    return batch.map((i) => ({ feature: this.dataset.features[i], label: this.dataset.labels[i] }));
+  }
+
+  private _shuffle(): void {
     const n = this.dataset.features.length;
-    const m = Math.min(this._batchSize, n);
-    const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, m);
-    return indices.map((i) => ({ feature: this.dataset.features[i], label: this.dataset.labels[i] }));
+    this._indices = [...Array(n).keys()].sort(() => Math.random() - 0.5);
+    this._pos = 0;
   }
 }
 
