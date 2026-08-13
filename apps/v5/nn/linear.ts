@@ -1,5 +1,8 @@
 /**
- * Linear 层 — y = W·x + b，矩阵实现。
+ * Linear 层 — Y = W·X + b，矩阵实现。
+ *
+ * 输入 X 是 [inDim × B] 矩阵（每列一个样本），一次 forward 处理 B 个样本。
+ * 这就是"批处理"——矩阵乘法天然同时算 B 列。
  */
 
 import { Mat } from "@handfirst/utils";
@@ -14,7 +17,7 @@ export class Linear {
 
   private _initW: Float64Array | null = null;
   private _initB: Float64Array | null = null;
-  private _x: Float64Array | null = null;
+  private _x: Mat | null = null;
 
   constructor(inDim: number, outDim: number) {
     this.inDim = inDim;
@@ -38,39 +41,38 @@ export class Linear {
     if (this._initB) this.b.set(this._initB);
   }
 
-  // ---- 前向：y = W @ x + b ----
+  // ---- 前向：Y = W @ X + b ----
+  // W: [outDim × inDim]，X: [inDim × B]，b: 广播到每列
 
-  forward(x: Float64Array | number[]): Float64Array {
-    this._x = x instanceof Float64Array ? x : new Float64Array(x);
-
-    const weightMat = new Mat(this.outDim, this.inDim, this.w);
-    const inputMat = new Mat(this.inDim, 1, this._x);
-    const biasMat  = new Mat(this.outDim, 1, this.b);
-
-    return weightMat.matmul(inputMat).add(biasMat).data;
+  forward(x: Mat): Mat {
+    this._x = x;
+    const weight = new Mat(this.outDim, this.inDim, this.w);
+    const bias = new Mat(this.outDim, 1, this.b);
+    return weight.matmul(x).add(bias);
   }
 
-  // ---- 反向：链式法则 ----
+  // ---- 反向：链式法则（batch 维自然累加） ----
   //
-  // 已知上游梯度 ∂L/∂y（shape [outDim × 1]），需要计算：
-  //   ∂L/∂W = ∂L/∂y ⊗ x      （外积，shape [outDim × inDim]）
-  //   ∂L/∂b = ∂L/∂y           （shape [outDim × 1]）
-  //   ∂L/∂x = W^T · ∂L/∂y     （传给前一层，shape [inDim × 1]）
+  // 已知上游梯度 ∂L/∂Y（[outDim × B]）：
+  //   ∂L/∂W = ∂L/∂Y @ X^T     [outDim×B] @ [B×inDim] = [outDim×inDim]
+  //   ∂L/∂b = ∂L/∂Y 沿 batch 求和  （行求和）
+  //   ∂L/∂X = W^T @ ∂L/∂Y     [inDim×outDim] @ [outDim×B] = [inDim×B]
 
-  backward(gradOut: Float64Array): Float64Array {
+  backward(gradOut: Mat): Mat {
     if (!this._x) throw new Error("必须先调用 forward()");
+    const x = this._x;
 
-    const gradOutMat = new Mat(this.outDim, 1, gradOut);
-    const inputMat   = new Mat(this.inDim, 1, this._x);
-
-    // ∂L/∂W = ∂L/∂y ⊗ x，∂L/∂b = ∂L/∂y
-    const gradWMat = gradOutMat.matmul(inputMat.transpose());
+    // ∂L/∂W = ∂L/∂Y @ X^T（B 个样本的梯度自动累加进矩阵乘法）
+    const gradWMat = gradOut.matmul(x.transpose());
     for (let i = 0; i < gradWMat.data.length; i++) this.gradW[i] += gradWMat.data[i];
-    for (let j = 0; j < this.outDim; j++) this.gradB[j] += gradOutMat.data[j];
 
-    // ∂L/∂x = W^T · ∂L/∂y
-    const weightMat = new Mat(this.outDim, this.inDim, this.w);
-    return weightMat.transpose().matmul(gradOutMat).data;
+    // ∂L/∂b = ∂L/∂Y 沿 batch 维求和
+    const gradBMat = gradOut.sum(1);
+    for (let j = 0; j < this.outDim; j++) this.gradB[j] += gradBMat.data[j];
+
+    // ∂L/∂X = W^T @ ∂L/∂Y
+    const weight = new Mat(this.outDim, this.inDim, this.w);
+    return weight.transpose().matmul(gradOut);
   }
 
   // ---- 工具 ----

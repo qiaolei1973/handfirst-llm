@@ -5,6 +5,7 @@
  * backward: 梯度从输出端反向往回传
  */
 
+import { Mat } from "@handfirst/utils";
 import type { Linear } from "./linear";
 import type { ReLU } from "./relu";
 
@@ -17,18 +18,16 @@ export class Sequential {
     this.layers = layers;
   }
 
-  forward(x: Float64Array | number[]): Float64Array {
-    let out: Float64Array = x instanceof Float64Array
-      ? x
-      : new Float64Array(x);
+  forward(x: Mat): Mat {
+    let out = x;
     for (const layer of this.layers) {
       out = layer.forward(out);
     }
     return out;
   }
 
-  backward(gradOut: Float64Array): void {
-    let g: Float64Array = gradOut;
+  backward(gradOut: Mat): void {
+    let g = gradOut;
     for (let i = this.layers.length - 1; i >= 0; i--) {
       g = this.layers[i].backward(g);
     }

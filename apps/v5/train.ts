@@ -1,8 +1,8 @@
 // ============================================================
-// 多维输入 — d 个特征 → N 个神经元 → ŷ
+// 多维输入 + 批处理 — d 个特征、B 个样本一次算完
 //
-// 模型: h_j = ReLU(Σ_i W_{j,i}·x_i + b_j)
-//        ŷ  = Σ_j w_out_j·h_j + b_out
+// 模型: H = ReLU(W_h @ X + b_h)     W_h: [N × d], X: [d × B]
+//        Ŷ = W_o @ H + b_o          W_o: [1 × N], Ŷ: [1 × B]
 // ============================================================
 
 import { Trainer as BaseTrainer } from "@handfirst/utils";
@@ -32,27 +32,28 @@ export class Trainer extends BaseTrainer {
   }
 
   step() {
-    const batch = this._train.nextBatch();
+    const { X, Y } = this._train.nextBatch();   // X: [d × B], Y: [1 × B]
+    const B = X.cols;
+
     this.model.zeroGrad();
-    let totalLoss = 0;
+    const yPred = this.model.forward(X);         // [1 × B]
 
-    for (const { feature, label } of batch) {
-      const diff = this.model.forward(feature)[0] - label;
-      totalLoss += diff * diff;
-      this.model.backward(new Float64Array([(2 * diff) / BATCH]));
-    }
+    // MSE: L = Σ(ŷ - y)² / B
+    const diff = yPred.sub(Y);
+    const trainLoss = diff.dotmul(diff).sum().data[0] / B;
 
+    // 初始梯度 ∂L/∂ŷ = 2(ŷ - y) / B
+    this.model.backward(diff.scale(2 / B));
     this._opt.step();
 
-    let valLoss = 0;
-    for (let k = 0; k < this._val.features.length; k++) {
-      const diff = this.model.forward(this._val.features[k])[0] - this._val.labels[k];
-      valLoss += diff * diff;
-    }
-    valLoss /= this._val.features.length;
+    // 验证集：一次 forward，全部样本
+    const { X: vX, Y: vY } = this._val.nextBatch();
+    const vPred = this.model.forward(vX);
+    const vDiff = vPred.sub(vY);
+    const valLoss = vDiff.dotmul(vDiff).sum().data[0] / vX.cols;
 
     return {
-      trainLoss: Number((totalLoss / BATCH).toFixed(6)),
+      trainLoss: Number(trainLoss.toFixed(6)),
       valLoss: Number(valLoss.toFixed(6)),
     };
   }

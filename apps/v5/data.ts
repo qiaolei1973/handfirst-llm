@@ -1,3 +1,5 @@
+import { Mat } from "@handfirst/utils";
+
 /** 2D 曲面数据 — f(x₁,x₂) = sin(√(x₁²+x₂²) · 2π) + noise */
 export function surfaceData(size = 200) {
   const scale = 2 * Math.PI;
@@ -14,17 +16,30 @@ export function surfaceData(size = 200) {
 }
 
 export class DataLoader {
+  private _dim: number;
+
   constructor(
     readonly features: number[][],
     readonly labels: number[],
     private _batchSize: number,
-  ) {}
+  ) {
+    this._dim = features[0].length;
+  }
 
-  nextBatch(): { feature: number[]; label: number }[] {
+  /** 随机抽 batchSize 个样本，堆成 [dim × B] 输入矩阵和 [1 × B] 标签矩阵 */
+  nextBatch(): { X: Mat; Y: Mat } {
     const n = this.features.length;
     const m = Math.min(this._batchSize, n);
     const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, m);
-    return indices.map((i) => ({ feature: this.features[i], label: this.labels[i] }));
+
+    const X = new Mat(this._dim, m);
+    const Y = new Mat(1, m);
+    for (let b = 0; b < m; b++) {
+      const f = this.features[indices[b]];
+      for (let i = 0; i < this._dim; i++) X.data[i * m + b] = f[i];
+      Y.data[b] = this.labels[indices[b]];
+    }
+    return { X, Y };
   }
 }
 

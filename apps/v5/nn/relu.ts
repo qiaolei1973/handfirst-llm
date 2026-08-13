@@ -1,29 +1,30 @@
 /**
- * ReLU 激活函数 — max(0, z)。
+ * ReLU 激活函数 — max(0, z)，逐元素操作。
  *
- * 没有可学习参数，只做非线性变换。
- * z > 0 → 输出 z 本身，导数 = 1
- * z ≤ 0 → 输出 0，导数 = 0
+ * 没有可学习参数。矩阵进来矩阵出去，对每个元素独立计算。
+ * z > 0 → z，导数 = 1；z ≤ 0 → 0，导数 = 0。
  */
 
-export class ReLU {
-  private _z: Float64Array | null = null;
+import { Mat } from "@handfirst/utils";
 
-  forward(z: Float64Array): Float64Array {
+export class ReLU {
+  private _z: Mat | null = null;
+
+  forward(z: Mat): Mat {
     this._z = z;
-    const out = new Float64Array(z.length);
-    for (let i = 0; i < z.length; i++) {
-      out[i] = z[i] > 0 ? z[i] : 0;
+    const out = new Mat(z.rows, z.cols);
+    for (let i = 0; i < z.data.length; i++) {
+      out.data[i] = z.data[i] > 0 ? z.data[i] : 0;
     }
     return out;
   }
 
-  backward(gradOut: Float64Array): Float64Array {
+  backward(gradOut: Mat): Mat {
+    if (!this._z) throw new Error("必须先调用 forward()");
     const z = this._z;
-    if (!z) throw new Error("必须先调用 forward()");
-    const out = new Float64Array(z.length);
-    for (let i = 0; i < z.length; i++) {
-      out[i] = z[i] > 0 ? gradOut[i] : 0;
+    const out = new Mat(gradOut.rows, gradOut.cols);
+    for (let i = 0; i < z.data.length; i++) {
+      out.data[i] = z.data[i] > 0 ? gradOut.data[i] : 0;
     }
     return out;
   }
