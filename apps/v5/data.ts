@@ -23,37 +23,20 @@ export function surfaceData(size = 200) {
 
 export class DataLoader {
   private _dim: number;
-  private _indices: number[] = [];
-  private _pos = 0;
 
   constructor(
     readonly dataset: Dataset,
     private _batchSize: number,
   ) {
     this._dim = dataset.features[0].length;
-    this._shuffle();
   }
 
-  /** 取下一个 batch，遍历完一个 epoch 返回 null 并重新 shuffle */
-  next(): { X: Mat; Y: Mat } | null {
-    if (this._pos >= this._indices.length) {
-      this._shuffle();
-      return null;
-    }
-    const batch = this._indices.slice(this._pos, this._pos + this._batchSize);
-    this._pos += this._batchSize;
-    return this._stack(batch);
-  }
-
-  private _shuffle(): void {
+  /** 随机抽 batchSize 个样本，堆成 [dim × B] 输入矩阵和 [1 × B] 标签矩阵 */
+  generate(): { X: Mat; Y: Mat } {
     const n = this.dataset.features.length;
-    this._indices = [...Array(n).keys()].sort(() => Math.random() - 0.5);
-    this._pos = 0;
-  }
+    const m = Math.min(this._batchSize, n);
+    const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, m);
 
-  /** 把一组样本堆成 [dim × B] 输入矩阵和 [1 × B] 标签矩阵 */
-  private _stack(indices: number[]): { X: Mat; Y: Mat } {
-    const m = indices.length;
     const X = new Mat(this._dim, m);
     const Y = new Mat(1, m);
     for (let b = 0; b < m; b++) {

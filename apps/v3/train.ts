@@ -27,22 +27,19 @@ export class Trainer extends BaseTrainer {
   }
 
   step() {
-    // 一个 epoch：遍历所有 batch，每个 batch 累加梯度后更新一次
-    let totalLoss = 0, count = 0;
-    let batch = this._loader.next();
-    while (batch) {
-      this.model.zeroGrad();
-      for (const { feature, label } of batch) {
-        const diff = this.model.forward([feature])[0] - label;
-        totalLoss += diff * diff;
-        count++;
-        this.model.backward(new Float64Array([(2 * diff) / BATCH]));
-      }
-      this._opt.step();
-      batch = this._loader.next();
+    const batch = this._loader.generate();   // 一批随机数据（mini-batch）
+    this.model.zeroGrad();
+    let totalLoss = 0;
+
+    for (let i = 0; i < batch.length; i++) {
+      const { feature, label } = batch[i];
+      const diff = this.model.forward([feature])[0] - label;
+      totalLoss += diff * diff;
+      this.model.backward(new Float64Array([(2 * diff) / BATCH]));
     }
 
-    const ev = { loss: Number((totalLoss / count).toFixed(6)) };
+    this._opt.step();
+    const ev = { loss: Number((totalLoss / BATCH).toFixed(6)) };
     this.history.push(ev);
     return ev;
   }

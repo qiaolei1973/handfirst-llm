@@ -13,32 +13,18 @@ export function sinData(size = 60) {
   return { features, labels, trueFn, xScale };
 }
 
-/** 数据加载器：shuffle 后按 batchSize 顺序遍历（一个 epoch 遍历一遍） */
+/** 数据加载器：随机抽一批数据（mini-batch） */
 export class DataLoader {
-  private _indices: number[] = [];
-  private _pos = 0;
-
   constructor(
     readonly dataset: Dataset,
     private _batchSize: number,
-  ) {
-    this._shuffle();
-  }
+  ) {}
 
-  /** 取下一个 batch，遍历完一个 epoch 返回 null 并重新 shuffle */
-  next(): { feature: number; label: number }[] | null {
-    if (this._pos >= this._indices.length) {
-      this._shuffle();
-      return null;
-    }
-    const batch = this._indices.slice(this._pos, this._pos + this._batchSize);
-    this._pos += this._batchSize;
-    return batch.map((i) => ({ feature: this.dataset.features[i], label: this.dataset.labels[i] }));
-  }
-
-  private _shuffle(): void {
+  /** 随机抽 batchSize 个样本（无放回） */
+  generate(): { feature: number; label: number }[] {
     const n = this.dataset.features.length;
-    this._indices = [...Array(n).keys()].sort(() => Math.random() - 0.5);
-    this._pos = 0;
+    const m = Math.min(this._batchSize, n);
+    const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, m);
+    return indices.map((i) => ({ feature: this.dataset.features[i], label: this.dataset.labels[i] }));
   }
 }
