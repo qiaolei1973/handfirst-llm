@@ -30,9 +30,10 @@ export class Trainer extends BaseTrainer {
   }
 
   step() {
-    // 训练：遍历一个 epoch 的所有 batch
+    // 训练：一个 epoch，遍历所有 batch
     let trainLoss = 0, count = 0;
-    for (let batch = this._train.next(); batch; batch = this._train.next()) {
+    let batch = this._train.next();
+    while (batch) {
       const { X, Y } = batch;
       const B = X.cols;
 
@@ -47,15 +48,19 @@ export class Trainer extends BaseTrainer {
       // 初始梯度 ∂L/∂ŷ = 2(ŷ - y) / B
       this.model.backward(diff.scale(2 / B));
       this._opt.step();
+
+      batch = this._train.next();
     }
 
-    // 验证集：batchSize = 全量，for 循环只跑一次
+    // 验证集：batchSize = 全量，while 循环只跑一次
     let valLoss = 0;
-    for (let batch = this._val.next(); batch; batch = this._val.next()) {
-      const { X, Y } = batch;
+    let vBatch = this._val.next();
+    while (vBatch) {
+      const { X, Y } = vBatch;
       const vPred = this.model.forward(X);
       const vDiff = vPred.sub(Y);
       valLoss = vDiff.dotmul(vDiff).sum().data[0] / X.cols;
+      vBatch = this._val.next();
     }
 
     return {

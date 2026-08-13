@@ -31,7 +31,8 @@ export class Trainer extends BaseTrainer {
   step() {
     // 训练：一个 epoch，遍历所有 batch
     let totalLoss = 0, count = 0;
-    for (let batch = this._train.next(); batch; batch = this._train.next()) {
+    let batch = this._train.next();
+    while (batch) {
       this.model.zeroGrad();
       for (const { feature, label } of batch) {
         const diff = this.model.forward([feature])[0] - label;
@@ -40,15 +41,18 @@ export class Trainer extends BaseTrainer {
         this.model.backward(new Float64Array([(2 * diff) / BATCH]));
       }
       this._opt.step();
+      batch = this._train.next();
     }
 
-    // 验证：batchSize = 全量，for 循环只跑一次
+    // 验证：batchSize = 全量，while 循环只跑一次
     let valLoss = 0;
-    for (let batch = this._val.next(); batch; batch = this._val.next()) {
-      for (const { feature, label } of batch) {
+    let vBatch = this._val.next();
+    while (vBatch) {
+      for (const { feature, label } of vBatch) {
         const diff = this.model.forward([feature])[0] - label;
         valLoss += diff * diff;
       }
+      vBatch = this._val.next();
     }
     valLoss /= this._val.dataset.features.length;
 

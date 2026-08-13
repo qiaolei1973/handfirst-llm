@@ -29,7 +29,8 @@ export class Trainer extends BaseTrainer {
   step() {
     // 一个 epoch：遍历所有 batch，每个 batch 累加梯度后更新一次
     let totalLoss = 0, count = 0;
-    for (let batch = this._loader.next(); batch; batch = this._loader.next()) {
+    let batch = this._loader.next();
+    while (batch) {
       this.model.zeroGrad();
       for (const { feature, label } of batch) {
         const diff = this.model.forward([feature])[0] - label;
@@ -38,6 +39,7 @@ export class Trainer extends BaseTrainer {
         this.model.backward(new Float64Array([(2 * diff) / BATCH]));
       }
       this._opt.step();
+      batch = this._loader.next();
     }
 
     const ev = { loss: Number((totalLoss / count).toFixed(6)) };
