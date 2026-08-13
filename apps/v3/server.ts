@@ -16,7 +16,7 @@ Trainer.server({
   labels,
   trueFnLabel: "y = sin(x)",
   factory: () => {
-    const t = new Trainer(features, labels, 16);
+    const t = new Trainer({ features, labels }, 16);
     return {
       step: () => ({ ...t.step(), params: dumpModel(t) }),
       history: t.history, params: dumpModel(t),

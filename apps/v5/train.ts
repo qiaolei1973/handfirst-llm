@@ -7,6 +7,7 @@
 
 import { Trainer as BaseTrainer } from "@handfirst/utils";
 import { DataLoader } from "./data";
+import type { Dataset } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
@@ -20,14 +21,11 @@ export class Trainer extends BaseTrainer {
   private _train: DataLoader;
   private _val: DataLoader;
 
-  constructor(
-    trainF: number[][], trainL: number[], valF: number[][], valL: number[],
-    numNeurons = 16,
-  ) {
+  constructor(train: Dataset, val: Dataset, numNeurons = 16) {
     super();
-    this._train = new DataLoader(trainF, trainL, BATCH);
-    this._val = new DataLoader(valF, valL, valF.length);
-    this.model = new Sequential([new Linear(trainF[0].length, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
+    this._train = new DataLoader(train, BATCH);
+    this._val = new DataLoader(val, val.features.length);
+    this.model = new Sequential([new Linear(train.features[0].length, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new Adam(this.model.parameters(), LR);
   }
 

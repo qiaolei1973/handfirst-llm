@@ -4,7 +4,7 @@ import { Trainer } from "./train";
 
 const { features, labels } = sinData(60);
 const d = prepare(features, labels);
-const t = new Trainer(d.trainF, d.trainL, d.valF, d.valL, 16);
+const t = new Trainer(d.train, d.val, 16);
 
 let bestVal = Infinity, patience = 0;
 for (let e = 0; e < 3000; e++) {

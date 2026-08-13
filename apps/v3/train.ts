@@ -6,6 +6,7 @@
 
 import { Trainer as BaseTrainer } from "@handfirst/utils";
 import { DataLoader } from "./data";
+import type { Dataset } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
@@ -18,9 +19,9 @@ export class Trainer extends BaseTrainer {
   private _opt: SGD;
   private _loader: DataLoader;
 
-  constructor(features: number[], labels: number[], numNeurons = 16) {
+  constructor(dataset: Dataset, numNeurons = 16) {
     super();
-    this._loader = new DataLoader(features, labels, BATCH);
+    this._loader = new DataLoader(dataset, BATCH);
     this.model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new SGD(this.model.parameters(), LR);
   }

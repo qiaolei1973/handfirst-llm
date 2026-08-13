@@ -1,5 +1,11 @@
 import { Mat } from "@handfirst/utils";
 
+/** 数据集 — feature + label 打包在一起 */
+export interface Dataset {
+  features: number[][];
+  labels: number[];
+}
+
 /** 2D 曲面数据 — f(x₁,x₂) = sin(√(x₁²+x₂²) · 2π) + noise */
 export function surfaceData(size = 200) {
   const scale = 2 * Math.PI;
@@ -19,25 +25,24 @@ export class DataLoader {
   private _dim: number;
 
   constructor(
-    readonly features: number[][],
-    readonly labels: number[],
+    readonly dataset: Dataset,
     private _batchSize: number,
   ) {
-    this._dim = features[0].length;
+    this._dim = dataset.features[0].length;
   }
 
   /** 随机抽 batchSize 个样本，堆成 [dim × B] 输入矩阵和 [1 × B] 标签矩阵 */
   nextBatch(): { X: Mat; Y: Mat } {
-    const n = this.features.length;
+    const n = this.dataset.features.length;
     const m = Math.min(this._batchSize, n);
     const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, m);
 
     const X = new Mat(this._dim, m);
     const Y = new Mat(1, m);
     for (let b = 0; b < m; b++) {
-      const f = this.features[indices[b]];
+      const f = this.dataset.features[indices[b]];
       for (let i = 0; i < this._dim; i++) X.data[i * m + b] = f[i];
-      Y.data[b] = this.labels[indices[b]];
+      Y.data[b] = this.dataset.labels[indices[b]];
     }
     return { X, Y };
   }
@@ -66,13 +71,10 @@ function standardizeMulti(data: number[][], dim: number) {
   return { means, stds };
 }
 
-/** 完整数据准备 */
+/** 完整数据准备：split → 标准化 → 返回训练集和验证集两个 Dataset */
 export function prepare(
   features: number[][], labels: number[],
-): {
-  trainF: number[][]; trainL: number[]; valF: number[][]; valL: number[];
-  means: number[]; stds: number[];
-} {
+): { train: Dataset; val: Dataset } {
   const dim = features[0].length;
   const fi = trainValSplit(features.map((f, i) => ({ f, l: labels[i] })));
   let trainF = fi.train.map(d => d.f), trainL = fi.train.map(d => d.l);
@@ -82,5 +84,8 @@ export function prepare(
   trainF = trainF.map(f => f.map((v, i) => (v - means[i]) / stds[i]));
   valF = valF.map(f => f.map((v, i) => (v - means[i]) / stds[i]));
 
-  return { trainF, trainL, valF, valL };
+  return {
+    train: { features: trainF, labels: trainL },
+    val:   { features: valF,   labels: valL },
+  };
 }

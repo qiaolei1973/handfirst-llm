@@ -3,7 +3,7 @@ import { sinData } from "./data";
 import { Trainer } from "./train";
 
 const { features, labels } = sinData(60);
-const t = new Trainer(features, labels, 16);
+const t = new Trainer({ features, labels }, 16);
 
 for (let e = 0; e < 3000; e++) {
   const ev = t.step();

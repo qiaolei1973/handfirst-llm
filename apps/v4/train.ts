@@ -6,6 +6,7 @@
 
 import { Trainer as BaseTrainer } from "@handfirst/utils";
 import { DataLoader } from "./data";
+import type { Dataset } from "./data";
 import { Linear } from "./nn/linear";
 import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
@@ -19,10 +20,10 @@ export class Trainer extends BaseTrainer {
   private _train: DataLoader;
   private _val: DataLoader;
 
-  constructor(trainF: number[], trainL: number[], valF: number[], valL: number[], numNeurons = 16) {
+  constructor(train: Dataset, val: Dataset, numNeurons = 16) {
     super();
-    this._train = new DataLoader(trainF, trainL, BATCH);
-    this._val = new DataLoader(valF, valL, valF.length);
+    this._train = new DataLoader(train, BATCH);
+    this._val = new DataLoader(val, val.features.length);
     this.model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
     this._opt = new Adam(this.model.parameters(), 0.001);
   }
@@ -41,11 +42,11 @@ export class Trainer extends BaseTrainer {
     this._opt.step();
 
     let valLoss = 0;
-    for (let k = 0; k < this._val.features.length; k++) {
-      const diff = this.model.forward([this._val.features[k]])[0] - this._val.labels[k];
+    for (let k = 0; k < this._val.dataset.features.length; k++) {
+      const diff = this.model.forward([this._val.dataset.features[k]])[0] - this._val.dataset.labels[k];
       valLoss += diff * diff;
     }
-    valLoss /= this._val.features.length;
+    valLoss /= this._val.dataset.features.length;
 
     return {
       trainLoss: Number((totalLoss / BATCH).toFixed(6)),
