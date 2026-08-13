@@ -30,28 +30,36 @@ export class Trainer extends BaseTrainer {
   }
 
   step() {
-    const { X, Y } = this._train.nextBatch();   // X: [d × B], Y: [1 × B]
-    const B = X.cols;
+    // 训练：遍历一个 epoch 的所有 batch
+    let trainLoss = 0, count = 0;
+    for (let batch = this._train.next(); batch; batch = this._train.next()) {
+      const { X, Y } = batch;
+      const B = X.cols;
 
-    this.model.zeroGrad();
-    const yPred = this.model.forward(X);         // [1 × B]
+      this.model.zeroGrad();
+      const yPred = this.model.forward(X);         // [1 × B]
+      const diff = yPred.sub(Y);
 
-    // MSE: L = Σ(ŷ - y)² / B
-    const diff = yPred.sub(Y);
-    const trainLoss = diff.dotmul(diff).sum().data[0] / B;
+      // MSE 累加（每个 batch 的 loss 加权平均）
+      trainLoss += diff.dotmul(diff).sum().data[0];
+      count += B;
 
-    // 初始梯度 ∂L/∂ŷ = 2(ŷ - y) / B
-    this.model.backward(diff.scale(2 / B));
-    this._opt.step();
+      // 初始梯度 ∂L/∂ŷ = 2(ŷ - y) / B
+      this.model.backward(diff.scale(2 / B));
+      this._opt.step();
+    }
 
-    // 验证集：一次 forward，全部样本
-    const { X: vX, Y: vY } = this._val.nextBatch();
-    const vPred = this.model.forward(vX);
-    const vDiff = vPred.sub(vY);
-    const valLoss = vDiff.dotmul(vDiff).sum().data[0] / vX.cols;
+    // 验证集：batchSize = 全量，for 循环只跑一次
+    let valLoss = 0;
+    for (let batch = this._val.next(); batch; batch = this._val.next()) {
+      const { X, Y } = batch;
+      const vPred = this.model.forward(X);
+      const vDiff = vPred.sub(Y);
+      valLoss = vDiff.dotmul(vDiff).sum().data[0] / X.cols;
+    }
 
     return {
-      trainLoss: Number(trainLoss.toFixed(6)),
+      trainLoss: Number((trainLoss / count).toFixed(6)),
       valLoss: Number(valLoss.toFixed(6)),
     };
   }
