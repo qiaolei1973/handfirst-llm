@@ -33,15 +33,17 @@ docs/               项目文档
 
 **训练代码只做训练。** `train.ts` = model + optimizer + DataLoader + step()。仪表盘展示逻辑（params 序列化、isBest、类型定义）放在 `server.ts` 或 dashboard 自己处理。
 
+**GUI 不侵蚀训练。** 分清三种东西：产出值（`step()` 的 return loss，等于 PyTorch `criterion` 的 return，合法保留）、模型状态（参数/梯度，读即可，不另存快照）、GUI 副本（`history.push` 或存 params 快照 → 移走）。epoch 是训练概念，由 base 统一记，`_step()` 不感知。
+
 **算法概念随版本演进，各版本自包含。** `nn/` 和 `data.ts` 在每个版本目录下独立存在。不共享——读者打开一个版本就看到全部。`packages/` 只放算法无关的基础设施。
 
-**一个函数只做一件事，签名随版本自然演化。** 不要用两个版本兼容一个函数。v5 的 `sampleBatch` 接受 `number[][]` 而不是同时保留 `number[]` 版本。
+**一个函数只做一件事，签名随版本自然演化。** 不要用两个版本兼容一个函数。`DataLoader.generate()` 在 v3/v4 返回样本数组、v5 返回 `{X, Y}` 矩阵——各版本写各版本的，不保留旧签名。
 
-**PyTorch 是设计参考。** `model.parameters()`、`opt.reset()`、`DataLoader`、早停放调用方——这些都是 PyTorch 的标准做法。
+**PyTorch 是设计参考。** `model.parameters()`、`param.grad`、`DataLoader`、早停放调用方——这些都是 PyTorch 的标准做法。
 
 **早停是调用方的控制逻辑。** `test.ts` 自己 `if (patience >= N) break`，WS server 用 `maxEpochs`。不在 Trainer 里维护 `_stopped/_patience/_bestVal` 状态机。
 
-**可重置性由组件自己提供。** `Linear.resetParameters()` 存初始值复本。`Adam.reset()` 清零 m/v。不需要 `new Optimizer()` 重建。
+**reset = 重新 factory()。** 组件不存初始值复本、优化器不维护内部状态重置。需要重置时 server 用同一个 factory 重新 new 一个 trainer。
 
 **变量名让学习者能读懂。** 用 `gradOutMat` 不用 `GO`。数学公式写在注释里。
 
@@ -54,6 +56,7 @@ docs/               项目文档
 **问**：这个字段/方法属于训练逻辑吗？不属于 → 移走或删除。
 **问**：这个类型/函数只被仪表盘用吗？是 → 放 dashboard 或 server.ts，不放 train.ts。
 **问**：这个信息已经存在在 model 对象里了吗？是 → 不要另存一份。
+**问**：这是产出值、模型状态，还是专为 GUI 存的副本？→ 前两者合法，第三种移走。
 **问**：PyTorch 怎么做这件事？→ 参考它。
 
 ## 技术栈
