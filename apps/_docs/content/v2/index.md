@@ -158,7 +158,7 @@ v1 里每个 epoch 扫完所有 12 个点，在全部数据上算梯度。这条
 把左边换成**随机 Mini-batch**——每次只抽一小撮（batch=8）：
 
 ```typescript
-const batch = sampleBatch({ features: X, labels: Y }, 8);
+const batch = sampleBatch(X, Y, 8);
 ```
 
 只在这 8 个点上算梯度、更新。下一轮再随机抽 8 个——每次看到的子集都不一样。参数的更新方式还是 `w -= lr * grad` 没变，但梯度的**来源**带上了随机性。
@@ -198,11 +198,11 @@ features = features.map(x => x - mean);
 
 ---
 
-## 合在一起：v2 的完整 step()
+## 合在一起：v2 的完整 _step()
 
 ```typescript
-step(): EpochEvent {
-  const batch = sampleBatch({ features: X, labels: Y }, this._batchSize);
+protected _step(): EpochEvent {
+  const batch = sampleBatch(X, Y, this._batchSize);
 
   let gradW = 0, gradBias = 0, batchLoss = 0;
   for (const { feature: x, label: y } of batch) {

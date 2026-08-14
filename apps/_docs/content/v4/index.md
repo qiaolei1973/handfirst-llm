@@ -233,7 +233,7 @@ let patience = 0;
 const PATIENCE_LIMIT = 200;  // 连续 200 epoch 没改善就停
 
 for (let epoch = 0; epoch < maxEpochs; epoch++) {
-  const { trainLoss, valLoss } = step();
+  const { trainLoss, valLoss } = t.step();
 
   if (valLoss < bestValLoss) {
     bestValLoss = valLoss;
@@ -252,27 +252,39 @@ for (let epoch = 0; epoch < maxEpochs; epoch++) {
 
 ## 合在一起：v4 的训练循环
 
-v1 → v4，`step()` 一步步进化：
+v1 → v4，`_step()` 一步步进化：
 
 ```typescript
-step(): EpochEvent {
-  // 1. 采样
-  const batch = sampleBatch(trainSet, this._batchSize);
+protected _step() {
+  // 1. 采样：DataLoader 随机抽一批
+  const batch = this._train.generate();
 
-  // 2. 前向传播
-  const h = this.hidden.forward(batch.features);    // Linear + ReLU
-  const yPred = this.output.forward(h);             // Linear
+  // 2. 前向 + 逐样本反向（Sequential 一次跑完 Linear → ReLU → Linear）
+  this.model.zeroGrad();
+  let totalLoss = 0;
+  for (let i = 0; i < batch.length; i++) {
+    const { feature, label } = batch[i];
+    const diff = this.model.forward([feature])[0] - label;
+    totalLoss += diff * diff;
+    this.model.backward(new Float64Array([(2 * diff) / BATCH]));
+  }
 
-  // 3. 算 loss（训练集 + 验证集）
-  const trainLoss = mse(yPred, batch.labels);
-  const valLoss = this.evaluate(valSet);             // NEW!
+  // 3. 更新参数（Adam 替代 SGD）                   // NEW!
+  this._opt.step();
 
-  // 4. 反向传播（v3）
-  this.output.backward(/* ∂L/∂yPred */);
-  this.hidden.backward(/* 上游梯度 */);
+  // 4. 验证集：全量评估一次                       // NEW!
+  const valBatch = this._val.generate();
+  let valLoss = 0;
+  for (let i = 0; i < valBatch.length; i++) {
+    const diff = this.model.forward([valBatch[i].feature])[0] - valBatch[i].label;
+    valLoss += diff * diff;
+  }
+  valLoss /= valBatch.length;
 
-  // 5. 更新参数（用 Adam 替代 SGD）               // NEW!
-  this.optimizer.step();   // Adam internally
+  return {
+    trainLoss: Number((totalLoss / BATCH).toFixed(6)),
+    valLoss: Number(valLoss.toFixed(6)),
+  };
 }
 ```
 
