@@ -61,11 +61,6 @@ export class Trainer extends BaseTrainer {
     this.dataset = dataset;
   }
 
-  reset(): void {
-    this.params = { W: 1, bias: 0 };
-    this.history.length = 0;
-  }
-
   // 模型预测:    yPred = x·W + bias
   // MSE 损失:    L = (1/n) Σ (yPred - y)²
   // W 的梯度:    ∂L/∂W    = (2/n) Σ (yPred - y)·x

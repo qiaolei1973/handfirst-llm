@@ -8,7 +8,7 @@ import { useWsTrainer } from '@handfirst/utils';
 const trueFn = (x: number) => 2 * x + 30;
 
 export default function Page() {
-  const trainer = useWsTrainer('ws://localhost:3101');
+  const trainer = useWsTrainer('ws://localhost:3102');
 
   return (
     <SurgeryDashboard

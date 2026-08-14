@@ -26,11 +26,6 @@ export class Trainer extends BaseTrainer {
     this.dataset = dataset;
   }
 
-  reset(): void {
-    this.params = { W: 1, bias: 0 };
-    this.history.length = 0;
-  }
-
   step(): EpochEvent {
     const size = this.dataset.features.length;
 
