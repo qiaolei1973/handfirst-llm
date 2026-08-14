@@ -14,7 +14,7 @@ import { SGD } from "./nn/sgd";
 
 const LR = 0.02, BATCH = 40;
 
-export class Trainer extends BaseTrainer {
+export class Trainer extends BaseTrainer<{ loss: number }> {
   readonly model: Sequential;
   private _opt: SGD;
   private _loader: DataLoader;
@@ -26,7 +26,7 @@ export class Trainer extends BaseTrainer {
     this._opt = new SGD(this.model.parameters(), LR);
   }
 
-  step() {
+  protected _step() {
     const batch = this._loader.generate();   // 一批随机数据（mini-batch）
     this.model.zeroGrad();
     let totalLoss = 0;
@@ -40,7 +40,6 @@ export class Trainer extends BaseTrainer {
 
     this._opt.step();
     const ev = { loss: Number((totalLoss / BATCH).toFixed(6)) };
-    this.history.push(ev);
     return ev;
   }
 

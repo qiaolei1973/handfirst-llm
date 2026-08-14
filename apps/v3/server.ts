@@ -19,7 +19,7 @@ Trainer.server({
     const t = new Trainer({ features, labels }, 16);
     return {
       step: () => ({ ...t.step(), params: dumpModel(t) }),
-      history: t.history, params: dumpModel(t),
+      get epoch() { return t.epoch; }, params: dumpModel(t),
     };
   },
 });

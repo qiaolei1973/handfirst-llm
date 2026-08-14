@@ -15,7 +15,7 @@ import { Adam } from "./nn/adam";
 
 const BATCH = 40, LR = 0.005;
 
-export class Trainer extends BaseTrainer {
+export class Trainer extends BaseTrainer<{ trainLoss: number; valLoss: number }> {
   readonly model: Sequential;
   private _opt: Adam;
   private _train: DataLoader;
@@ -29,7 +29,7 @@ export class Trainer extends BaseTrainer {
     this._opt = new Adam(this.model.parameters(), LR);
   }
 
-  step() {
+  protected _step() {
     const { X, Y } = this._train.generate();   // 一批随机数据（矩阵）
     const B = X.cols;
 

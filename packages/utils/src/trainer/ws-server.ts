@@ -40,7 +40,7 @@ export class WSServer {
       const send = (msg: ServerMsg) => { if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg)); };
       const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
 
-      const done = () => trainer.history.length >= this._maxEpochs;
+      const done = () => trainer.epoch >= this._maxEpochs;
 
       send({ type: 'init', data: { ...initData, params: (trainer as any).params } });
 
@@ -54,7 +54,7 @@ export class WSServer {
             const interval = Math.max(20, Math.floor(100 / msg.speed));
             timer = setInterval(() => {
               const ev = trainer.step() as Record<string, unknown>;
-              send({ type: 'epoch', data: { ...ev, epoch: trainer.history.length } });
+              send({ type: 'epoch', data: { ...ev, epoch: trainer.epoch } });
               if (done()) { stop(); send({ type: 'done' }); }
             }, interval);
             break;
@@ -62,7 +62,7 @@ export class WSServer {
           case 'pause': stop(); break;
           case 'step': {
             const ev = trainer.step() as Record<string, unknown>;
-            send({ type: 'epoch', data: { ...ev, epoch: trainer.history.length } });
+            send({ type: 'epoch', data: { ...ev, epoch: trainer.epoch } });
             if (done()) send({ type: 'done' });
             break;
           }

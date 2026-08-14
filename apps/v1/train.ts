@@ -16,7 +16,7 @@ const linear = (x: number, W: number, bias: number) => {
 
 // ===== Trainer =====
 
-export class Trainer extends BaseTrainer {
+export class Trainer extends BaseTrainer<EpochEvent> {
   params = { W: 1, bias: 0 };
   private dataset: { features: number[]; labels: number[] };
   private learnRate = 0.1;
@@ -26,7 +26,7 @@ export class Trainer extends BaseTrainer {
     this.dataset = dataset;
   }
 
-  step(): EpochEvent {
+  protected _step(): EpochEvent {
     const size = this.dataset.features.length;
 
     let gradW = 0;
@@ -64,7 +64,6 @@ export class Trainer extends BaseTrainer {
       loss: 0, // train_simple 不计算 loss，这里也不计
     };
 
-    this.history.push(ev);
     return ev;
   }
 }

@@ -50,7 +50,7 @@ export function normalize(dataset: {
 
 // ===== Trainer =====
 
-export class Trainer extends BaseTrainer {
+export class Trainer extends BaseTrainer<EpochEvent> {
   params = { W: 1, bias: 0 };
   private readonly _lr = 0.01;
   private readonly _batchSize = 8;
@@ -66,7 +66,7 @@ export class Trainer extends BaseTrainer {
   // W 的梯度:    ∂L/∂W    = (2/n) Σ (yPred - y)·x
   // bias 的梯度: ∂L/∂bias = (2/n) Σ (yPred - y)
 
-  step(): EpochEvent {
+  protected _step(): EpochEvent {
     const { features: X, labels: Y } = this.dataset;
 
     // 随机采样（无放回 mini-batch）—— SGD 的核心
@@ -95,7 +95,6 @@ export class Trainer extends BaseTrainer {
       loss: batchLoss / this._batchSize,
     };
 
-    this.history.push(ev);
     return ev;
   }
 }

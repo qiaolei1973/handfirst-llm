@@ -14,7 +14,7 @@ import { Adam } from "./nn/adam";
 
 const BATCH = 40;
 
-export class Trainer extends BaseTrainer {
+export class Trainer extends BaseTrainer<{ trainLoss: number; valLoss: number }> {
   readonly model: Sequential;
   private _opt: Adam;
   private _train: DataLoader;
@@ -28,7 +28,7 @@ export class Trainer extends BaseTrainer {
     this._opt = new Adam(this.model.parameters(), 0.001);
   }
 
-  step() {
+  protected _step() {
     const batch = this._train.generate();   // 一批随机训练数据
     this.model.zeroGrad();
     let totalLoss = 0;
