@@ -207,14 +207,7 @@ lr(t) = lr_min + ½(lr₀ − lr_min) · (1 + cos(π·t/T))
 - `t=0` 时 `lr = lr₀`（起步最大），`t=T` 时 `lr = lr_min`（收尾最小）
 - 中间平滑过渡，不是阶梯骤降
 
-```
-lr
- │  ████\
- │       \
- │        \___ (余弦)
- └─────────────→ epoch
-    先大后小
-```
+![余弦退火：lr 从 lr0 平滑降到 0，中间平滑过渡而非阶梯骤降](/v4/cosine-annealing.png)
 
 代码就几行：
 
@@ -234,10 +227,10 @@ Adam 因此加一个 `lr` 的 getter/setter，让外部（调度）能逐 step �
 
 ### 效果
 
-固定 lr 时，v4 的验证 loss 会先降后升（过拟合）；换成余弦退火（`lr₀=0.01` 起步）后，验证 loss 一路平滑降到噪声地板，不再反弹——**又快又稳**。
+实测（平均 15 个种子）：同样 2000 个 epoch，固定 `lr=0.001` 的验证 loss 停在 ~0.022，余弦退火（`lr0=0.01` 起步）降到 ~0.011——**更快、更低**。前期 lr 大所以下得快，后期 lr 小所以能贴到更低的谷底。
 
 ![固定 lr vs 余弦退火的 loss 对比](/v4/lr-schedule-comparison.png)
-<!-- gen_v4_images.py: #4 lr-schedule-comparison — 上：固定 lr=0.001 的 valLoss，标注过拟合反弹；下：余弦退火 lr0=0.01 的 valLoss，标注平滑收敛到噪声地板 -->
+<!-- gen_v4_images.py: #4 lr-schedule-comparison — 左右对比：固定 lr=0.001 vs 余弦退火 lr0=0.01，各画 train/val 两条曲线（平均 15 个种子）；余弦收敛更快、更低 -->
 
 ---
 
