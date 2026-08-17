@@ -11,10 +11,12 @@ export { createLossLandscape } from './biz/loss-landscape';
 export { createModelFit } from './biz/model-fit';
 export { createModelCurve } from './biz/model-curve';
 export { createReLUActivations } from './biz/relu-activations';
+export { createMatmulAnim } from './biz/matmul-anim';
 export type { LineChartOpts, LineChartHandle } from './biz/line-chart';
 export type { LossLandscapeOpts, LossLandscapeConfig, LossLandscapeHandle } from './biz/loss-landscape';
 export type { ModelFitConfig, ModelFitHandle } from './biz/model-fit';
 export type { ModelCurveConfig, ModelCurveHandle } from './biz/model-curve';
 export type { ReLUActivationsConfig, ReLUActivationsHandle } from './biz/relu-activations';
+export type { MatmulAnimHandle } from './biz/matmul-anim';
 
 export type { Padding, Coord, Point, LineSeries } from './types';

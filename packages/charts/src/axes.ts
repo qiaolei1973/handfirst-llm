@@ -110,7 +110,7 @@ export function createAxes(
           break;
         }
         case 'scatter': {
-          for (const pt of layer.points) { if (pt.x < xLo) xLo = pt.x; if (pt.x > xHi) xHi = x; if (pt.y < yLo) yLo = pt.y; if (pt.y > yHi) yHi = pt.y; }
+          for (const pt of layer.points) { if (pt.x < xLo) xLo = pt.x; if (pt.x > xHi) xHi = pt.x; if (pt.y < yLo) yLo = pt.y; if (pt.y > yHi) yHi = pt.y; }
           break;
         }
         case 'vline': { if (layer.x < xLo) xLo = layer.x; if (layer.x > xHi) xHi = layer.x; break; }
