@@ -1,26 +1,51 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { marked, Renderer } from 'marked';
+import type { Tokens } from 'marked';
 import hljs from 'highlight.js';
 
 const CONTENT_DIR = join(process.cwd(), 'content');
 
+// ---- 目录条目 ----
+export interface TocItem {
+  id: string;
+  text: string;
+  level: 2 | 3;
+}
+
 // ---- 配置 marked + highlight.js ----
-const renderer = new Renderer();
-renderer.code = function (token: { text: string; lang?: string }) {
-  const lang = token.lang || '';
-  const language = hljs.getLanguage(lang) ? lang : undefined;
-  const highlighted = language
-    ? hljs.highlight(token.text, { language }).value
-    : hljs.highlightAuto(token.text).value;
-  return `<pre><code class="hljs ${language || ''}">${highlighted}</code></pre>`;
-};
+// 每次 render 新建 renderer，把本页标题收进 toc——不能共用模块级单例（Next 构建时会为每个页面各 render 一次，跨页面串味）。
+function createRenderer(toc: TocItem[]): Renderer {
+  const renderer = new Renderer();
 
-marked.use({ gfm: true, renderer });
+  renderer.code = function (token: { text: string; lang?: string }) {
+    const lang = token.lang || '';
+    const language = hljs.getLanguage(lang) ? lang : undefined;
+    const highlighted = language
+      ? hljs.highlight(token.text, { language }).value
+      : hljs.highlightAuto(token.text).value;
+    return `<pre><code class="hljs ${language || ''}">${highlighted}</code></pre>`;
+  };
 
-// ---- MD → HTML（同步）----
-export function renderMarkdown(content: string): string {
-  return marked.parse(content) as string;
+  renderer.heading = function ({ tokens, depth, text }: Tokens.Heading) {
+    // 目录只收 h2/h3：h1 是页面标题、h4+ 太细，都不进。
+    if (depth === 2 || depth === 3) {
+      const id = `toc-${toc.length}`;
+      toc.push({ id, text: text.replace(/`/g, ''), level: depth });
+      return `<h${depth} id="${id}">${this.parser.parseInline(tokens)}</h${depth}>\n`;
+    }
+    return `<h${depth}>${this.parser.parseInline(tokens)}</h${depth}>\n`;
+  };
+
+  return renderer;
+}
+
+// ---- MD → HTML + 目录（同步）----
+export function renderMarkdown(content: string): { html: string; toc: TocItem[] } {
+  const toc: TocItem[] = [];
+  const renderer = createRenderer(toc);
+  const html = marked.parse(content, { gfm: true, renderer }) as string;
+  return { html, toc };
 }
 
 // ---- 读取 content 目录下的 .md 文件 ----

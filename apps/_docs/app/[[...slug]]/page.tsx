@@ -2,6 +2,7 @@ import { getNavigation, readContentFile, renderMarkdown } from '@/lib/markdown';
 import { ImageViewer } from '@handfirst/components';
 import { notFound } from 'next/navigation';
 import { NavSidebar } from './NavSidebar';
+import { TocSidebar } from './TocSidebar';
 
 interface PageParams {
   slug?: string[];
@@ -14,7 +15,7 @@ export default async function Page({ params }: { params: Promise<PageParams> }) 
   if (!exists) notFound();
 
   const nav = getNavigation();
-  const html = renderMarkdown(content);
+  const { html, toc } = renderMarkdown(content);
 
   return (
     <div className="docs-layout">
@@ -22,6 +23,7 @@ export default async function Page({ params }: { params: Promise<PageParams> }) 
       <main className="docs-content">
         <ImageViewer html={html} />
       </main>
+      <TocSidebar items={toc} />
     </div>
   );
 }

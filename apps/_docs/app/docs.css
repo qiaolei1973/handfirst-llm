@@ -87,6 +87,65 @@ body {
 .docs-content hr { border: none; border-top: 1px solid #e2e8f0; margin: 2em 0; }
 .docs-content strong { font-weight: 600; }
 
+/* 平滑滚动 + 标题滚到位时留点呼吸空间 */
+html { scroll-behavior: smooth; }
+.docs-content h2, .docs-content h3 { scroll-margin-top: 24px; }
+
+/* ---- Right TOC ---- */
+.docs-toc {
+  width: 260px;
+  min-width: 260px;
+  padding: 24px 16px;
+  background: #ffffff;
+  border-left: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.docs-toc-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-left: 12px;
+}
+
+.toc-list { list-style: none; }
+
+.toc-link {
+  display: block;
+  padding: 4px 12px;
+  border-left: 2px solid transparent;
+  text-decoration: none;
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  transition: all 0.15s;
+  /* 单行 + 省略号：超长标题不换行，截断处显示 …（h2/h3 都适用） */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* h3 子项缩进 + 更小字号 */
+.toc-item.sub .toc-link {
+  padding-left: 24px;
+  font-size: 0.8rem;
+}
+
+.toc-link:hover { color: #1e293b; background: #f8fafc; }
+
+.toc-link.active {
+  color: #2563eb;
+  border-left-color: #2563eb;
+  font-weight: 600;
+  background: #eff6ff;
+}
+
 /* ---- Header ---- */
 .docs-header {
   display: flex;
@@ -108,6 +167,11 @@ body {
 }
 
 /* ---- Responsive ---- */
+/* 三栏放不下（左 260 + 内容 + 右 260）时先收掉右侧大纲，保阅读宽度 */
+@media (max-width: 1240px) {
+  .docs-toc { display: none; }
+}
+
 @media (max-width: 768px) {
   .docs-sidebar { display: none; }
   .docs-content { padding: 32px 24px; }
