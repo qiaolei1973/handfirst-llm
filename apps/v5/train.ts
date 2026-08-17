@@ -13,7 +13,18 @@ import { ReLU } from "./nn/relu";
 import { Sequential } from "./nn/sequential";
 import { Adam } from "./nn/adam";
 
-const BATCH = 40, LR = 0.005;
+const BATCH = 40;
+
+// ---- 学习率调度（余弦退火，沿用 v4）----
+// 前期 lr 大 → 大步快降；后期 lr 小 → 小步防震荡。
+const LR0 = 0.005;   // 初始学习率（调度起点；曲面比 v4 的 sin 更尖锐，扛不住 0.01）
+const LR_MIN = 0;    // 最终学习率（调度终点）
+const EPOCHS = 6000; // 训练总步数，与 server.ts 的 maxEpochs 一致
+
+function cosineLr(t: number): number {
+  const p = Math.min(t / EPOCHS, 1);  // 进度 0→1，超出后钳到 1
+  return LR_MIN + (LR0 - LR_MIN) * 0.5 * (1 + Math.cos(Math.PI * p));
+}
 
 export class Trainer extends BaseTrainer<{ trainLoss: number; valLoss: number }> {
   readonly model: Sequential;
@@ -26,10 +37,11 @@ export class Trainer extends BaseTrainer<{ trainLoss: number; valLoss: number }>
     this._train = new DataLoader(train, BATCH);
     this._val = new DataLoader(val, val.features.length);
     this.model = new Sequential([new Linear(train.features[0].length, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
-    this._opt = new Adam(this.model.parameters(), LR);
+    this._opt = new Adam(this.model.parameters(), LR0);
   }
 
   protected _step() {
+    this._opt.lr = cosineLr(this.epoch);   // 学习率调度：每个 epoch 重算 lr
     const { X, Y } = this._train.generate();   // 一批随机数据（矩阵）
     const B = X.cols;
 

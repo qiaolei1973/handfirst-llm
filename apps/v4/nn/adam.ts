@@ -44,5 +44,9 @@ export class Adam {
     }
   }
 
+  // 学习率可被外部调度（如余弦退火）逐 step 修改
+  get lr() { return this._lr; }
+  set lr(v: number) { this._lr = v; }
+
   get t() { return this._t; }
 }

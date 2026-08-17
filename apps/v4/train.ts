@@ -1,5 +1,5 @@
 // ============================================================
-// 神经网络 + 标准化 + Adam + 训练/验证分离 + Early Stopping
+// 神经网络 + 标准化 + Adam + 学习率调度 + 训练/验证分离 + Early Stopping
 //
 // 模型: y = Σ w_out_i · ReLU(w_i · x_std + b_i) + b_out
 // ============================================================
@@ -14,6 +14,17 @@ import { Adam } from "./nn/adam";
 
 const BATCH = 40;
 
+// ---- 学习率调度（余弦退火）----
+// 前期 lr 大 → 大步快降；后期 lr 小 → 小步防震荡。
+const LR0 = 0.01;    // 初始学习率（调度起点）
+const LR_MIN = 0;    // 最终学习率（调度终点）
+const EPOCHS = 3000; // 训练总步数，与 server.ts 的 maxEpochs 一致
+
+function cosineLr(t: number): number {
+  const p = Math.min(t / EPOCHS, 1);  // 进度 0→1，超出后钳到 1
+  return LR_MIN + (LR0 - LR_MIN) * 0.5 * (1 + Math.cos(Math.PI * p));
+}
+
 export class Trainer extends BaseTrainer<{ trainLoss: number; valLoss: number }> {
   readonly model: Sequential;
   private _opt: Adam;
@@ -25,10 +36,11 @@ export class Trainer extends BaseTrainer<{ trainLoss: number; valLoss: number }>
     this._train = new DataLoader(train, BATCH);
     this._val = new DataLoader(val, val.features.length);
     this.model = new Sequential([new Linear(1, numNeurons), new ReLU(), new Linear(numNeurons, 1)]);
-    this._opt = new Adam(this.model.parameters(), 0.001);
+    this._opt = new Adam(this.model.parameters(), LR0);
   }
 
   protected _step() {
+    this._opt.lr = cosineLr(this.epoch);   // 学习率调度：每个 epoch 重算 lr
     const batch = this._train.generate();   // 一批随机训练数据
     this.model.zeroGrad();
     let totalLoss = 0;

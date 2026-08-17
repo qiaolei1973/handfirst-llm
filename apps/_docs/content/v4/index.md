@@ -1,6 +1,6 @@
 # v4：优化曲线
 
-> 你将学到：标准化（Z-score）、Momentum、RMSProp、Adam、训练集/验证集、过拟合、Early Stopping。
+> 你将学到：标准化（Z-score）、Momentum、RMSProp、Adam、学习率调度、训练集/验证集、过拟合、Early Stopping。
 
 v3 让模型学会了画曲线——16 个 ReLU 神经元拼出 sin 的形状。但仔细看训练结果，还有两个问题：
 
@@ -182,6 +182,65 @@ W -= lr * mHat / (Math.sqrt(vHat) + eps);
 
 ---
 
+## 学习率调度：lr 也别固定
+
+前面 Momentum、RMSProp、Adam 解决的，都是「**每个参数步长不同**」的问题。但还有一个旋钮从头到尾没动过：**lr 本身**。v1 到现在的 Adam，lr 一直是一个固定值。
+
+固定 lr 有个两难：
+
+```
+lr 大 → 前期下山快，但到了谷底停不住，来回震荡
+lr 小 → 稳，但前期爬得太慢，浪费 epoch
+```
+
+**洞察：lr 不必固定。** 让它在训练过程中**从大变到小**——前期大步快降，后期小步贴地，两个好处都拿到。
+
+### 余弦退火（Cosine Annealing）
+
+最常用的调度是**余弦退火**：lr 沿一条余弦曲线，从初始 `lr₀` 平滑降到最终 `lr_min`：
+
+```
+lr(t) = lr_min + ½(lr₀ − lr_min) · (1 + cos(π·t/T))
+```
+
+- `t` = 当前 epoch，`T` = 总 epoch
+- `t=0` 时 `lr = lr₀`（起步最大），`t=T` 时 `lr = lr_min`（收尾最小）
+- 中间平滑过渡，不是阶梯骤降
+
+```
+lr
+ │  ████\
+ │       \
+ │        \___ (余弦)
+ └─────────────→ epoch
+    先大后小
+```
+
+代码就几行：
+
+```typescript
+const LR0 = 0.01, LR_MIN = 0, EPOCHS = 3000;
+
+function cosineLr(t: number): number {
+  const p = Math.min(t / EPOCHS, 1);              // 进度 0→1
+  return LR_MIN + (LR0 - LR_MIN) * 0.5 * (1 + Math.cos(Math.PI * p));
+}
+
+// 每个 epoch 开始前，按进度重算一遍 lr
+this._opt.lr = cosineLr(this.epoch);
+```
+
+Adam 因此加一个 `lr` 的 getter/setter，让外部（调度）能逐 step 改它。**优化器负责「怎么用梯度」，调度器负责「lr 现在该多少」**——两者正交，各管一段。这也是 PyTorch 里 `optimizer` + `lr_scheduler` 两层结构的原因。
+
+### 效果
+
+固定 lr 时，v4 的验证 loss 会先降后升（过拟合）；换成余弦退火（`lr₀=0.01` 起步）后，验证 loss 一路平滑降到噪声地板，不再反弹——**又快又稳**。
+
+![固定 lr vs 余弦退火的 loss 对比](/v4/lr-schedule-comparison.png)
+<!-- gen_v4_images.py: #4 lr-schedule-comparison — 上：固定 lr=0.001 的 valLoss，标注过拟合反弹；下：余弦退火 lr0=0.01 的 valLoss，标注平滑收敛到噪声地板 -->
+
+---
+
 ## 泛化：怎么知道模型真的学会了？
 
 标准化 + Adam 让训练更快更稳。但还有一个根本问题没有回答：**模型是在"学习规律"还是在"背答案"？**
@@ -256,10 +315,13 @@ v1 → v4，`_step()` 一步步进化：
 
 ```typescript
 protected _step() {
-  // 1. 采样：DataLoader 随机抽一批
+  // 1. 学习率调度：每个 epoch 按余弦退火重算 lr       // NEW!
+  this._opt.lr = cosineLr(this.epoch);
+
+  // 2. 采样：DataLoader 随机抽一批
   const batch = this._train.generate();
 
-  // 2. 前向 + 逐样本反向（Sequential 一次跑完 Linear → ReLU → Linear）
+  // 3. 前向 + 逐样本反向（Sequential 一次跑完 Linear → ReLU → Linear）
   this.model.zeroGrad();
   let totalLoss = 0;
   for (let i = 0; i < batch.length; i++) {
@@ -269,10 +331,10 @@ protected _step() {
     this.model.backward(new Float64Array([(2 * diff) / BATCH]));
   }
 
-  // 3. 更新参数（Adam 替代 SGD）                   // NEW!
+  // 4. 更新参数（Adam 替代 SGD）                   // NEW!
   this._opt.step();
 
-  // 4. 验证集：全量评估一次                       // NEW!
+  // 5. 验证集：全量评估一次                       // NEW!
   const valBatch = this._val.generate();
   let valLoss = 0;
   for (let i = 0; i < valBatch.length; i++) {
@@ -295,7 +357,7 @@ v1 → v4 的变化：
 | 损失 | MAE | MSE | MSE | MSE |
 | 采样 | 全量 | SGD | SGD（全量也行） | SGD |
 | 数据预处理 | 无 | 中心化 | 中心化 | **标准化** |
-| 优化器 | `w -= lr*grad` | `w -= lr*grad` | `w -= lr*grad` | **Adam** |
+| 优化器 | `w -= lr*grad` | `w -= lr*grad` | `w -= lr*grad` | **Adam + 余弦退火** |
 | 模型 | `y=Wx+b` | `y=Wx+b` | 1→N→1 MLP | 1→N→1 MLP |
 | 泛化保障 | 无 | 无 | 无 | **验证集 + Early Stopping** |
 
@@ -317,7 +379,7 @@ pnpm dev:v4     # → http://localhost:3004
 
 ## 总结
 
-v4 是"优化"的一章——不回头的优化（标准化管数据、Adam 管更新）、有保险的优化（验证集 + Early Stopping 防过拟合）：
+v4 是"优化"的一章——不回头的优化（标准化管数据、Adam + 余弦退火管更新）、有保险的优化（验证集 + Early Stopping 防过拟合）：
 
 | 概念 | 是什么 | 解决的问题 |
 |---|---|---|
@@ -325,6 +387,7 @@ v4 是"优化"的一章——不回头的优化（标准化管数据、Adam 管�
 | Momentum | 梯度的指数移动平均，加惯性 | SGD 震荡、没方向记忆 |
 | RMSProp | 每个参数自己的缩放因子 | 一刀切 lr，陡的震荡缓的爬不动 |
 | Adam | Momentum + RMSProp + 偏差修正 | 以上所有问题，默认首选 |
+| 学习率调度 | lr 沿余弦从 lr₀ 衰减到 0 | 固定 lr：大了震荡、小了太慢 |
 | 训练/验证集 | 留一部分数据不训练 | 怎么知道模型是在学不是背？ |
 | 过拟合 | 训练 loss↓，验证 loss↑ | 参数太多 → 背噪声 |
 | Early Stopping | 验证 loss 不降就停 | 过拟合的简单解法 |
