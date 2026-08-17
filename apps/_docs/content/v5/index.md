@@ -127,7 +127,136 @@ x (d维) → 隐藏层 (N 个神经元) → ŷ (标量)
 | 权重 | `w_i`（一个数） | `w_i₁, ..., w_i_d`（d 个数，一个向量） |
 | 全部神经元权重 | `w`（N 个数的向量） | `W`（N×d 个数的矩阵） |
 
-代码层面，`Layer` 类其实一开始就支持了多维——`inputDim` 参数从 v3/v4 的 `1` 改成 `d` 就行。
+代码层面，`Linear` 层的 `inDim` 从 v3/v4 的 `1` 改成 `d` 就行。
+
+---
+
+## 代码：矩阵在 v5 里长什么样
+
+概念讲完了，落到代码。v5 相对 v4 多了两样东西：`Mat`（矩阵数据结构），以及 `DataLoader.generate()` 返回矩阵而不是样本数组。`Linear` 的 forward/backward 也随之全部改成矩阵运算。
+
+### Mat —— 「行 × 列」加一段连续数据
+
+```typescript
+class Mat {
+  data: Float64Array;   // 所有元素拍平成一段
+  rows: number;
+  cols: number;
+}
+```
+
+矩阵不引入新的数学对象，只是把一堆数按「行 × 列」排好。`data[i * cols + j]` 就是第 i 行第 j 列。v5 训练只用这几个操作：
+
+| 方法 | 含义 | 在 v5 里用在哪 |
+|---|---|---|
+| `a.matmul(b)` | 矩阵乘 `A @ B` | `W @ X`（前向） |
+| `a.transpose()` | 转置 `Aᵀ` | `Xᵀ`、`Wᵀ`（反向） |
+| `a.dotmul(b)` | 逐元素乘（哈达玛积） | `(ŷ-y)²` |
+| `a.scale(s)` | 逐元素乘标量 | `2(ŷ-y)/B` |
+| `a.sum(dim)` | 求和（无参=总和，`1`=按行） | loss（`sum()`）、bias 梯度（`sum(1)`） |
+| `a.add(b)` / `a.sub(b)` | 加 / 减（带广播） | `W@X + b`、`ŷ - Y` |
+
+两个容易混的：
+
+- **`dotmul` 不是矩阵乘。** `A @ B` 是「行 × 列」的信息融合；`A.dotmul(B)` 是「对应位置直接乘」，算 `diff²` 用的就是它。
+- **`add` / `sub` 带广播。** `weight.matmul(x)` 是 `[outDim × B]`，`bias` 只有 `[outDim × 1]`——`add` 自动把 bias 复制到每一列，省掉 `for` 循环。
+
+### DataLoader.generate() —— 样本排成矩阵
+
+v3/v4 的 `generate()` 返回样本数组，要 `for` 循环逐个算；v5 改成返回矩阵：
+
+```typescript
+generate(): { X: Mat; Y: Mat } {
+  const indices = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, m);
+
+  const X = new Mat(this._dim, m);   // 输入 [d × B]
+  const Y = new Mat(1, m);           // 标签 [1 × B]
+  for (let b = 0; b < m; b++) {
+    const f = this.dataset.features[indices[b]];
+    for (let i = 0; i < this._dim; i++) X.data[i * m + b] = f[i];   // 第 b 列 = 第 b 个样本
+    Y.data[b] = this.dataset.labels[indices[b]];
+  }
+  return { X, Y };
+}
+```
+
+关键在 `X.data[i * m + b] = f[i]`：**每一列是一个样本**。d 个特征、B 个样本，排成一个 `[d × B]` 矩阵；标签 Y 是一行 `[1 × B]`。
+
+从这里开始，「逐个样本的 `for` 循环」就消失了——样本被堆进矩阵，后面全是矩阵运算。
+
+### Linear —— 矩阵版 forward / backward
+
+forward 就是一行 `W @ X + b`：
+
+```typescript
+forward(x: Mat): Mat {
+  this._x = x;                                          // 记住输入，backward 要用
+  const weight = new Mat(this.outDim, this.inDim, this.weight.data);
+  const bias   = new Mat(this.outDim, 1, this.bias.data);
+  return weight.matmul(x).add(bias);                    // W @ X + b
+}
+```
+
+backward 是三条链式法则，全用矩阵运算：
+
+```typescript
+backward(gradOut: Mat): Mat {                           // 上游梯度 ∂L/∂Y，[outDim × B]
+  const x = this._x;
+
+  // ① ∂L/∂W = ∂L/∂Y @ Xᵀ —— B 个样本的梯度贡献，自动累加进矩阵乘法
+  const gradWMat = gradOut.matmul(x.transpose());
+  for (let i = 0; i < gradWMat.data.length; i++) this.weight.grad[i] += gradWMat.data[i];
+
+  // ② ∂L/∂b = ∂L/∂Y 沿 batch 维求和
+  const gradBMat = gradOut.sum(1);
+  for (let j = 0; j < this.outDim; j++) this.bias.grad[j] += gradBMat.data[j];
+
+  // ③ ∂L/∂X = Wᵀ @ ∂L/∂Y —— 传给上一层
+  const weight = new Mat(this.outDim, this.inDim, this.weight.data);
+  return weight.transpose().matmul(gradOut);
+}
+```
+
+对比 v4 逐个样本 `for` 累加梯度，这里 ①②③ 三行矩阵乘法就完成。「**B 个样本的梯度累加**」这个动作，被矩阵乘法里的 `Σ_k A[i][k]·B[k][j]` 内置了——这才是批处理的真正收益，也是这一章引入矩阵的原因。
+
+### 合在一起：v5 的完整 _step()
+
+> `_step()` 是基类 `Trainer` 的钩子：`step()` 调它并记一次 epoch，所以训练代码写的是 `_step()`。
+
+```typescript
+protected _step() {
+  // 1. 采样：随机一批样本，堆成 [d×B] 输入 + [1×B] 标签
+  const { X, Y } = this._train.generate();
+  const B = X.cols;
+
+  // 2. 前向：W_h @ X → ReLU → W_o @ H，一次算完 B 个样本
+  this.model.zeroGrad();
+  const yPred = this.model.forward(X);                  // [1 × B]
+
+  // 3. 训练 loss：MSE = Σ(ŷ-y)² / B
+  const diff = yPred.sub(Y);
+  const trainLoss = diff.dotmul(diff).sum().data[0] / B;
+
+  // 4. 反向：∂L/∂ŷ = 2(ŷ-y)/B，梯度在 batch 维自动累加
+  this.model.backward(diff.scale(2 / B));
+
+  // 5. 更新参数（Adam）
+  this._opt.step();
+
+  // 6. 验证集：全量评估一次
+  const { X: vX, Y: vY } = this._val.generate();
+  const vPred = this.model.forward(vX);
+  const vDiff = vPred.sub(vY);
+  const valLoss = vDiff.dotmul(vDiff).sum().data[0] / vX.cols;
+
+  return {
+    trainLoss: Number(trainLoss.toFixed(6)),
+    valLoss: Number(valLoss.toFixed(6)),
+  };
+}
+```
+
+和 v4 的 `_step()` 并排看，唯一的结构差异：v4 里 `for (sample of batch)` 逐个样本循环，v5 里变成 `generate()` 返回矩阵 + 三次矩阵运算（`forward` / `sub` / `backward`）。循环没了，每一步做的事完全一样。
 
 ---
 
