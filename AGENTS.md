@@ -70,6 +70,14 @@ docs/               项目文档
 - **Excalidraw + excalirender**：架构图、计算图、渐进讲解图
 - **marked + highlight.js**：_docs MD 渲染
 
+## 画图
+
+架构图/计算图是 **Excalidraw** 源文件，数据图是 **matplotlib** 脚本，都放 `apps/_docs/scripts/<vn>/`，由 `generate-all.ts` 统一渲染到 `apps/_docs/public/<vn>/`（gitignore，产物不进库）。
+
+- **画 Excalidraw 图**：用 `excalidraw-diagram-generator` 技能（`.agents/skills/`），风格遵循 `docs/excalidraw-style.md`（圆=值、方=操作、颜色语义、渐进披露用 groupIds）。
+- **渲染**：`cd apps/_docs/scripts && npx tsx generate-all.ts`（按源文件 sha256 缓存，`--force` 或 `GENERATE_ALL_FORCE=1` 强制重生成；`pnpm dev` 的 predev 会自动跑）。
+- **matplotlib**：`.py` 脚本直接 `python3` 执行；CJK 字体用 `~/.fonts/NotoSansSC-Regular.ttf`（`NotoSansSC.ttf` 是坏文件，别用）。
+
 ## 运行
 
 ```bash

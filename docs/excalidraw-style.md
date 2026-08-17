@@ -4,6 +4,15 @@
 
 ---
 
+## 生成流程
+
+- **源文件**：`.excalidraw` 放在 `apps/_docs/scripts/<vn>/`。
+- **渲染**：`cd apps/_docs/scripts && npx tsx generate-all.ts` → 输出 `apps/_docs/public/<vn>/<name>.svg`（excalirender 渲染，按源文件 sha256 缓存）。
+- **引用**：markdown 里写 `![...](/vn/<name>.svg)`。
+- **画图**：可用 `excalidraw-diagram-generator` 技能生成 `.excalidraw`；本文件定义风格。
+
+---
+
 ## 元素选择
 
 | 元素 | 语义 | 什么时候用 |

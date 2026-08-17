@@ -84,3 +84,15 @@ packages/components/src/     ← 新建
 - 不引入 d3（工作量/收益比低；niceTicks + toX/toY 已够用）
 - 不再进一步抽象 Axes（3 种图表 + 6 种 Layer 已覆盖需求）
 - 不变外部 API 签名（backward compatible）
+
+---
+
+## 附：文档图的生成（与 charts 代码无关）
+
+`packages/charts` 是**代码里跑的运行时图表**（Canvas2D）。文档里的**教学图**（架构图、计算图、loss 曲线）走的是另一套离线管线：
+
+- Excalidraw 图 / matplotlib 脚本放 `apps/_docs/scripts/<vn>/`。
+- `apps/_docs/scripts/generate-all.ts` 统一渲染到 `apps/_docs/public/<vn>/`（gitignore）。
+- 风格见 `docs/excalidraw-style.md`；画图用 `excalidraw-diagram-generator` 技能。
+
+别把这两套混起来——charts 是 dashboard 的交互图表，Excalidraw 是教程的静态插图。
