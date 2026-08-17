@@ -84,7 +84,7 @@ export function getNavigation(): NavItem[] {
   return items;
 }
 
-const DIR_ORDER = ['v1', 'v2', 'v3', 'v4', 'recap'];
+const DIR_ORDER = ['v1', 'v2', 'v3', 'v4', 'recap', 'v5', 'v6', 'v7', 'v8', 'v9', 'v10', 'v11', 'v12'];
 
 const DIR_TITLES: Record<string, string> = {
   v1: 'v1：猜一条直线',
@@ -92,6 +92,14 @@ const DIR_TITLES: Record<string, string> = {
   v3: 'v3：画曲线',
   v4: 'v4：优化曲线',
   recap: '复习：机器学习是什么',
+  v5: 'v5：矩阵与批处理',
+  v6: 'v6：图片就是函数',
+  v7: 'v7：分类与 softmax',
+  v8: 'v8：卷积',
+  v9: 'v9：嵌入',
+  v10: 'v10：RNN 序列',
+  v11: 'v11：翻译与注意力',
+  v12: 'v12：Transformer',
 };
 
 function getSubPages(dir: string): NavItem[] | undefined {
